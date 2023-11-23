@@ -206,7 +206,7 @@ Send the command from below to chat with the user to whom you want to deliver th
 
 about = """<b>🐦 FunPay Cardinal 🐦 v{}</b>\n
 <i>Telegram chat:</i> @funpay_cardinal
-<i>Developer:</i> @woopertail"""
+<i>Developer:</i> @woopertail, @sidor0912"""
 
 sys_info = """<b><u>Data summary</u></b>
 

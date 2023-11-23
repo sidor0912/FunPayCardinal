@@ -206,7 +206,7 @@ test_ad_key_created = """✅ Создан одноразовый ключ для
 
 about = """<b>🐦 FunPay Cardinal 🐦 v{}</b>\n
 <i>Telegram чат:</i> @funpay_cardinal
-<i>Разработчик:</i> @woopertail"""
+<i>Разработчик:</i> @woopertail, @sidor0912"""
 
 sys_info = """<b><u>Сводка данных</u></b>
 

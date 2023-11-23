@@ -895,7 +895,7 @@ class TGBot:
         self.cardinal.save_config(self.cardinal.MAIN_CFG, "configs/_main.cfg")
         if localizer.current_language == "eng":
             self.bot.answer_callback_query(c.id, "The translation may be incomplete and contain errors.\n\n"
-                                                 "If you find errors in the translation, let @woopertail know.\n\n"
+                                                 "If you find errors in the translation, let @sidor0912 know.\n\n"
                                                  "Thank you :)", show_alert=True)
         self.open_cp(c)
 

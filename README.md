@@ -3,7 +3,6 @@
 
 <h2 align="center">Перед началом настоятельно рекомендую залететь в наш <a href="https://t.me/funpay_cardinal">Telegram чат (клик)</a>. Тут и поможем чем сможем и посидеть можно.</h2>
 
-<h2 align="center">Полная инструкция: <a href="https://woopertail.ru">woopertail.ru</a>
 
 ## :clipboard: **Содержание**
 
@@ -81,7 +80,7 @@
 
 ## :electric_plug: Плагины
 
-- [FPC Newbie Greetings Plugin](https://github.com/Woopertail/FPC-Newbie_Greetings_Plugin) (отправляет приветственное сообщение пользователям, которые написали впервые)
+- [FPC Newbie Greetings Plugin](https://github.com/sidor0912/FPC-Newbie_Greetings_Plugin) (отправляет приветственное сообщение пользователям, которые написали впервые)
 
 
 ## :arrow_down: Установка
@@ -90,7 +89,7 @@
 
 1. Скачайте и установите [Python](https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe).
    1. При установке поставьте галочку у `Add python.exe to PATH` на первом экране установки.
-2. Скачайте [FunPay Cardinal](https://github.com/Woopertail/FunPayCardinal/archive/refs/heads/master.zip)
+2. Скачайте [FunPay Cardinal](https://github.com/sidor0912/FunPayCardinal/archive/refs/heads/master.zip)
 3. Перенести папку `FunPayCardinal-master` в нужное вам место.
 4. Перейдите в папку `FunPayCardinal-master`.
 5. В адресной строке введите `cmd` и нажмите `Enter`. <img src="https://i.ibb.co/0mjkf9Q/explorer-Zcsm-Ife-XFl.png">
@@ -110,7 +109,7 @@
    8. `curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11`
 
 2. Скачайте `git` с помощью команды `sudo apt install git`.
-3. Скачайте FunPayCardinal с помощью команды `git clone https://github.com/woopertail/FunPayCardinal`.
+3. Скачайте FunPayCardinal с помощью команды `git clone https://github.com/sidor0912/FunPayCardinal`.
 4. Перейдите в папку `FunPayCardinal` с помощью команрды `cd FunPayCardinal`.
 5. Установите нужные пакеты с помощью команды `python3.11 setup.py`.
 6. Настройте конфиги и запустите FunPay Cardinal с помощью команды `python3.11 main.py`.

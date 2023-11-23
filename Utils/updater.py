@@ -44,7 +44,7 @@ def get_tags() -> list[str] | None:
     :return: список тегов.
     """
     try:
-        response = requests.get("https://api.github.com/repos/woopertail/FunPayCardinal/tags", headers=HEADERS)
+        response = requests.get("https://api.github.com/repos/sidor0912/FunPayCardinal/tags", headers=HEADERS)
         if not response.status_code == 200:
             logger.debug(f"Update status code is {response.status_code}!")
             return None
@@ -86,7 +86,7 @@ def get_release(tag: str) -> Release | None:
     :return: данные релиза.
     """
     try:
-        response = requests.get(f"https://api.github.com/repos/woopertail/FunPayCardinal/releases/tags/{tag}",
+        response = requests.get(f"https://api.github.com/repos/sidor0912/FunPayCardinal/releases/tags/{tag}",
                                 headers=HEADERS)
         if not response.status_code == 200:
             logger.debug(f"Update status code is {response.status_code}!")
