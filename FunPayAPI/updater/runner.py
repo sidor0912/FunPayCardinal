@@ -284,9 +284,12 @@ class Runner:
                         temp.append(i)
                     messages = list(reversed(temp))
 
-                # Если данного чата не было при первом запросе, в результат добавляем только ласт сообщение истории.
+                # Если данного чата не было при первом запросе, в результат добавляем
+                # только сообщения, у которых ID больше чем у минимального из сохраненных.
+                # Если сохраненных ID нету совсем, то добавляем только ласт сообщение истории.
                 else:
-                    messages = messages[-1:]
+                    messages_temp = [m for m in messages if m.id > min([*self.last_messages_ids.values(), 99999999999999999999999999999999999])]
+                    messages = messages_temp if messages_temp else messages[-1:]
 
             self.last_messages_ids[cid] = messages[-1].id  # Перезаписываем ID последнего сообщение
             self.by_bot_ids[cid] = [i for i in self.by_bot_ids[cid] if i > self.last_messages_ids[cid]]  # чистим память
