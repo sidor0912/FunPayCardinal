@@ -1,0 +1,10 @@
+/venv
+/venv2
+/__pycache__
+/.idea
+/FunPayAPI/__pycache__
+/logs
+/storage
+/build
+/dist
+test.py
