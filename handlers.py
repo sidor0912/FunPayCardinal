@@ -147,7 +147,7 @@ def add_old_user_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChange
     else:
         chat_id = e.chat.id
 
-    if chat_id in c.old_users:
+    if not c.MAIN_CFG["Greetings"].getboolean("cacheInitChats") or chat_id in c.old_users:
         return
     c.old_users.append(chat_id)
     cardinal_tools.cache_old_users(c.old_users)
@@ -240,6 +240,8 @@ def send_new_msg_notification_handler(c: Cardinal, e: NewMessageEvent) -> None:
             author = ""
         elif i.message.author_id == c.account.id:
             author = f"<i><b>🤖 {_('you')} (<i>FPC</i>):</b></i> " if i.message.by_bot else f"<i><b>🫵 {_('you')}:</b></i> "
+            if i.message.badge:
+                author = f"<i><b>📦 {_('you')} ({i.message.badge}):</b></i> "
         elif i.message.author_id == 0:
             author = f"<i><b>🔵 {i.message.author}: </b></i>"
         elif i.message.badge:
@@ -274,10 +276,10 @@ def process_review_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChan
     if not c.old_mode_enabled:
         if isinstance(e, LastChatMessageChangedEvent):
             return
-        message_type, its_me = e.message.type, c.account.username in str(e.message)
+        message_type, its_me = e.message.type, f" {c.account.username} " in str(e.message)
         message_text, chat_id = str(e.message), e.message.chat_id
     else:
-        message_type, its_me = e.chat.last_message_type, c.account.username in str(e.chat)
+        message_type, its_me = e.chat.last_message_type, f" {c.account.username} " in str(e.chat)
         message_text, chat_id = str(e.chat), e.chat.id
 
     if message_type not in [types.MessageTypes.NEW_FEEDBACK, types.MessageTypes.FEEDBACK_CHANGED] or its_me:
@@ -764,3 +766,5 @@ BIND_TO_ORDER_STATUS_CHANGED = [send_thank_u_message_handler, send_order_confirm
 BIND_TO_POST_DELIVERY = [send_delivery_notification_handler]
 
 BIND_TO_POST_START = [send_bot_started_notification_handler]
+
+

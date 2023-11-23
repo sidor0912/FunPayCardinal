@@ -216,7 +216,7 @@ class Account:
             result.append(lot_obj)
         return result
 
-    def get_balance(self, lot_id: int = 18853876) -> types.Balance:
+    def get_balance(self, lot_id: int = 20978354) -> types.Balance:
         """
         Получает информацию о балансе пользователя.
 
@@ -1376,7 +1376,7 @@ class Account:
             # Если ник или бейдж написавшего неизвестен, но есть блок с данными об авторе сообщения
             if None in [ids.get(author_id), badges.get(author_id)] and (author_div := parser.find("div", {"class": "media-user-name"})):
                 if badges.get(author_id) is None:
-                    badge = author_div.find("span")
+                    badge = author_div.find("span", {"class": "label label-succes"})
                     badges[author_id] = badge.text if badge else 0
                 if ids.get(author_id) is None:
                     author = author_div.find("a").text.strip()
@@ -1410,6 +1410,10 @@ class Account:
             i.author = ids.get(i.author_id)
             i.chat_name = interlocutor_username
             i.badge = badges.get(i.author_id) if badges.get(i.author_id) != 0 else None
+            parser = BeautifulSoup(i.html, "html.parser")
+            default_label = parser.find("div", {"class": "media-user-name"})
+            default_label = default_label.find("span", {"class": "label label-default"}) if default_label else None
+            i.badge = default_label.text if (i.badge is None and default_label) else 0
         return messages
 
     @staticmethod

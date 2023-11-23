@@ -686,6 +686,8 @@ class TGBot:
                 author = ""
             elif i.author_id == self.cardinal.account.id:
                 author = f"<i><b>🫵 {_('you')}:</b></i> "
+                if i.badge:
+                    author = f"<i><b>📦 {_('you')} ({i.badge}):</b></i> "
             elif i.author_id == 0:
                 author = f"<i><b>🔵 {i.author}: </b></i>"
             elif i.author == i.chat_name:
