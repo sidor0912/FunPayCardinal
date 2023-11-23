@@ -1195,15 +1195,11 @@ class Account:
         """
         if not self.is_initiated:
             raise exceptions.AccountNotInitiatedError()
-        headers = {
-            "accept": "*/*",
-            "content-type": "application/json",
-            "x-requested-with": "XMLHttpRequest",
-        }
+        headers = {}
         response = self.method("get", f"lots/offerEdit?offer={lot_id}", headers, {}, raise_not_200=True)
 
-        json_response = response.json()
-        bs = BeautifulSoup(json_response["html"], "html.parser")
+        html_response = response.content.decode()
+        bs = BeautifulSoup(html_response, "html.parser")
 
         result = {"active": "", "deactivate_after_sale": ""}
         result.update({field["name"]: field.get("value") or "" for field in bs.find_all("input")
