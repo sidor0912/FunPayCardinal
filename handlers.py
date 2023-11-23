@@ -245,7 +245,7 @@ def send_new_msg_notification_handler(c: Cardinal, e: NewMessageEvent) -> None:
         elif i.message.author_id == 0:
             author = f"<i><b>🔵 {i.message.author}: </b></i>"
         elif i.message.badge:
-            author = f"<i><b>🆘 {i.message.author} ({_('support')}): </b></i>"
+            author = f"<i><b>🆘 {i.message.author} ({i.message.badge}): </b></i>"
         elif i.message.author == i.message.chat_name:
             author = f"<i><b>👤 {i.message.author}: </b></i>"
         else:

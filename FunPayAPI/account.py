@@ -878,7 +878,7 @@ class Account:
                 full_description = div.find("div").text
             elif h.text == "Сумма":
                 sum_ = float(div.find("span").text)
-            elif h.text == "Категория":
+            elif h.text in ("Категория", "Валюта"):
                 subcategory_link = div.find("a").get("href")
                 subcategory_split = subcategory_link.split("/")
                 subcategory_id = int(subcategory_split[-2])
@@ -1376,7 +1376,7 @@ class Account:
             # Если ник или бейдж написавшего неизвестен, но есть блок с данными об авторе сообщения
             if None in [ids.get(author_id), badges.get(author_id)] and (author_div := parser.find("div", {"class": "media-user-name"})):
                 if badges.get(author_id) is None:
-                    badge = author_div.find("span", {"class": "label label-succes"})
+                    badge = author_div.find("span", {"class": "label label-success"})
                     badges[author_id] = badge.text if badge else 0
                 if ids.get(author_id) is None:
                     author = author_div.find("a").text.strip()
@@ -1413,7 +1413,7 @@ class Account:
             parser = BeautifulSoup(i.html, "html.parser")
             default_label = parser.find("div", {"class": "media-user-name"})
             default_label = default_label.find("span", {"class": "label label-default"}) if default_label else None
-            i.badge = default_label.text if (i.badge is None and default_label) else 0
+            i.badge = default_label.text if (i.badge is None and default_label is not None) else i.badge
         return messages
 
     @staticmethod

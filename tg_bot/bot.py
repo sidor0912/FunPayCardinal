@@ -690,6 +690,8 @@ class TGBot:
                     author = f"<i><b>📦 {_('you')} ({i.badge}):</b></i> "
             elif i.author_id == 0:
                 author = f"<i><b>🔵 {i.author}: </b></i>"
+            elif i.badge:
+                author = f"<i><b>🆘 {i.author} ({i.badge}): </b></i>"
             elif i.author == i.chat_name:
                 author = f"<i><b>👤 {i.author}: </b></i>"
             else:
