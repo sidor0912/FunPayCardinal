@@ -447,7 +447,7 @@ class Account:
             raise exceptions.MessageNotDeliveredError(response, error_text, chat_id)
 
         mes = json_response["objects"][0]["data"]["messages"][-1]
-        parser = BeautifulSoup(mes["html"], "html.parser")
+        parser = BeautifulSoup(mes["html"].replace("<br>", "\n"), "html.parser")
         try:
             if image_link := parser.find("a", {"class": "chat-img-link"}):
                 image_link = image_link.get("href")
@@ -1367,7 +1367,7 @@ class Account:
             if i["id"] < from_id:
                 continue
             author_id = i["author"]
-            parser = BeautifulSoup(i["html"], "html.parser")
+            parser = BeautifulSoup(i["html"].replace("<br>", "\n"), "html.parser")
 
             # Если ник или бейдж написавшего неизвестен, но есть блок с данными об авторе сообщения
             if None in [ids.get(author_id), badges.get(author_id)] and (author_div := parser.find("div", {"class": "media-user-name"})):
