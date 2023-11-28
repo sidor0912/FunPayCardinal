@@ -377,7 +377,7 @@ def test_auto_delivery_handler(c: Cardinal, e: NewMessageEvent | LastChatMessage
     date_text = date.strftime("%H:%M")
     html = ORDER_HTML_TEMPLATE.replace("$username", chat_name).replace("$lot_name", lot_name).replace("$date", date_text)
 
-    fake_order = OrderShortcut("ADTEST", lot_name, 0.0, chat_name, 000000, types.OrderStatuses.PAID,
+    fake_order = OrderShortcut("ADTEST", lot_name, 0.0, "?", chat_name, 000000, types.OrderStatuses.PAID,
                                date, "Авто-выдача, Тест", html)
 
     fake_event = NewOrderEvent(e.runner_tag, fake_order)
@@ -486,8 +486,8 @@ def send_new_order_notification_handler(c: Cardinal, e: NewOrderEvent, *args):
             delivery_info = _("ntfc_new_order_user_blocked")
         else:
             delivery_info = _("ntfc_new_order_will_be_delivered")
-    text = _("ntfc_new_order", utils.escape(e.order.description), e.order.buyer_username, e.order.price, e.order.id,
-             delivery_info)
+    text = _("ntfc_new_order", utils.escape(e.order.description), e.order.buyer_username,
+             f"{e.order.price} {e.order.currency}", e.order.id, delivery_info)
 
     chat_id = c.account.get_chat_by_name(e.order.buyer_username, True).id
     keyboard = keyboards.new_order(e.order.id, e.order.buyer_username, chat_id)

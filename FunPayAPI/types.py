@@ -250,6 +250,9 @@ class OrderShortcut:
     :param price: цена заказа.
     :type price: :obj:`float`
 
+    :param price: валюта заказа.
+    :type price: :obj:`str`
+
     :param buyer_username: никнейм покупателя.
     :type buyer_username: :obj:`str`
 
@@ -271,7 +274,7 @@ class OrderShortcut:
     :param dont_search_amount: не искать кол-во товара.
     :type dont_search_amount: :obj:`bool`, опционально
     """
-    def __init__(self, id_: str, description: str, price: float,
+    def __init__(self, id_: str, description: str, price: float, currency: str,
                  buyer_username: str, buyer_id: int, status: OrderStatuses,
                  date: datetime.datetime, subcategory_name: str, html: str, dont_search_amount: bool = False):
         self.id: str = id_ if not id_.startswith("#") else id_[1:]
@@ -280,6 +283,8 @@ class OrderShortcut:
         """Описание заказа."""
         self.price: float = price
         """Цена заказа."""
+        self.currency = currency
+        """Валюта заказа."""
         self.amount: int | None = self.parse_amount() if not dont_search_amount else None
         """Кол-во товаров."""
         self.buyer_username: str = buyer_username
@@ -353,7 +358,7 @@ class Order:
     :type review: :class:`FunPayAPI.types.Review` or :obj:`None`
     """
     def __init__(self, id_: str, status: OrderStatuses, subcategory: SubCategory, short_description: str | None,
-                 full_description: str | None, sum_: float,
+                 full_description: str | None, sum_: float, currency: str,
                  buyer_id: int, buyer_username: str,
                  seller_id: int, seller_username: str,
                  html: str, review: Review | None):
@@ -371,6 +376,8 @@ class Order:
         """Полное описание заказа."""
         self.sum: float = sum_
         """Сумма заказа."""
+        self.currency: float = currency
+        """Валюта заказа."""
         self.buyer_id: int = buyer_id
         """ID покупателя."""
         self.buyer_username: str = buyer_username

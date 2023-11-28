@@ -868,6 +868,7 @@ class Account:
         short_description = None
         full_description = None
         sum_ = None
+        currency = "?"
         subcategory = None
         for div in parser.find_all("div", {"class": "param-item"}):
             if not (h := div.find("h5")):
@@ -878,6 +879,7 @@ class Account:
                 full_description = div.find("div").text
             elif h.text == "Сумма":
                 sum_ = float(div.find("span").text)
+                currency = div.find("strong").text
             elif h.text in ("Категория", "Валюта"):
                 subcategory_link = div.find("a").get("href")
                 subcategory_split = subcategory_link.split("/")
@@ -916,7 +918,7 @@ class Account:
         else:
             review = types.Review(stars, text, reply, False, str(reply_obj), order_id, buyer_username, buyer_id)
 
-        order = types.Order(order_id, status, subcategory, short_description, full_description, sum_,
+        order = types.Order(order_id, status, subcategory, short_description, full_description, sum_, currency,
                             buyer_id, buyer_username, seller_id, seller_username, html_response, review)
         return order
 
@@ -1026,7 +1028,7 @@ class Account:
                 continue
 
             description = div.find("div", {"class": "order-desc"}).find("div").text
-            price = float(div.find("div", {"class": "tc-price"}).text.split(" ")[0])
+            price, currency = float(div.find("div", {"class": "tc-price"}).text.split(" ", 1))
 
             buyer_div = div.find("div", {"class": "media-user-name"}).find("span")
             buyer_username = buyer_div.text
@@ -1055,7 +1057,7 @@ class Account:
                 h, m = split[1].split(":")
                 order_date = datetime(year, month, day, int(h), int(m))
 
-            order_obj = types.OrderShortcut(order_id, description, price, buyer_username, buyer_id, order_status,
+            order_obj = types.OrderShortcut(order_id, description, price, currency, buyer_username, buyer_id, order_status,
                                             order_date, subcategory_name, str(div))
             sells.append(order_obj)
 
