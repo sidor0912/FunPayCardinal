@@ -283,7 +283,7 @@ class OrderShortcut:
         """Описание заказа."""
         self.price: float = price
         """Цена заказа."""
-        self.currency = currency
+        self.currency: str = currency
         """Валюта заказа."""
         self.amount: int | None = self.parse_amount() if not dont_search_amount else None
         """Кол-во товаров."""
@@ -376,7 +376,7 @@ class Order:
         """Полное описание заказа."""
         self.sum: float = sum_
         """Сумма заказа."""
-        self.currency: float = currency
+        self.currency: str = currency
         """Валюта заказа."""
         self.buyer_id: int = buyer_id
         """ID покупателя."""
