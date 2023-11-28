@@ -878,7 +878,7 @@ class Account:
             elif h.text == "Подробное описание":
                 full_description = div.find("div").text
             elif h.text == "Сумма":
-                sum_ = float(div.find("span").text)
+                sum_ = float(div.find("span").text.replace(" ", ""))
                 currency = div.find("strong").text
             elif h.text in ("Категория", "Валюта"):
                 subcategory_link = div.find("a").get("href")
