@@ -1028,7 +1028,8 @@ class Account:
                 continue
 
             description = div.find("div", {"class": "order-desc"}).find("div").text
-            price, currency = float(div.find("div", {"class": "tc-price"}).text.split(" ", 1))
+            price, currency = div.find("div", {"class": "tc-price"}).text.split(" ", 1)
+            price = float(price)
 
             buyer_div = div.find("div", {"class": "media-user-name"}).find("span")
             buyer_username = buyer_div.text
