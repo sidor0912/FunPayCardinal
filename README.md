@@ -98,21 +98,9 @@
 
 ### :hotsprings: Linux (Ubuntu)
 
-1. Введите следующие команды для установки Python 3.11.
-   1. `sudo apt update`
-   2. `sudo apt install software-properties-common`
-   3. `sudo add-apt-repository ppa:deadsnakes/ppa`
-   4. `sudo apt update`
-   5. `sudo apt install python3.11 python3.11-dev python3.11-gdbm python3.11-venv`
-   6. `sudo apt install curl`
-   7. `sudo apt install gcc`
-   8. `curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11`
-
-2. Скачайте `git` с помощью команды `sudo apt install git`.
-3. Скачайте FunPayCardinal с помощью команды `git clone https://github.com/sidor0912/FunPayCardinal`.
-4. Перейдите в папку `FunPayCardinal` с помощью команрды `cd FunPayCardinal`.
-5. Установите нужные пакеты с помощью команды `python3.11 setup.py`.
-6. Настройте конфиги и запустите FunPay Cardinal с помощью команды `python3.11 main.py`.
+1. Выполните команду: wget https://raw.githubusercontent.com/sidor0912/FunPayCardinal/main/linux-install.sh -nc && bash linux-install.sh
+2. Следуйте инструкциям установщика.
+Данный скрипт автоматически установит всё необходимое и запустит бота как фоновый процесс.
 
 ## :hammer_and_wrench: Настройка конфигов
 
