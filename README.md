@@ -99,7 +99,7 @@
 ### :hotsprings: Linux (Ubuntu)
 
 1. Выполните команду: 
-'wget https://raw.githubusercontent.com/sidor0912/FunPayCardinal/main/linux-install.sh -nc && bash linux-install.sh'
+`wget https://raw.githubusercontent.com/sidor0912/FunPayCardinal/main/linux-install.sh -nc && bash linux-install.sh`
 2. Следуйте инструкциям установщика.
 Данный скрипт автоматически установит всё необходимое и запустит бота как фоновый процесс.
 
