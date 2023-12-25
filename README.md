@@ -90,15 +90,16 @@
 1. Скачайте и установите [Python](https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe).
    1. При установке поставьте галочку у `Add python.exe to PATH` на первом экране установки.
 2. Скачайте [FunPay Cardinal](https://github.com/sidor0912/FunPayCardinal/archive/refs/heads/master.zip)
-3. Перенести папку `FunPayCardinal-master` в нужное вам место.
-4. Перейдите в папку `FunPayCardinal-master`.
+3. Перенести папку `FunPayCardinal-main` в нужное Вам место.
+4. Перейдите в папку `FunPayCardinal-main`.
 5. В адресной строке введите `cmd` и нажмите `Enter`. <img src="https://i.ibb.co/0mjkf9Q/explorer-Zcsm-Ife-XFl.png">
 6. В открывшейся командной строке введите `python setup.py`. Дождитесь окончания загрузки пакетов.
 7. Закройте командную строку, настройте конфиги и запустите файл `Start.bat`.
 
 ### :hotsprings: Linux (Ubuntu)
 
-1. Выполните команду: wget https://raw.githubusercontent.com/sidor0912/FunPayCardinal/main/linux-install.sh -nc && bash linux-install.sh
+1. Выполните команду: 
+'wget https://raw.githubusercontent.com/sidor0912/FunPayCardinal/main/linux-install.sh -nc && bash linux-install.sh'
 2. Следуйте инструкциям установщика.
 Данный скрипт автоматически установит всё необходимое и запустит бота как фоновый процесс.
 
