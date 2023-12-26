@@ -744,7 +744,7 @@ class Account:
             wait_time = utils.parse_wait_time(json_response.get("msg"))
             raise exceptions.RaiseError(response, category, json_response.get("msg"), wait_time)
         else:
-            raise exceptions.RaiseError(response, category, None, None)
+            raise exceptions.RaiseError(response, category, json_response.get("msg"), None)
 
     def get_user(self, user_id: int) -> types.UserProfile:
         """
