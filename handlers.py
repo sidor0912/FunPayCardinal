@@ -384,14 +384,14 @@ def test_auto_delivery_handler(c: Cardinal, e: NewMessageEvent | LastChatMessage
     c.run_handlers(c.new_order_handlers, (c, fake_event,))
 
 
-def send_categories_raised_notification_handler(c: Cardinal, cat: types.Category) -> None:
+def send_categories_raised_notification_handler(c: Cardinal, cat: types.Category, error_text: str = "") -> None:
     """
     Отправляет уведомление о поднятии лотов в Telegram.
     """
     if not c.telegram:
         return
 
-    text = f"""⤴️<b><i>Поднял все лоты категории</i></b> <code>{cat.name}</code>"""
+    text = f"""⤴️<b><i>Поднял все лоты категории</i></b> <code>{cat.name}</code>\n<tg-spoiler>{error_text}</tg-spoiler>"""
     Thread(target=c.telegram.send_notification,
            args=(text, ),
            kwargs={"notification_type": utils.NotificationTypes.lots_raise}, daemon=True).start()

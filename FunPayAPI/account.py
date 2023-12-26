@@ -742,7 +742,7 @@ class Account:
             return True
         elif json_response.get("error") and json_response.get("msg") and "Подождите" in json_response.get("msg"):
             wait_time = utils.parse_wait_time(json_response.get("msg"))
-            raise exceptions.RaiseError(response, category, json_response.get("MSG"), wait_time)
+            raise exceptions.RaiseError(response, category, json_response.get("msg"), wait_time)
         else:
             raise exceptions.RaiseError(response, category, None, None)
 
