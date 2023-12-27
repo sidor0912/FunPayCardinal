@@ -55,7 +55,7 @@ def parse_wait_time(response: str) -> int:
         return (int(response[1])-1) * 60
     elif "час" in response:
         response = response.split()
-        return (int(response[1])) * 3600
+        return (int(response[1])) * 3600 - 60*30
     else:
         return 10
 
