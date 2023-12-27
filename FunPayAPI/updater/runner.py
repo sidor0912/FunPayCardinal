@@ -78,6 +78,15 @@ class Runner:
 
         self.__msg_time_re = re.compile(r"\d{2}:\d{2}")
 
+        try:
+            self.last_messages_ids = {2: account.get_chat_history(chat_id="flood")[0].id}
+            logger.debug(f"ID сообщения из общего чата успешно получено: {self.last_messages_ids}")
+        except:
+            logger.debug(f"ID сообщения из общего чата не получено: {self.last_messages_ids}")
+            logger.debug("TRACEBACK", exc_info=True)
+        """Сохраняем сообщение из общего чата, чтобы несколько одновременно полученных сообщений от человека,
+         которого не было в сохранненных чатах, отображались корректно после перезапуска"""
+
     def get_updates(self) -> dict:
         """
         Запрашивает список событий FunPay.
