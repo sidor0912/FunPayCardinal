@@ -1,4 +1,1 @@
-:controlstart
-python main.py
-timeout 5
-goto controlstart
+start python main.py
