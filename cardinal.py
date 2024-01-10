@@ -392,7 +392,7 @@ class Cardinal(object):
                 entities.extend(self.split_text(text))
         return entities
 
-    def send_message(self, chat_id: int, message_text: str, chat_name: str | None,  attempts: int = 3,
+    def send_message(self, chat_id: int, message_text: str, chat_name: str | None = None,  attempts: int = 3,
                      watermark: bool = True) -> list[FunPayAPI.types.Message] | None:
         """
         Отправляет сообщение в чат FunPay.
@@ -428,7 +428,7 @@ class Cardinal(object):
                     elif isinstance(entity, float):
                         time.sleep(entity)
                     break
-                except:
+                except Exception as ex:
                     logger.warning(_("crd_msg_send_err", chat_id))
                     logger.debug("TRACEBACK", exc_info=True)
                     logger.info(_("crd_msg_attempts_left", current_attempts))
