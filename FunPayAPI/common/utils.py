@@ -78,8 +78,7 @@ class RegularExpressions(object):
         Лучше всего использовать вместе с MessageTypesRes.ORDER_PURCHASED2
         """
 
-        self.ORDER_PURCHASED2 = re.compile(r"[a-zA-Z0-9]+, не забудьте потом нажать кнопку "
-                                           r"«Подтвердить выполнение заказа»\.")
+        self.ORDER_PURCHASED2 = re.compile(r"[a-zA-Z0-9]+, не забудьте потом нажать кнопку («Подтвердить выполнение заказа»|«Подтвердить получение валюты»)\.")
         """
         Скомпилированное регулярное выражение, описывающее сообщение об оплате заказа (2).
         Лучше всего использовать вместе с MessageTypesRes.ORDER_PURCHASED

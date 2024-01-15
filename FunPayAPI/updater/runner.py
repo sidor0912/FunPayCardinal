@@ -80,9 +80,9 @@ class Runner:
 
         try:
             self.last_messages_ids = {2: account.get_chat_history(chat_id="flood")[0].id}
-            logger.debug(f"ID сообщения из общего чата успешно получено: {self.last_messages_ids}")
+            logger.info(f"ID сообщения из общего чата успешно получено: {self.last_messages_ids}")
         except:
-            logger.debug(f"ID сообщения из общего чата не получено: {self.last_messages_ids}")
+            logger.warning(f"ID сообщения из общего чата не получено: {self.last_messages_ids}")
             logger.debug("TRACEBACK", exc_info=True)
         """Сохраняем сообщение из общего чата, чтобы несколько одновременно полученных сообщений от человека,
          которого не было в сохранненных чатах, отображались корректно после перезапуска"""
@@ -278,7 +278,7 @@ class Runner:
             # Если нет сохраненного ID последнего сообщения
             if not self.last_messages_ids.get(cid):
                 # Если данный чат был доступен при первом запросе и есть сохраненное последнее сообщение,
-                # то ищем новые сообщения относительно последнего сохраненного текста
+                # то ищем новые сообщения относительно последнего сохраненного текста или минимального сохраненного id
                 if init_msg_text := self.init_messages.get(cid):
                     del self.init_messages[cid]
                     temp = []
@@ -288,7 +288,7 @@ class Runner:
                                 if not temp:
                                     temp.append(i)
                                 break
-                        elif i.text[:250] == init_msg_text:
+                        elif i.text[:250] == init_msg_text or i.id<(min(self.last_messages_ids.values(), default=0)):
                             break
                         temp.append(i)
                     messages = list(reversed(temp))
@@ -297,7 +297,7 @@ class Runner:
                 # только сообщения, у которых ID больше чем у минимального из сохраненных.
                 # Если сохраненных ID нету совсем, то добавляем только ласт сообщение истории.
                 else:
-                    messages_temp = [m for m in messages if m.id > min([*self.last_messages_ids.values(), 99999999999999999999999999999999999])]
+                    messages_temp = [m for m in messages if m.id > min(self.last_messages_ids.values(), default=10**20)]
                     messages = messages_temp if messages_temp else messages[-1:]
 
             self.last_messages_ids[cid] = messages[-1].id  # Перезаписываем ID последнего сообщение
