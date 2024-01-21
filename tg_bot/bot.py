@@ -1018,6 +1018,19 @@ class TGBot:
         commands = [BotCommand(f"/{i}", self.commands[i]) for i in self.commands]
         self.bot.set_my_commands(commands)
 
+    def edit_descriptions(self):
+        """
+        Изменяет описания бота.
+        """
+        self.bot.set_my_short_description("🛠️ github.com/sidor0912/FunPayCardinal 💰 @sidor_donate 👨‍💻 @sidor0912 🧩 @fpc_plugins 🔄 @fpc_updates 💬 @funpay_cardinal ")
+        self.bot.set_my_description("""🛠️ Сделано с помощью: https://github.com/sidor0912/FunPayCardinal
+        👨‍💻 Автор: @woopertail, @sidor0912
+        💰 Донат: @sidor_donate        
+        🧩 Плагины: @fpc_plugins
+        🔄 Обновления: @fpc_updates
+        💬 Чат: @funpay_cardinal        
+        """)
+
     def init(self):
         self.__register_handlers()
         logger.info(_("log_tg_initialized"))

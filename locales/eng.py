@@ -196,7 +196,8 @@ fpc_init = """✅ <b><u>FunPay Cardinal initialized!</u></b>\n
 ℹ️ <b><i>Version:</i></b> <code>{}</code>
 👑 <b><i>Account:</i></b>  <code>{}</code> | <code>{}</code>
 💰 <b><i>Balance:</i></b> <code>{}₽, {}$, {}€</code>
-📊 <b><i>Active orders:</i></b>  <code>{}</code>"""
+📊 <b><i>Active orders:</i></b>  <code>{}</code>
+🤑 <b><i>Donate:</i></b>  @sidor_donate"""
 
 create_test_ad_key = "Enter the name of the lot whose auto-delivery you want to test."
 
@@ -206,7 +207,8 @@ Send the command from below to chat with the user to whom you want to deliver th
 
 about = """<b>🐦 FunPay Cardinal 🐦 v{}</b>\n
 <i>Telegram chat:</i> @funpay_cardinal
-<i>Developer:</i> @woopertail, @sidor0912"""
+<i>Developer:</i> @woopertail, @sidor0912
+<i>Donate:</i>  @sidor_donate"""
 
 sys_info = """<b><u>Data summary</u></b>
 

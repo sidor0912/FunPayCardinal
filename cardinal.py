@@ -367,7 +367,7 @@ class Cardinal(object):
         Разбивает сообщения по 20 строк, отделяет изображения от текста.
         (обозначение изображения: $photo=1234567890)
 
-        :param text: текст сообщения.
+        :param msg_text: текст сообщения.
 
         :return: набор текстов сообщений / изображений.
         """
@@ -544,6 +544,12 @@ class Cardinal(object):
 
         if self.MAIN_CFG["Telegram"].getboolean("enabled"):
             self.telegram.setup_commands()
+            try:
+                self.telegram.edit_descriptions()
+            except:
+                logger.debug("Не удалось изменить описание Telegram-бота")
+                logger.debug("TRACEBACK", exc_info=True)
+
             Thread(target=self.telegram.run, daemon=True).start()
 
         self.__init_account()
