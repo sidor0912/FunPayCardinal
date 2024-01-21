@@ -305,6 +305,8 @@ class TGBot:
         """
         Отправляет статистику аккаунта.
         """
+        self.cardinal.account.get()
+        self.cardinal.balance = self.cardinal.get_balance()
         self.bot.send_message(m.chat.id, utils.generate_profile_text(self.cardinal),
                               reply_markup=skb.REFRESH_BTN())
 
