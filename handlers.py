@@ -308,7 +308,28 @@ def process_review_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChan
         reply_text = None
         if c.MAIN_CFG["ReviewReply"].getboolean(toggle) and c.MAIN_CFG["ReviewReply"].get(text):
             try:
+                #Укорачиваем текст до 1000 символов, до 10 строк
+                def format_text4review(text):
+
+                    text = text[:1001]
+                    if len(text) > 1000:
+                        ln = len(text)
+                        print(ln)
+                        indexes = []
+                        for char in (".", "!", "\n"):
+                            index1 = text.rfind(char)
+                            indexes.extend([index1, text[:index1].rfind(char)])
+                            print(indexes, char)
+
+                        text = text[:max(indexes, key = lambda x: (x<ln-1, x))]+"📜"
+                    while text.count("\n") > 9 and "\n\n" in text:
+                        text = text[::-1].replace("\n\n", "\n", text.count("\n") - 9)[::-1]
+                    if text.count("\n") > 9:
+                        text = text[::-1].replace("\n", " ", text.count("\n") - 9)[::-1]
+                    return text
+
                 reply_text = cardinal_tools.format_order_text(c.MAIN_CFG["ReviewReply"].get(text), order)
+                reply_text = format_text4review(reply_text)
                 c.account.send_review(order_id, reply_text)
             except:
                 logger.error(f"Произошла ошибка при ответе на отзыв {order_id}.")
