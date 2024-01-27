@@ -95,8 +95,7 @@ def get_release(tag: str) -> Release | None:
         name = json_response.get("name")
         description = json_response.get("body")
         sources = json_response.get("zipball_url")
-        assets = json_response.get("assets")
-        exe = assets[0].get("browser_download_url")
+        exe = f"https://github.com/sidor0912/FunPayCardinal/archive/refs/tags/{tag}.zip"
         return Release(name, description, sources, exe)
     except:
         logger.debug("TRACEBACK", exc_info=True)
