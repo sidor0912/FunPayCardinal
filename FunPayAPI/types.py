@@ -185,7 +185,7 @@ class Message:
         self.by_bot: bool = False
         """Отправлено ли сообщение с помощью :meth:`FunPayAPI.Account.send_message`?"""
         self.badge: str | None = badge_text
-        """Текст бэйджика тех. поддержки."""
+        """Текст бэйджика тех. поддержки или автовыдачи FunPay."""
 
     def get_message_type(self) -> MessageTypes:
         """
@@ -361,7 +361,7 @@ class Order:
                  full_description: str | None, sum_: float, currency: str,
                  buyer_id: int, buyer_username: str,
                  seller_id: int, seller_username: str,
-                 html: str, review: Review | None):
+                 html: str, review: Review | None, order_secrets: list[str]):
         self.id: str = id_ if not id_.startswith("#") else id_[1:]
         """ID заказа."""
         self.status: OrderStatuses = status
@@ -390,7 +390,8 @@ class Order:
         """HTML код заказа."""
         self.review: Review | None = review
         """Объект отзыва заказа."""
-
+        self.order_secrets: list[str] = order_secrets
+        """Список товаров автовыдачи FunPay из заказа"""
 
 class Category:
     """

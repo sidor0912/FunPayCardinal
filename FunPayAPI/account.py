@@ -887,6 +887,9 @@ class Account:
                 subcategory_type = types.SubCategoryTypes.COMMON if "lots" in subcategory_link else \
                     types.SubCategoryTypes.CURRENCY
                 subcategory = self.get_subcategory(subcategory_type, subcategory_id)
+            elif h.text in ("Оплаченный товар", "Оплаченные товары"):
+                secret_placeholders = div.find_all("span", class_="secret-placeholder")
+                order_secrets = [i.text for i in secret_placeholders]
 
         chat = parser.find("div", {"class": "chat-header"})
         chat_link = chat.find("div", {"class": "media-user-name"}).find("a")
@@ -919,7 +922,7 @@ class Account:
             review = types.Review(stars, text, reply, False, str(reply_obj), order_id, buyer_username, buyer_id)
 
         order = types.Order(order_id, status, subcategory, short_description, full_description, sum_, currency,
-                            buyer_id, buyer_username, seller_id, seller_username, html_response, review)
+                            buyer_id, buyer_username, seller_id, seller_username, html_response, review, order_secrets)
         return order
 
     def get_sells(self, start_from: str | None = None, include_paid: bool = True, include_closed: bool = True,
