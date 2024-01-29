@@ -870,6 +870,7 @@ class Account:
         sum_ = None
         currency = "?"
         subcategory = None
+        order_secrets = []
         for div in parser.find_all("div", {"class": "param-item"}):
             if not (h := div.find("h5")):
                 continue

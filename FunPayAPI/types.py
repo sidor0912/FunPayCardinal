@@ -356,6 +356,9 @@ class Order:
 
     :param review: объект отзыва на заказ.
     :type review: :class:`FunPayAPI.types.Review` or :obj:`None`
+
+    :param order_secrets: cписок товаров автовыдачи FunPay.
+    :type order_secrets: :obj:`list` of :obj:`str`
     """
     def __init__(self, id_: str, status: OrderStatuses, subcategory: SubCategory, short_description: str | None,
                  full_description: str | None, sum_: float, currency: str,
@@ -391,7 +394,7 @@ class Order:
         self.review: Review | None = review
         """Объект отзыва заказа."""
         self.order_secrets: list[str] = order_secrets
-        """Список товаров автовыдачи FunPay из заказа"""
+        """Список товаров автовыдачи FunPay заказа."""
 
 class Category:
     """
