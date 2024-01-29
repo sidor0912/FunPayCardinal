@@ -309,24 +309,20 @@ def process_review_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChan
         if c.MAIN_CFG["ReviewReply"].getboolean(toggle) and c.MAIN_CFG["ReviewReply"].get(text):
             try:
                 #Укорачиваем текст до 1000 символов, до 10 строк
-                def format_text4review(text):
-
-                    text = text[:1001]
-                    if len(text) > 1000:
-                        ln = len(text)
-                        print(ln)
+                def format_text4review(text_: str):
+                    text_ = text_[:1001]
+                    if len(text_) > 1000:
+                        ln = len(text_)
                         indexes = []
                         for char in (".", "!", "\n"):
-                            index1 = text.rfind(char)
-                            indexes.extend([index1, text[:index1].rfind(char)])
-                            print(indexes, char)
-
-                        text = text[:max(indexes, key = lambda x: (x<ln-1, x))]+"📜"
-                    while text.count("\n") > 9 and "\n\n" in text:
-                        text = text[::-1].replace("\n\n", "\n", text.count("\n") - 9)[::-1]
-                    if text.count("\n") > 9:
-                        text = text[::-1].replace("\n", " ", text.count("\n") - 9)[::-1]
-                    return text
+                            index1 = text_.rfind(char)
+                            indexes.extend([index1, text_[:index1].rfind(char)])
+                        text_ = text_[:max(indexes, key = lambda x: (x<ln-1, x))]+"📜"
+                    while text_.count("\n") > 9 and "\n\n" in text_:
+                        text_ = text_[::-1].replace("\n\n", "\n", text_.count("\n") - 9)[::-1]
+                    if text_.count("\n") > 9:
+                        text_ = text_[::-1].replace("\n", " ", text_.count("\n") - 9)[::-1]
+                    return text_
 
                 reply_text = cardinal_tools.format_order_text(c.MAIN_CFG["ReviewReply"].get(text), order)
                 reply_text = format_text4review(reply_text)
