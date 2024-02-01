@@ -713,17 +713,10 @@ def send_thank_u_message_handler(c: Cardinal, e: OrderStatusChangedEvent):
 
     text = cardinal_tools.format_order_text(c.MAIN_CFG["OrderConfirm"]["replyText"], e.order)
     chat = c.account.get_chat_by_name(e.order.buyer_username, True)
-    # если не нашли сохраненный чат, то получаем ID чата из ID юзеров
-    # (возможно, приводит к каким-то проблемам, связанным с runner.update_last_message и runner.mark_as_by_bot)
-    if chat is None:
-        id1, id2 = sorted([c.account.id, e.order.buyer_id])
-        chat_id = f"users-{id1}-{id2}"
-    else:
-        chat_id = chat.id
     logger.info(f"Пользователь $YELLOW{e.order.buyer_username}$RESET подтвердил выполнение заказа "
                 f"$YELLOW{e.order.id}.$RESET")
     logger.info(f"Отправляю ответное сообщение ...")
-    Thread(target=c.send_message, args=(chat_id, text, e.order.buyer_username), daemon=True).start()
+    Thread(target=c.send_message, args=(chat.id, text, e.order.buyer_username), daemon=True).start()
 
 
 def send_order_confirmed_notification_handler(cardinal: Cardinal, event: OrderStatusChangedEvent):
