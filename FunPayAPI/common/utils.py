@@ -165,7 +165,7 @@ class RegularExpressions(object):
         Точный текст сообщения о предложении перехода в Discord.
         """
 
-        self.PRODUCTS_AMOUNT = re.compile(r"\d+ шт\.")
+        self.PRODUCTS_AMOUNT = re.compile(r",\s(\d{1,3}(?:\s?\d{3})*)\sшт\.")
         """
         Скомпилированное регулярное выражение, описывающее запись кол-ва товаров в заказе.
         """

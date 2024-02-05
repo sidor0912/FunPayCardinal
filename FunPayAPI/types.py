@@ -310,7 +310,7 @@ class OrderShortcut:
         res = RegularExpressions()
         result = res.PRODUCTS_AMOUNT.findall(self.description)
         if result:
-            return int(result[0].split(" ")[0])
+            return int(result[0].replace(" ", ""))
         return 1
 
     def __str__(self):
