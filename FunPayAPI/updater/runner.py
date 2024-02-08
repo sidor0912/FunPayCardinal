@@ -79,7 +79,7 @@ class Runner:
         self.__msg_time_re = re.compile(r"\d{2}:\d{2}")
 
         try:
-            self.last_messages_ids = {2: account.get_chat_history(chat_id="flood")[0].id}
+            self.last_messages_ids = {2: account.get_chat_history(chat_id="flood")[-1].id}
             logger.info(f"ID сообщения из общего чата успешно получено: {self.last_messages_ids}")
         except:
             logger.warning(f"ID сообщения из общего чата не получено: {self.last_messages_ids}")
