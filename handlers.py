@@ -229,6 +229,7 @@ def send_new_msg_notification_handler(c: Cardinal, e: NewMessageEvent) -> None:
     text = ""
     last_message_author_id = -1
     last_by_bot = False
+    last_badge = None
     for i in events:
         message_text = str(e.message)
         if message_text.strip().lower() in c.AR_CFG.sections() and len(events) < 2:
@@ -236,7 +237,7 @@ def send_new_msg_notification_handler(c: Cardinal, e: NewMessageEvent) -> None:
         elif message_text.startswith("!автовыдача") and len(events) < 2:
             continue
 
-        if i.message.author_id == last_message_author_id and i.message.by_bot == last_by_bot:
+        if i.message.author_id == last_message_author_id and i.message.by_bot == last_by_bot and i.message.badge == last_badge:
             author = ""
         elif i.message.author_id == c.account.id:
             author = f"<i><b>🤖 {_('you')} (<i>FPC</i>):</b></i> " if i.message.by_bot else f"<i><b>🫵 {_('you')}:</b></i> "
@@ -244,17 +245,19 @@ def send_new_msg_notification_handler(c: Cardinal, e: NewMessageEvent) -> None:
                 author = f"<i><b>📦 {_('you')} ({i.message.badge}):</b></i> "
         elif i.message.author_id == 0:
             author = f"<i><b>🔵 {i.message.author}: </b></i>"
-        elif i.message.badge:
+        elif i.message.badge and i.message.badge != "автоответ":
             author = f"<i><b>🆘 {i.message.author} ({i.message.badge}): </b></i>"
         elif i.message.author == i.message.chat_name:
             author = f"<i><b>👤 {i.message.author}: </b></i>"
+            if i.message.badge:
+                author = f"<i><b>🛍️ {i.message.author} ({i.message.badge}):</b></i> "
         else:
             author = f"<i><b>🆘 {i.message.author} {_('support')}: </b></i>"
         msg_text = f"<code>{i.message}</code>" if i.message.text else f"<a href=\"{i.message}\">{_('photo')}</a>"
         text += f"{author}{msg_text}\n\n"
         last_message_author_id = i.message.author_id
         last_by_bot = i.message.by_bot
-
+        last_badge = i.message.badge
     kb = keyboards.reply(chat_id, chat_name, extend=True)
     Thread(target=c.telegram.send_notification, args=(text, kb, utils.NotificationTypes.new_message),
            daemon=True).start()

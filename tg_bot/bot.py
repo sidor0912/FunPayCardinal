@@ -683,24 +683,30 @@ class TGBot:
 
         messages = chat.messages[-10:]
         last_message_author_id = -1
+        last_by_bot = False
+        last_badge = None
         for i in messages:
-            if i.author_id == last_message_author_id:
+            if i.author_id == last_message_author_id and i.by_bot == last_by_bot and i.badge == last_badge:
                 author = ""
             elif i.author_id == self.cardinal.account.id:
-                author = f"<i><b>🫵 {_('you')}:</b></i> "
+                author = f"<i><b>🤖 {_('you')} (<i>FPC</i>):</b></i> " if i.by_bot else f"<i><b>🫵 {_('you')}:</b></i> "
                 if i.badge:
                     author = f"<i><b>📦 {_('you')} ({i.badge}):</b></i> "
             elif i.author_id == 0:
                 author = f"<i><b>🔵 {i.author}: </b></i>"
-            elif i.badge:
+            elif i.badge and i.badge != "автоответ":
                 author = f"<i><b>🆘 {i.author} ({i.badge}): </b></i>"
             elif i.author == i.chat_name:
                 author = f"<i><b>👤 {i.author}: </b></i>"
+                if i.badge:
+                    author = f"<i><b>🛍️ {i.author} ({i.badge}):</b></i> "
             else:
                 author = f"<i><b>🆘 {i.author} ({_('support')}): </b></i>"
             msg_text = f"<code>{i.text}</code>" if i.text else f"<a href=\"{i.image_link}\">{_('photo')}</a>"
             text += f"{author}{msg_text}\n\n"
             last_message_author_id = i.author_id
+            last_by_bot = i.by_bot
+            last_badge = i.badge
 
         self.bot.edit_message_text(text, c.message.chat.id, c.message.id,
                                    reply_markup=kb.reply(int(chat_id), username, False, False))
