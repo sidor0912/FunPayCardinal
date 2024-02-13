@@ -42,7 +42,8 @@ class RequestFailedError(Exception):
               f"Метод: {self.response.request.method} .\n" \
               f"Статус-код ответа: {self.status_code} .\n" \
               f"Заголовки запроса: {self.request_headers} .\n" \
-              f"Тело запроса: {self.request_body} ."
+              f"Тело запроса: {self.request_body} .\n" \
+              f"Текст ответа: {self.response.text}"
         if self.log_response:
             msg += f"\n{self.response.content.decode()}"
         return msg

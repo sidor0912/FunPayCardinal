@@ -432,6 +432,19 @@ class TGBot:
             try:
                 with open("logs/log.log", "r", encoding="utf-8") as f:
                     self.bot.send_document(m.chat.id, f)
+                    f.seek(0)
+                    file_content = f.read()
+                    if "TRACEBACK" in file_content:
+                        file_content, right = file_content.rsplit("TRACEBACK", 1)
+                        file_content = "\n[".join(file_content.rsplit("\n[", 2)[-2:])
+                        right = right.split("\n[", 1)[0]
+                        result = f"<b>Текст последней ошибки:</b>\n\n[{utils.escape(file_content)}TRACEBACK{utils.escape(right)}"
+                        while result:
+                            text, result = result[:4096], result[4096:]
+                            self.bot.send_message(m.chat.id, text)
+                            time.sleep(0.5)
+                    else:
+                        self.bot.send_message(m.chat.id, "Ошибок за последние сутки не обнаружено.")
             except:
                 self.bot.send_message(m.chat.id, _("logfile_error"))
                 logger.debug("TRACEBACK", exc_info=True)
@@ -448,7 +461,7 @@ class TGBot:
                     deleted += 1
                 except:
                     continue
-        self.bot.send_message(m.chat.id, _("logfile_deleted"))
+        self.bot.send_message(m.chat.id, _("logfile_deleted").format(deleted))
 
     def about(self, m: Message):
         """
