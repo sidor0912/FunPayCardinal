@@ -357,7 +357,8 @@ pl_not_found_err = "❌ Plugin with UUID <code>{}</code> not found."
 pl_file_not_found_err = "❌  File <code>{}</code> not found.\nRestart <i>FPC</i> with command /restart."
 pl_commands_list = "<b><i>{}</i></b> plugin commands list."
 pl_author = "Dev"
-pl_new = "Send me a plugin."
+pl_new = "Send me a plugin. \n<b><u>⚠️ ATTENTION! Downloading plugins from questionable sources may lead to unfortunate consequences.\n" \
+         "@fpc_plugins solves most potential issues.</u></b>"
 
 # - Menus desc
 desc_main = "Select a settings category."

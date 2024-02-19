@@ -738,8 +738,10 @@ class Account:
         response = self.method("post", "lots/raise", headers, payload, raise_not_200=True)
         json_response = response.json()
         logger.debug(f"Ответ FunPay (поднятие категорий): {json_response}.")
-        if not json_response.get("error"):
+        if not json_response.get("error") and not json_response.get("url"):
             return True
+        elif json_response.get("url"):
+            raise exceptions.RaiseError(response, category, json_response.get("url"), 7200)
         elif json_response.get("error") and json_response.get("msg") and "Подождите" in json_response.get("msg"):
             wait_time = utils.parse_wait_time(json_response.get("msg"))
             raise exceptions.RaiseError(response, category, json_response.get("msg"), wait_time)
