@@ -197,7 +197,12 @@ fpc_init = """✅ <b><u>FunPay Cardinal initialized!</u></b>\n
 👑 <b><i>Account:</i></b>  <code>{}</code> | <code>{}</code>
 💰 <b><i>Balance:</i></b> <code>{}₽, {}$, {}€</code>
 📊 <b><i>Active orders:</i></b>  <code>{}</code>
-🤑 <b><i>Donate:</i></b>  @sidor_donate"""
+
+💬 <b><i>Telegram chat:</i></b> @funpay_cardinal
+🔄 <b><i>Updates:</i></b> @fpc_updates
+🧩 <b><i>Plugins:</i></b> @fpc_plugins
+👨‍💻 <b><i>Developer:</i></b> @woopertail, @sidor0912
+🤑 <b><i>Donate:</i></b> @sidor_donate"""
 
 create_test_ad_key = "Enter the name of the lot whose auto-delivery you want to test."
 
@@ -207,8 +212,10 @@ Send the command from below to chat with the user to whom you want to deliver th
 
 about = """<b>🐦 FunPay Cardinal 🐦 v{}</b>\n
 <i>Telegram chat:</i> @funpay_cardinal
+<i>Updates:</i> @fpc_updates
+<i>Plugins:</i> @fpc_plugins
 <i>Developer:</i> @woopertail, @sidor0912
-<i>Donate:</i>  @sidor_donate"""
+<i>Donate:</i> @sidor_donate"""
 
 sys_info = """<b><u>Data summary</u></b>
 
@@ -357,8 +364,8 @@ pl_not_found_err = "❌ Plugin with UUID <code>{}</code> not found."
 pl_file_not_found_err = "❌  File <code>{}</code> not found.\nRestart <i>FPC</i> with command /restart."
 pl_commands_list = "<b><i>{}</i></b> plugin commands list."
 pl_author = "Dev"
-pl_new = "Send me a plugin. \n<b><u>⚠️ ATTENTION! Downloading plugins from questionable sources may lead to unfortunate consequences.\n" \
-         "@fpc_plugins solves most potential issues.</u></b>"
+pl_new = "Send me a plugin.\n\n<b>⚠️ ATTENTION! Downloading plugins from questionable sources may lead to unfortunate consequences.\n" \
+         "@fpc_plugins solves most potential issues.</b>"
 
 # - Menus desc
 desc_main = "Select a settings category."

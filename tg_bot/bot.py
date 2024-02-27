@@ -1044,7 +1044,9 @@ class TGBot:
         Изменяет описания бота.
         """
         self.bot.set_my_short_description("🛠️ github.com/sidor0912/FunPayCardinal 💰 @sidor_donate 👨‍💻 @sidor0912 🧩 @fpc_plugins 🔄 @fpc_updates 💬 @funpay_cardinal ")
-        self.bot.set_my_description("""🤖 Автовыдача товаров
+        self.bot.set_my_description(f"""🐦 𝑭𝒖𝒏𝑷𝒂𝒚 𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍 v{self.cardinal.VERSION}🐦
+
+🤖 Автовыдача товаров
 🚀 Автоподнятие лотов
 💬 Автоответ на заготовленные команды
 🔄 Автовосстановление лотов после продажи
@@ -1052,15 +1054,15 @@ class TGBot:
 🔝 Вечный онлайн
 📲 Уведомления в Telegram
 🕹️ Полноценная панель управления в Telegram
+🧩 Плагины
 🌟 И многое другое...
 
-🛠️ Сделано с помощью: https://github.com/sidor0912/FunPayCardinal
+🛠️ Сделано с помощью: github.com/sidor0912/FunPayCardinal
 👨‍💻 Автор: @woopertail, @sidor0912
-💰 Донат: @sidor_donate        
-🧩 Плагины: @fpc_plugins
+💰 Донат: @sidor_donate
 🔄 Обновления: @fpc_updates
-💬 Чат: @funpay_cardinal        
-""")
+🧩 Плагины: @fpc_plugins
+💬 Чат: @funpay_cardinal""")
 
     def init(self):
         self.__register_handlers()
