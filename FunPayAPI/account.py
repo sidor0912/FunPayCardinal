@@ -1216,7 +1216,10 @@ class Account:
         result.update({field["name"]: field.get("value") or "" for field in bs.find_all("input")
                        if field["name"] not in ["active", "deactivate_after_sale"]})
         result.update({field["name"]: field.text or "" for field in bs.find_all("textarea")})
-        result.update({field["name"]: field.find("option", selected=True)["value"] for field in bs.find_all("select")})
+        result.update({
+            field["name"]: field.find("option", selected=True)["value"]
+            for field in bs.find_all("select") if "hidden" not in field.find_parent(class_="form-group").get("class", [])
+        })
         result.update({field["name"]: "on" for field in bs.find_all("input", {"type": "checkbox"}, checked=True)})
         return types.LotFields(lot_id, result)
 
