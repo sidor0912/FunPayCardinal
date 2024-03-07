@@ -17,7 +17,8 @@ import psutil
 import telebot
 import logging
 
-from telebot.types import InlineKeyboardMarkup as K, InlineKeyboardButton as B, Message, CallbackQuery, BotCommand
+from telebot.types import InlineKeyboardMarkup as K, InlineKeyboardButton as B, Message, CallbackQuery, BotCommand, \
+    InputFile
 from tg_bot import utils, static_keyboards as skb, keyboards as kb, CBT
 from Utils import cardinal_tools, updater
 from locales.localizer import Localizer
@@ -77,6 +78,8 @@ class TGBot:
             "check_updates": _("cmd_check_updates"),
             "update": _("cmd_update"),
             "sys": _("cmd_sys"),
+            "get_backup": _("cmd_get_backup"),
+            "create_backup": _("cmd_create_backup"),
             "restart": _("cmd_restart"),
             "power_off": _("cmd_power_off")
         }
@@ -483,6 +486,22 @@ class TGBot:
         self.bot.send_message(m.chat.id, _("update_available", release.name, release.description))
         self.bot.send_message(m.chat.id, _("update_update"))
 
+    def get_backup (self, m: Message):
+        if os.path.exists("backup.zip"):
+            with open(file_path := "backup.zip", 'rb') as file:
+                modification_time = os.path.getmtime(file_path)
+                formatted_time = time.strftime('%d.%m.%Y %H:%M:%S', time.localtime(modification_time))
+                self.bot.send_document(chat_id=m.chat.id, document=InputFile(file), caption=f'{_("update_backup_created")}\n\n{formatted_time}')
+        else:
+            self.bot.send_message(m.chat.id, _("update_backup_not_found"))
+
+    def create_backup (self, m: Message):
+        if updater.create_backup():
+            self.bot.send_message(m.chat.id, _("update_backup_error"))
+            return False
+        self.get_backup(m)
+        return True
+
     def update(self, m: Message):
         curr_tag = f"v{self.cardinal.VERSION}"
         release = updater.get_new_release(curr_tag)
@@ -495,11 +514,8 @@ class TGBot:
             self.bot.send_message(m.chat.id, _(errors[release][0], *errors[release][1]))
             return
 
-        if updater.create_backup():
-            self.bot.send_message(m.chat.id, _("update_backup_error"))
+        if not self.create_backup(m):
             return
-        self.bot.send_message(m.chat.id, _("update_backup_created"))
-
         if updater.download_zip(release.exe_link if getattr(sys, "frozen", False) else release.sources_link) \
                 or (release_folder := updater.extract_update_archive()) == 1:
             self.bot.send_message(m.chat.id, _("update_download_error"))
@@ -959,6 +975,8 @@ class TGBot:
         self.msg_handler(self.about, commands=["about"])
         self.msg_handler(self.check_updates, commands=["check_updates"])
         self.msg_handler(self.update, commands=["update"])
+        self.msg_handler(self.get_backup, commands=["get_backup"])
+        self.msg_handler(self.create_backup, commands=["create_backup"])
         self.msg_handler(self.send_system_info, commands=["sys"])
         self.msg_handler(self.restart_cardinal, commands=["restart"])
         self.msg_handler(self.ask_power_off, commands=["power_off"])

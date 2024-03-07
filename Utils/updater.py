@@ -176,6 +176,8 @@ def zipdir(path, zip_obj):
     :param zip_obj: объект zip архива.
     """
     for root, dirs, files in os.walk(path):
+        if os.path.basename(root) == "__pycache__":
+            continue
         for file in files:
             zip_obj.write(os.path.join(root, file),
                           os.path.relpath(os.path.join(root, file),
@@ -192,6 +194,7 @@ def create_backup() -> int:
         with zipfile.ZipFile("backup.zip", "w") as zip:
             zipdir("storage", zip)
             zipdir("configs", zip)
+            zipdir("plugins", zip)
         return 0
     except:
         logger.debug("TRACEBACK", exc_info=True)

@@ -44,7 +44,7 @@ default_config = {
     },
 
     "Greetings": {
-        "cacheInitChats": "0",
+        "cacheInitChats": "1",
         "ignoreSystemMessages": "0",
         "sendGreetings": "0",
         "greetingsText": "Привет, $username!"
