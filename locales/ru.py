@@ -256,7 +256,8 @@ update_lasted = "✅ У тебя стоит последняя версия FunP
 update_get_error = "❌ Не удалось получить информацию о новой версии. Попробуй позже."
 update_available = "<b><u>Доступна новая версия!</u></b>\n\n\n{}\n\n{}"
 update_update = "Чтобы обновиться, введи команду /update"
-update_backup_created = "✅ Создал резервную копию конфигов, хранилища и плагинов <code>backup.zip</code>."
+update_backup = "✅ Резервная копия конфигов, хранилища и плагинов <code>backup.zip</code>.\n\n" \
+                        "⚠️ НЕ ОТПРАВЛЯЙ этот архив НИКОМУ. Он содержит golden_key твоего аккаунта FunPay и товарные файлы."
 update_backup_error = "❌ Не удалось создать бэкап конфигов, хранилища и плагинов."
 update_backup_not_found = "❌ Резервная копия не обнаружена."
 update_downloaded = "✅ Загрузил обновление. Устанавливаю ..."
@@ -351,7 +352,7 @@ ar_notification_text = "Текст уведомления"
 ar_response_text_changed = "✅ Текст ответа команды <code>{}</code> изменен на <code>{}</code>."
 ar_notification_text_changed = "✅ Текст уведомления команды <code>{}</code> изменен на <code>{}</code>."
 
-cfg_main = "Основной конфиг."
+cfg_main = "Основной конфиг.\n\n⚠️ НЕ ОТПРАВЛЯЙ этот файл НИКОМУ."
 cfg_ar = "Конфиг автоответа."
 cfg_ad = "Конфиг авто-выдачи."
 cfg_not_found_err = "❌ Конфиг {} не обнаружен."
