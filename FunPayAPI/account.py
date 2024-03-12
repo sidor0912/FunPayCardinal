@@ -810,12 +810,15 @@ class Account:
                 user_obj.add_lot(lot_obj)
         return user_obj
 
-    def get_chat(self, chat_id: int) -> types.Chat:
+    def get_chat(self, chat_id: int, with_history: bool = True) -> types.Chat:
         """
         Получает информацию о личном чате.
 
         :param chat_id: ID чата.
         :type chat_id: :obj:`int`
+
+        :param with_history: получать ли историю сообщений?.
+        :type with_history: :obj:`bool`
 
         :return: объект чата.
         :rtype: :class:`FunPayAPI.types.Chat`
@@ -834,8 +837,10 @@ class Account:
         else:
             a = chat_panel.find("a")
             text, link = a.text, a["href"]
-
-        history = self.get_chat_history(chat_id, interlocutor_username=name)
+        if with_history:
+            history = self.get_chat_history(chat_id, interlocutor_username=name)
+        else:
+            history = []
         return types.Chat(chat_id, name, link, text, html_response, history)
 
     def get_order(self, order_id: str) -> types.Order:
