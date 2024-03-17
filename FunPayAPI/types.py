@@ -607,7 +607,7 @@ class LotShortcut:
     :type html: :obj:`str`
     """
     def __init__(self, id_: int | str, server: str | None,
-                 description: str | None, price: float, subcategory: SubCategory, html: str):
+                 description: str | None, price: float, currency: str, subcategory: SubCategory, seller: str, stars: float | int | None, html: str):
         self.id: int | str = id_
         if isinstance(self.id, str) and self.id.isnumeric():
             self.id = int(self.id)
@@ -620,6 +620,12 @@ class LotShortcut:
         """Краткое описание (название) лота."""
         self.price: float = price
         """Цена лота."""
+        self.currency: str = currency
+        """Валюта лота."""
+        self.seller: str = seller
+        """Никнейм продавца."""
+        self.stars: float | int | None = stars
+        """Количество звезд продавца."""
         self.subcategory: SubCategory = subcategory
         """Подкатегория лота."""
         self.html: str = html

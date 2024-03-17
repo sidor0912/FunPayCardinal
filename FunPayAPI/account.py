@@ -212,7 +212,15 @@ class Account:
                 price = float(offer.find("div", {"class": "tc-price"})["data-s"])
             else:
                 price = float(offer.find("div", {"class": "tc-price"}).find("div").text.split()[0])
-            lot_obj = types.LotShortcut(offer_id, server, description, price, subcategory_obj, str(offer))
+            currency = offer.find("div", {"class": "tc-price"}).find("span", class_= "unit").text
+            seller_soup = offer.find("div", class_="tc-user")
+            seller = seller_soup.find("div", class_="media-user-name").text.strip()
+            rating_stars_soup = seller_soup.find("div", class_="rating-stars")
+            if (rating_stars_soup != None):
+                rating_stars = len(rating_stars_soup.find_all("i", class_="fas"))
+            else:
+                rating_stars = None
+            lot_obj = types.LotShortcut(offer_id, server, description, price, currency, subcategory_obj, seller, rating_stars, str(offer))
             result.append(lot_obj)
         return result
 
@@ -805,8 +813,8 @@ class Account:
                     price = float(j.find("div", {"class": "tc-price"})["data-s"])
                 else:
                     price = float(j.find("div", {"class": "tc-price"}).find("div").text.split(" ")[0])
-
-                lot_obj = types.LotShortcut(offer_id, server, description, price, subcategory_obj, str(j))
+                currency = j.find("div", {"class": "tc-price"}).find("span", class_ = "unit").text
+                lot_obj = types.LotShortcut(offer_id, server, description, price, currency, subcategory_obj, username, None, str(j))
                 user_obj.add_lot(lot_obj)
         return user_obj
 
