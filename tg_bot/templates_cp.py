@@ -80,7 +80,7 @@ def init_templates_cp(cardinal: Cardinal, *args):
         Активирует режим добавления нового шаблона ответа.
         """
         offset = int(c.data.split(":")[1])
-        variables = ["v_username", "v_photo"]
+        variables = ["v_username", "v_chat_name", "v_photo"]
         text = f"{_('V_new_template')}\n\n{_('v_list')}:\n" + "\n".join(_(i) for i in variables)
         result = bot.send_message(c.message.chat.id, text, reply_markup=CLEAR_STATE_BTN())
         tg.set_state(c.message.chat.id, result.id, c.from_user.id, CBT.ADD_TMPLT, {"offset": offset})

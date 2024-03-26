@@ -268,6 +268,7 @@ def format_msg_text(text: str, obj: FunPayAPI.types.Message | FunPayAPI.types.Ch
     time_full = date_obj.strftime("%H:%M:%S")
 
     username = obj.author if isinstance(obj, FunPayAPI.types.Message) else obj.name
+    chat_name = obj.chat_name if isinstance(obj, FunPayAPI.types.Message) else obj.name
     chat_id = str(obj.chat_id) if isinstance(obj, FunPayAPI.types.Message) else str(obj.id)
 
     variables = {
@@ -278,7 +279,8 @@ def format_msg_text(text: str, obj: FunPayAPI.types.Message | FunPayAPI.types.Ch
         "$full_time": time_full,
         "$username": username,
         "$message_text": str(obj),
-        "$chat_id": chat_id
+        "$chat_id": chat_id,
+        "$chat_name": chat_name
     }
 
     for var in variables:

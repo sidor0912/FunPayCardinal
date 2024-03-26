@@ -137,7 +137,7 @@ def init_auto_response_cp(cardinal: Cardinal, *args):
         command_index, offset = int(split[1]), int(split[2])
 
         variables = ["v_date", "v_date_text", "v_full_date_text", "v_time", "v_full_time", "v_username",
-                     "v_message_text", "v_chat_id", "v_photo"]
+                     "v_message_text", "v_chat_id", "v_chat_name", "v_photo"]
         text = f"{_('v_edit_response_text')}\n\n{_('v_list')}:\n" + "\n".join(_(i) for i in variables)
 
         result = bot.send_message(c.message.chat.id, text, reply_markup=CLEAR_STATE_BTN())
@@ -177,7 +177,7 @@ def init_auto_response_cp(cardinal: Cardinal, *args):
         command_index, offset = int(split[1]), int(split[2])
 
         variables = ["v_date", "v_date_text", "v_full_date_text", "v_time", "v_full_time", "v_username",
-                     "v_message_text", "v_chat_id", "v_photo"]
+                     "v_message_text", "v_chat_id", "v_chat_name", "v_photo"]
         text = f"{_('v_edit_notification_text')}\n\n{_('v_list')}:\n" + "\n".join(_(i) for i in variables)
 
         result = bot.send_message(c.message.chat.id, text, reply_markup=CLEAR_STATE_BTN())

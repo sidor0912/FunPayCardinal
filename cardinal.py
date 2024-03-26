@@ -320,7 +320,7 @@ class Cardinal(object):
                 if e.error_message is not None:
                     error_text = e.error_message
                 if e.wait_time is not None:
-                    logger.warning(_("crd_raise_time_err", subcat.category.name, cardinal_tools.time_to_str(e.wait_time)))
+                    logger.warning(_("crd_raise_time_err", subcat.category.name, error_text, cardinal_tools.time_to_str(e.wait_time)))
                     next_time = int(time.time()) + e.wait_time
                 else:
                     logger.error(_("crd_raise_unexpected_err", subcat.category.name))

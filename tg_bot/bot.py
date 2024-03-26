@@ -630,7 +630,7 @@ class TGBot:
 
     def act_edit_greetings_text(self, c: CallbackQuery):
         variables = ["v_date", "v_date_text", "v_full_date_text", "v_time", "v_full_time", "v_username",
-                     "v_message_text", "v_chat_id", "v_photo"]
+                     "v_message_text", "v_chat_id", "v_chat_name", "v_photo"]
         text = f"{_('v_edit_greeting_text')}\n\n{_('v_list')}:\n" + "\n".join(_(i) for i in variables)
         result = self.bot.send_message(c.message.chat.id, text, reply_markup=skb.CLEAR_STATE_BTN())
         self.set_state(c.message.chat.id, result.id, c.from_user.id, CBT.EDIT_GREETINGS_TEXT)
