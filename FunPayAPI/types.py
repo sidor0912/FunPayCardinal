@@ -61,6 +61,9 @@ class ChatShortcut:
         if self.last_message_text == res.DISCORD:
             return MessageTypes.DISCORD
 
+        if self.last_message_text == res.DEAR_VENDORS:
+            return MessageTypes.DEAR_VENDORS
+
         if res.ORDER_PURCHASED.findall(self.last_message_text) and res.ORDER_PURCHASED2.findall(self.last_message_text):
             return MessageTypes.ORDER_PURCHASED
 
@@ -205,6 +208,8 @@ class Message:
         res = RegularExpressions()
         if self.text == res.DISCORD:
             return MessageTypes.DISCORD
+        if self.text == res.DEAR_VENDORS:
+            return MessageTypes.DEAR_VENDORS
 
         if res.ORDER_PURCHASED.findall(self.text) and res.ORDER_PURCHASED2.findall(self.text):
             return MessageTypes.ORDER_PURCHASED
