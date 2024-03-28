@@ -127,7 +127,7 @@ def greetings_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChangedEv
         obj = e.chat
         chat_id, chat_name, mtype, its_me = obj.id, obj.name, obj.last_message_type, not obj.unread
 
-    if any([chat_id in c.old_users, its_me, mtype == mtype.DEAR_VENDORS,
+    if any([chat_id in c.old_users, its_me, mtype == MessageTypes.DEAR_VENDORS,
             (mtype is not MessageTypes.NON_SYSTEM and c.MAIN_CFG["Greetings"].getboolean("ignoreSystemMessages"))]):
         return
 
@@ -143,11 +143,11 @@ def add_old_user_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChange
     if not c.old_mode_enabled:
         if isinstance(e, LastChatMessageChangedEvent):
             return
-        chat_id = e.message.chat_id
+        chat_id, mtype = e.message.chat_id, e.message.type
     else:
-        chat_id = e.chat.id
+        chat_id, mtype = e.chat.id, e.chat.last_message_type
 
-    if not c.MAIN_CFG["Greetings"].getboolean("cacheInitChats") or chat_id in c.old_users:
+    if not c.MAIN_CFG["Greetings"].getboolean("cacheInitChats") or chat_id in c.old_users or mtype == MessageTypes.DEAR_VENDORS:
         return
     c.old_users.append(chat_id)
     cardinal_tools.cache_old_users(c.old_users)
