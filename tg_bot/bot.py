@@ -281,12 +281,14 @@ class TGBot:
                 self.notification_settings[str(m.chat.id)] = self.__default_notification_settings
                 utils.save_notification_settings(self.notification_settings)
             text = _("access_granted")
+            kb_links = None
             logger.warning(_("log_access_granted", m.from_user.username, m.from_user.id))
         else:
             self.attempts[m.from_user.id] = self.attempts[m.from_user.id] + 1 if m.from_user.id in self.attempts else 1
             text = _("access_denied", m.from_user.username)
+            kb_links = skb.LINKS_KB()
             logger.warning(_("log_access_attempt", m.from_user.username, m.from_user.id))
-        self.bot.send_message(m.chat.id, text)
+        self.bot.send_message(m.chat.id, text, reply_markup=kb_links)
 
     @staticmethod
     def ignore_unauthorized_users(c: CallbackQuery):
@@ -456,6 +458,8 @@ class TGBot:
         """
         Удаляет старые лог-файлы.
         """
+        logger.info(
+            f"[IMPORTANT] Удаляю логи по запросу пользователя $MAGENTA@{m.from_user.username} (id: {m.from_user.id})$RESET.")
         deleted = 0
         for file in os.listdir("logs"):
             if not file.endswith(".log"):
@@ -487,6 +491,7 @@ class TGBot:
         self.bot.send_message(m.chat.id, _("update_update"))
 
     def get_backup (self, m: Message):
+        logger.info(f"[IMPORTANT] Получаю бэкап по запросу пользователя $MAGENTA@{m.from_user.username} (id: {m.from_user.id})$RESET.")
         if os.path.exists("backup.zip"):
             with open(file_path := "backup.zip", 'rb') as file:
                 modification_time = os.path.getmtime(file_path)
@@ -1057,10 +1062,22 @@ class TGBot:
         commands = [BotCommand(f"/{i}", self.commands[i]) for i in self.commands]
         self.bot.set_my_commands(commands)
 
-    def edit_descriptions(self):
+    def edit_bot(self):
         """
-        Изменяет описания бота.
+        Изменяет описания и название бота.
         """
+
+        name = self.bot.get_me().full_name
+        limit = 64
+        add_to_name = ["FunPay Bot | Бот ФанПей", "FunPay Bot", "FunPayBot", "FunPay", "FP"]
+        new_name = name
+        for m_name in add_to_name:
+            if len(name) + 2 + len(m_name) <= limit:
+                new_name = f"{(name+' ').ljust(limit - len(m_name)-1, 'ㅤ')} {m_name}"
+                break
+        if new_name != name:
+            self.bot.set_my_name(new_name)
+        time.sleep(1)
         self.bot.set_my_short_description("🛠️ github.com/sidor0912/FunPayCardinal 💰 @sidor_donate 👨‍💻 @sidor0912 🧩 @fpc_plugins 🔄 @fpc_updates 💬 @funpay_cardinal ")
         self.bot.set_my_description(f"""🐦 𝑭𝒖𝒏𝑷𝒂𝒚 𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍 v{self.cardinal.VERSION}🐦
 

@@ -39,6 +39,8 @@ def init_config_loader_cp(cardinal: Cardinal, *args):
         """
         config_type = c.data.split(":")[1]
         if config_type == "main":
+            logger.info(
+                f"[IMPORTANT] Получаю основной конфиг по запросу пользователя $MAGENTA@{c.from_user.username} (id: {c.from_user.id})$RESET.")
             path, text = "configs/_main.cfg", _("cfg_main")
         elif config_type == "autoResponse":
             path, text = "configs/auto_response.cfg", _("cfg_ar")

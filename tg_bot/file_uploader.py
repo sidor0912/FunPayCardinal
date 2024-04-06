@@ -243,7 +243,7 @@ def init_uploader(cardinal: Cardinal):
                              custom_path=f"plugins"):
             return
 
-        logger.info(f"Пользователь $MAGENTA@{m.from_user.username} (id: {m.from_user.id})$RESET "
+        logger.info(f"[IMPORTANT] Пользователь $MAGENTA@{m.from_user.username} (id: {m.from_user.id})$RESET "
                     f"загрузил в бота плагин $YELLOWplugins/{m.document.file_name}$RESET.")
 
         keyboard = types.InlineKeyboardMarkup() \

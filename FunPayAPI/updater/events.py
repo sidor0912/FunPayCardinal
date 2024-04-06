@@ -59,13 +59,13 @@ class LastChatMessageChangedEvent(BaseEvent):
     :param runner_tag: тег Runner'а.
     :type runner_tag: :obj:`str`
 
-    :param chat_obj: объект чата, в котором изменилось полседнее сообщение.
+    :param chat_obj: объект чата, в котором изменилось последнее сообщение.
     :type chat_obj: :class:`FunPayAPI.types.ChatShortcut`
     """
     def __init__(self, runner_tag: str, chat_obj: types.ChatShortcut):
         super(LastChatMessageChangedEvent, self).__init__(runner_tag, EventTypes.LAST_CHAT_MESSAGE_CHANGED)
         self.chat: types.ChatShortcut = chat_obj
-        """Объект чата, в котором изменилось полседнее сообщение."""
+        """Объект чата, в котором изменилось последнее сообщение."""
 
 
 class NewMessageEvent(BaseEvent):

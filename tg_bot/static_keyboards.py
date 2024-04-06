@@ -52,3 +52,11 @@ def CONFIGS_UPLOADER() -> K:
         .add(B(_("cfg_upload_ar"), callback_data="upload_auto_response_config")) \
         .add(B(_("cfg_upload_ad"), callback_data="upload_auto_delivery_config")) \
         .add(B(_("gl_back"), callback_data=CBT.MAIN2))
+
+def LINKS_KB() -> K:
+    return K().add(B("🛠️ Создать своего бота FunPay", url="https://github.com/sidor0912/FunPayCardinal"))\
+        .add(B("🔄 Обновления", url="https://t.me/fpc_updates")) \
+        .add(B("🧩 Плагины", url="https://t.me/fpc_plugins")) \
+        .add(B("💬 Чат", url="https://t.me/funpay_cardinal")) \
+        .add(B("💰 Донат", url="https://t.me/sidor_donate"))
+

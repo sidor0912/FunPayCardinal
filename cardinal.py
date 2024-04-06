@@ -545,9 +545,9 @@ class Cardinal(object):
         if self.MAIN_CFG["Telegram"].getboolean("enabled"):
             self.telegram.setup_commands()
             try:
-                self.telegram.edit_descriptions()
+                self.telegram.edit_bot()
             except:
-                logger.debug("Не удалось изменить описание Telegram-бота")
+                logger.debug("Произошла ошибка при изменении бота Telegram.")
                 logger.debug("TRACEBACK", exc_info=True)
 
             Thread(target=self.telegram.run, daemon=True).start()
