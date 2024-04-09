@@ -143,12 +143,11 @@ def add_old_user_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChange
     if not c.old_mode_enabled:
         if isinstance(e, LastChatMessageChangedEvent):
             return
-        chat_id, mtype, badge = e.message.chat_id, e.message.type, e.message.badge
+        chat_id, mtype = e.message.chat_id, e.message.type
     else:
-        chat_id, mtype, badge = e.chat.id, e.chat.last_message_type, None
+        chat_id, mtype = e.chat.id, e.chat.last_message_type
 
-    if not c.MAIN_CFG["Greetings"].getboolean("cacheInitChats") or chat_id in c.old_users \
-            or mtype == MessageTypes.DEAR_VENDORS or badge is not None:
+    if not c.MAIN_CFG["Greetings"].getboolean("cacheInitChats") or chat_id in c.old_users or mtype == MessageTypes.DEAR_VENDORS:
         return
     c.old_users.append(chat_id)
     cardinal_tools.cache_old_users(c.old_users)
