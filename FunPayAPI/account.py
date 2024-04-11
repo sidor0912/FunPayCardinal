@@ -73,7 +73,8 @@ class Account:
         self.__saved_chats: dict[int, types.ChatShortcut] = {}
         self.runner: Runner | None = None
         """Объект Runner'а."""
-
+        self._logout_link: str | None = None
+        """Ссылка для выхода с аккаунта"""
         self.__categories: list[types.Category] = []
         self.__sorted_categories: dict[int, types.Category] = {}
 
@@ -150,7 +151,7 @@ class Account:
         self.app_data = json.loads(parser.find("body").get("data-app-data"))
         self.id = self.app_data["userId"]
         self.csrf_token = self.app_data["csrf-token"]
-
+        self._logout_link = parser.find("a", class_="menu-item-logout").get("href")
         active_sales = parser.find("span", {"class": "badge badge-trade"})
         self.active_sales = int(active_sales.text) if active_sales else 0
 
@@ -1325,6 +1326,25 @@ class Account:
         :rtype: :obj:`dict` {:class:`FunPayAPI.common.enums.SubCategoryTypes`: :obj:`dict` {:obj:`int` :class:`FunPayAPI.types.SubCategory`}}
         """
         return self.__sorted_subcategories
+
+    def logout(self) -> None:
+        """
+        Выходит с аккаунта FunPay (сбрасывает golden_key).
+        """
+
+        while True:
+            try:
+                if self._logout_link is not None:
+                    self.method("get", self._logout_link, {"accept": "*/*"}, {}, raise_not_200=True)
+                    logger.info("Осуществил попытку выйти с аккаунта (сбросить golden_key).")
+                    self.get()
+            except exceptions.UnauthorizedError:
+                logger.info("Успешно вышел с аккаунта (сбросил golden_key).")
+                return
+            except:
+                logger.warning("Произошла ошибка при выходе c аккаунта.")
+                logger.debug("TRACEBACK", exc_info=True)
+            time.sleep(1)
 
     @property
     def is_initiated(self) -> bool:

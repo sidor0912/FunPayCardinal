@@ -275,6 +275,15 @@ class TGBot:
         if m.chat.type != "private" or (m.from_user.id in self.attempts and self.attempts.get(m.from_user.id) >= 5):
             return
         if m.text == self.cardinal.MAIN_CFG["Telegram"]["secretKey"]:
+            if self.authorized_users:
+                self.cardinal.account.logout()
+            for chat_id in self.cardinal.telegram.notification_settings.keys():
+                try:
+                    self.cardinal.telegram.bot.send_message(chat_id=chat_id, text=_("access_granted_notification", m.from_user.username, m.from_user.id))
+                except:
+                    logger.error(_("log_tg_notification_error", chat_id))
+                    logger.debug("TRACEBACK", exc_info=True)
+                time.sleep(1)
             self.authorized_users.append(m.from_user.id)
             utils.save_authorized_users(self.authorized_users)
             if str(m.chat.id) not in self.notification_settings:
@@ -1069,14 +1078,15 @@ class TGBot:
 
         name = self.bot.get_me().full_name
         limit = 64
-        add_to_name = ["FunPay Bot | Бот ФанПей", "FunPay Bot", "FunPayBot", "FunPay", "FP"]
+        add_to_name = ["FunPay Bot | Бот ФанПей", "FunPay Bot", "FunPayBot", "FunPay"]
         new_name = name
-        for m_name in add_to_name:
-            if len(name) + 2 + len(m_name) <= limit:
-                new_name = f"{(name+' ').ljust(limit - len(m_name)-1, 'ㅤ')} {m_name}"
-                break
-        if new_name != name:
-            self.bot.set_my_name(new_name)
+        if "funpay" not in name.lower():
+            for m_name in add_to_name:
+                if len(name) + 2 + len(m_name) <= limit:
+                    new_name = f"{(name+' ').ljust(limit - len(m_name)-1, 'ㅤ')} {m_name}"
+                    break
+            if new_name != name:
+                self.bot.set_my_name(new_name)
         time.sleep(1)
         self.bot.set_my_short_description("🛠️ github.com/sidor0912/FunPayCardinal 💰 @sidor_donate 👨‍💻 @sidor0912 🧩 @fpc_plugins 🔄 @fpc_updates 💬 @funpay_cardinal ")
         self.bot.set_my_description(f"""🐦 𝑭𝒖𝒏𝑷𝒂𝒚 𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍 v{self.cardinal.VERSION}🐦
