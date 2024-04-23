@@ -141,7 +141,7 @@ class Runner:
             :class:`FunPayAPI.updater.events.OrderStatusChangedEvent`
         """
         events = []
-        #сортируем в т.ч. для того, чтобы приветственное сообщение было перед данными автАовыдачи
+        #сортируем в т.ч. для того, чтобы приветственное сообщение было перед данными автовыдачи
         for obj in sorted(updates["objects"], key=lambda x: x.get("type") == "chat_bookmarks", reverse=True):
             if obj.get("type") == "chat_bookmarks":
                 events.extend(self.parse_chat_updates(obj))

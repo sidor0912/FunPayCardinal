@@ -34,7 +34,7 @@ def check_file(tg: TGBot, msg: types.Message) -> bool:
         tg.bot.send_message(msg.chat.id, "❌ Файл не обнаружен.")
         return False
     if not any((msg.document.file_name.endswith(".cfg"), msg.document.file_name.endswith(".txt"),
-                msg.document.file_name.endswith(".py"))):
+                msg.document.file_name.endswith(".py"), msg.document.file_name.endswith(".json"))):
         tg.bot.send_message(msg.chat.id, "❌ Файл должен быть текстовым.")
         return False
     if msg.document.file_size >= 20971520:

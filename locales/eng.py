@@ -529,6 +529,7 @@ crd_tg_profile_updated = "Updated the information about profile lots $YELLOW({})
 crd_raise_time_err = "The $CYAN\"{}\"$RESET category lots could not be raised. FunPay says: \"{}\". Next attempt in {}."
 crd_raise_unexpected_err = "An unexpected error occurred while trying to raise $CYAN\"{}\"$RESET catgory lots. Next attempt in 10 seconds."
 crd_raise_429_err = "Error 429 when raising lots of the $CYAN\"{}\"$RESET category. Pause for 10 seconds..."
+crd_raise_503_err = "Error 503 when raising lots of the $CYAN\"{}\"$RESET category. Pause for 2 minutes..."
 crd_lots_raised = "All lots in the $CYAN\"{}\"$RESET category are raised!"
 crd_raise_wait_3600 = "Next attempt in {}."
 crd_msg_send_err = "An error occurred when sending a message to chat $YELLOW{}$RESET."

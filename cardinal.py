@@ -334,6 +334,11 @@ class Cardinal(object):
                     logger.warning(_("crd_raise_429_err", subcat.category.name))
                     time.sleep(10)
                     next_time = int(time.time()) + 1
+                elif isinstance(e, FunPayAPI.exceptions.RequestFailedError) and e.status_code == 503:
+                    logger.warning(_("crd_raise_503_err", subcat.category.name))
+                    logger.debug("TRACEBACK", exc_info=True)
+                    time.sleep(120)
+                    next_time = int(time.time()) + 1
                 else:
                     logger.error(_("crd_raise_unexpected_err", subcat.category.name))
                     logger.debug("TRACEBACK", exc_info=True)
