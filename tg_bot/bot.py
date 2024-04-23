@@ -458,7 +458,7 @@ class TGBot:
                             self.bot.send_message(m.chat.id, text)
                             time.sleep(0.5)
                     else:
-                        self.bot.send_message(m.chat.id, "Ошибок за последние сутки не обнаружено.")
+                        self.bot.send_message(m.chat.id, "<b>Ошибок в последнем лог-файле не обнаружено.</b>")
             except:
                 self.bot.send_message(m.chat.id, _("logfile_error"))
                 logger.debug("TRACEBACK", exc_info=True)
