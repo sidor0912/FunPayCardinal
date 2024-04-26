@@ -814,7 +814,7 @@ class Account:
                     price = float(j.find("div", {"class": "tc-price"})["data-s"])
                 else:
                     price = float(j.find("div", {"class": "tc-price"}).find("div").text.split(" ")[0])
-                currency = j.find("div", {"class": "tc-price"}).find("span", class_ = "unit").text
+                currency = j.find("div", {"class": "tc-price"}).find("span", class_="unit").text
                 lot_obj = types.LotShortcut(offer_id, server, description, price, currency, subcategory_obj, username, None, str(j))
                 user_obj.add_lot(lot_obj)
         return user_obj

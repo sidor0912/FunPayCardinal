@@ -172,6 +172,38 @@ def first_setup():
 
         break
 
+    while True:
+        print(f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}"
+              f"Если хочешь использовать IPv4 прокси – укажи их в формате login:password@ip:port. Если ты не знаешь, "
+              f"что это такое или они тебе не нужны - просто нажми Enter. "
+              f"{Fore.RED}(* ^ ω ^){Style.RESET_ALL}")
+        proxy = input(f"{Fore.MAGENTA}{Style.BRIGHT}└───> {Style.RESET_ALL}").strip()
+        if proxy:
+            try:
+                login_password, ip_port = proxy.split("@")
+                login, password = login_password.split(":")
+                ip, port = ip_port.split(":")
+                print(not all([0 <= int(i) < 256 for i in ip.split(".")]))
+                print(ip.count(".") != 3)
+                print(not ip.replace(".", "").isdigit())
+                print(not 0 <= int(port) <= 65535)
+                if not all([0 <= int(i) < 256 for i in ip.split(".")]) or ip.count(".") != 3 \
+                        or not ip.replace(".", "").isdigit() or not 0 <= int(port) <= 65535:
+                    raise Exception()
+                config.set("Proxy", "enable", "1")
+                config.set("Proxy", "check", "1")
+                config.set("Proxy", "login", login)
+                config.set("Proxy", "password", password)
+                config.set("Proxy", "ip", ip)
+                config.set("Proxy", "port", port)
+                break
+            except Exception as ex:
+                print(ex)
+                print(f"\n{Fore.CYAN}{Style.BRIGHT}Неверный формат прокси. Попробуй еще раз! {Fore.RED}(o-_-o){Style.RESET_ALL}")
+                continue
+        else:
+            break
+
     print(f"\n{Fore.CYAN}{Style.BRIGHT}Готово! Сейчас я сохраню конфиг и завершу программу! "
           f"{Fore.RED}ʘ>ʘ{Style.RESET_ALL}")
     print(f"{Fore.CYAN}{Style.BRIGHT}Запусти меня снова и напиши своему Telegram-боту (если ты его включил). "
