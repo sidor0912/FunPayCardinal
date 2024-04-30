@@ -82,7 +82,8 @@ class ChatShortcut:
             MessageTypes.FEEDBACK_ANSWER_DELETED: res.FEEDBACK_ANSWER_DELETED,
             MessageTypes.ORDER_CONFIRMED_BY_ADMIN: res.ORDER_CONFIRMED_BY_ADMIN,
             MessageTypes.PARTIAL_REFUND: res.PARTIAL_REFUND,
-            MessageTypes.ORDER_REOPENED: res.ORDER_REOPENED
+            MessageTypes.ORDER_REOPENED: res.ORDER_REOPENED,
+            MessageTypes.REFUND_BY_ADMIN: res.REFUND_BY_ADMIN
         }
 
         for i in sys_msg_types:
@@ -229,7 +230,8 @@ class Message:
             MessageTypes.FEEDBACK_ANSWER_DELETED: res.FEEDBACK_ANSWER_DELETED,
             MessageTypes.ORDER_CONFIRMED_BY_ADMIN: res.ORDER_CONFIRMED_BY_ADMIN,
             MessageTypes.PARTIAL_REFUND: res.PARTIAL_REFUND,
-            MessageTypes.ORDER_REOPENED: res.ORDER_REOPENED
+            MessageTypes.ORDER_REOPENED: res.ORDER_REOPENED,
+            MessageTypes.REFUND_BY_ADMIN: res.REFUND_BY_ADMIN
         }
 
         for i in sys_msg_types:
