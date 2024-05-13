@@ -47,7 +47,7 @@ default_config = {
         "cacheInitChats": "1",
         "ignoreSystemMessages": "0",
         "sendGreetings": "0",
-        "greetingsText": "Привет, $username!"
+        "greetingsText": "Привет, $chat_name!"
     },
 
     "OrderConfirm": {

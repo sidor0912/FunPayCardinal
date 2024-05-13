@@ -10,7 +10,7 @@ import os
 from cardinal import Cardinal
 import Utils.exceptions as excs
 from locales.localizer import Localizer
-
+import ctypes
 
 logo = """[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m
 [38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m'[0m[38;5;0m"[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m
@@ -43,6 +43,13 @@ logo = """[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m
 VERSION = "0.1.12.17"
 
 
+def set_console_title(title):
+    ctypes.windll.kernel32.SetConsoleTitleW(title)
+
+
+set_console_title("FunPay Cardinal")
+
+
 if getattr(sys, 'frozen', False):
     os.chdir(os.path.dirname(sys.executable))
 else:
@@ -69,7 +76,7 @@ logger = logging.getLogger("main")
 logger.debug("------------------------------------------------------------------")
 
 
-print(logo)
+print(f"{Style.RESET_ALL}{logo}")
 print(f"{Fore.RED}{Style.BRIGHT}v{VERSION}{Style.RESET_ALL}\n")
 print(f"{Fore.MAGENTA}{Style.BRIGHT}By {Fore.BLUE}{Style.BRIGHT}Woopertail, @sidor0912{Style.RESET_ALL}")
 print(f"{Fore.MAGENTA}{Style.BRIGHT} * GitHub: {Fore.BLUE}{Style.BRIGHT}github.com/sidor0912/FunPayCardinal{Style.RESET_ALL}")
