@@ -183,19 +183,21 @@ class Runner:
             if last_msg_text.startswith(self.account.bot_character):
                 last_msg_text = last_msg_text[1:]
             last_msg_time = chat.find("div", {"class": "contact-item-time"}).text
-
-            # Если текст последнего сообщения совпадает с сохраненным
-            if chat_id in self.last_messages and self.last_messages[chat_id][0] == last_msg_text:
-                # Если есть сохраненное время сообщения для данного чата
-                if self.last_messages[chat_id][1]:
-                    # Если время ласт сообщения не имеет формат ЧЧ:ММ или совпадает с сохраненным - скип чата
-                    if not self.__msg_time_re.fullmatch(last_msg_time) or self.last_messages[chat_id][1] == last_msg_time:
-                        continue
-                # Если нет сохраненного времени сообщения для данного чата - скип чата
-                else:
-                    continue
-
             unread = True if "unread" in chat.get("class") else False
+
+            # Если не читаем чаты или если сообщение прочитано
+            if not self.make_msg_requests or not unread:
+                # Если текст последнего сообщения совпадает с сохраненным
+                if chat_id in self.last_messages and self.last_messages[chat_id][0] == last_msg_text:
+                    # Если есть сохраненное время сообщения для данного чата
+                    if self.last_messages[chat_id][1]:
+                        # Если время ласт сообщения не имеет формат ЧЧ:ММ или совпадает с сохраненным - скип чата
+                        if not self.__msg_time_re.fullmatch(last_msg_time) or self.last_messages[chat_id][1] == last_msg_time:
+                            continue
+                    # Если нет сохраненного времени сообщения для данного чата - скип чата
+                    else:
+                        continue
+
             chat_with = chat.find("div", {"class": "media-user-name"}).text
             chat_obj = types.ChatShortcut(chat_id, chat_with, last_msg_text, unread, str(chat))
             self.account.add_chats([chat_obj])

@@ -243,7 +243,12 @@ not_blacklisted = "❌ <code>{}</code> не в ЧС."
 user_unbanned = "✅ <code>{}</code> удален из ЧС."
 blacklist_empty = "❌ Черный список пуст."
 
-act_edit_watermark = "Введи новый текст водяного знака. Если нужно удалить водяной знак, отправь <code>-</code>."
+act_edit_watermark = "Введи новый текст водяного знака. Например:\n<code>𝑭𝒖𝒏𝑷𝒂𝒚 𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍</code>\n" \
+                     "<code>FunPay Cardinal</code>\n<code>[FunPay / Cardinal]</code>\n<code>𝑭𝑷𝑪</code>\n" \
+                     "<code>FPC</code>\n<code>🤖</code>\n<code>🐦</code>\n\n" \
+                     "Примеры можно скопировать нажатием и отредактировать по своему желанию. Учти, что на FunPay эмодзи " \
+                     "🐦 выглядит не так, как в Telegram." \
+                     "\nЕсли нужно удалить водяной знак, отправь <code>-</code>."
 watermark_changed = "✅ Водяной знак сообщений изменен."
 watermark_deleted = "✅ Водяной знак сообщений удален."
 watermark_error = "❌ Невалидный водяной знак."
