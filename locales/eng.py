@@ -243,12 +243,12 @@ not_blacklisted = "❌ <code>{}</code> is not blacklisted."
 user_unbanned = "✅ <code>{}</code> is no longer blacklisted."
 blacklist_empty = "❌ Blacklist is empty."
 
-act_edit_watermark = "Enter a new watermark text. For example:\n<code>𝑭𝒖𝒏𝑷𝒂𝒚 𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍</code>\n" \
+act_edit_watermark = "Enter a new watermark text. For example:\n\n<code>𝑭𝒖𝒏𝑷𝒂𝒚 𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍</code>\n" \
                      "<code>FunPay Cardinal</code>\n<code>[FunPay / Cardinal]</code>\n<code>𝑭𝑷𝑪</code>\n" \
                      "<code>FPC</code>\n<code>🤖</code>\n<code>🐦</code>\n\n" \
-                     "You can copy examples by clicking and edit them as you like. Keep in mind that on FunPay, the emoji " \
+                     "You can copy examples by clicking and edit them as you like.\nKeep in mind that on FunPay, the emoji " \
                      "🐦 looks different from Telegram." \
-                     "\nIf you want to remove the watermark, send <code>-</code>."
+                     "\n\nIf you want to remove the watermark, send <code>-</code>."
 watermark_changed = "✅ The message watermark has been changed."
 watermark_deleted = "✅ The message watermark has been deleted."
 watermark_error = "❌ Invalid watermark."
