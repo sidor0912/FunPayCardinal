@@ -55,13 +55,14 @@ def get_announcement() -> dict | None:
 
     :return: словарь с данными объявления.
     """
+    return None #todo
     global LAST_TAG
     headers = {
         'X-GitHub-Api-Version': '2022-11-28',
         'accept': 'application/vnd.github+json'
     }
     try:
-        response = requests.get("https://api.github.com/gists/e26d264e6912cc9c78bc00cb14773ffe", headers=headers)
+        response = requests.get("https://api.github.com/gists/бла-бла-бла_что-то там", headers=headers)
         if not response.status_code == 200:
             return None
 
