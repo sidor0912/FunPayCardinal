@@ -167,7 +167,7 @@ access_granted = "🔓 Access granted!\n\n"\
                  "🔔 You can set up notifications for <b><u>this chat</u></b> in the settings menu.\n\n"\
                  "⚙️ To open the <i>FunPay Cardinal</i> settings menu, send me /menu."
 
-access_granted_notification = "<b>🚨 ATTENTION! 🚨\n\n\n</b>" * 3 + "\n\n\n🔐 \"<a href=\"tg://user?id={1}\"> {0} </a>\" <b>(ID: {1}) has just accessed the Telegram Control Panel! 🔓</b>"
+access_granted_notification = "<b>🚨 ATTENTION! 🚨\n\n\n</b>" * 3 + "\n\n\n🔐 \"<a href=\"tg://user?id={1}\"> {0} </a>\" <b>(ID: {1}) has just accessed the Telegram Control Panel! 🔓\n\ngolden_key of the account has been reset.</b>"
 
 param_disabled = "❌ This parameter is disabled globally and cannot be changed for this lot.\n\n"\
                  "❔ Switching global parameters is available in the global switch menu "\

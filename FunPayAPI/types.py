@@ -257,8 +257,8 @@ class OrderShortcut:
     :param price: цена заказа.
     :type price: :obj:`float`
 
-    :param price: валюта заказа.
-    :type price: :obj:`str`
+    :param currency: валюта заказа.
+    :type currency: :obj:`str`
 
     :param buyer_username: никнейм покупателя.
     :type buyer_username: :obj:`str`
@@ -345,6 +345,9 @@ class Order:
 
     :param sum_: сумма заказа.
     :type sum_: :obj:`float`
+
+    :param currency: валюта заказа.
+    :type currency: :obj:`str`
 
     :param buyer_id: ID покупателя.
     :type buyer_id: :obj:`int`
@@ -606,6 +609,9 @@ class LotShortcut:
 
     :param price: цена лота.
     :type price: :obj:`float`
+
+    :param currency: валюта лота.
+    :type currency: :obj:`str`
 
     :param subcategory: подкатегория лота.
     :type subcategory: :class:`FunPayAPI.types.SubCategory`
