@@ -253,7 +253,7 @@ def send_new_msg_notification_handler(c: Cardinal, e: NewMessageEvent) -> None:
                 author = f"<i><b>🛍️ {i.message.author} ({i.message.badge}):</b></i> "
         else:
             author = f"<i><b>🆘 {i.message.author} {_('support')}: </b></i>"
-        msg_text = f"<code>{utils.escape(i.message)}</code>" if i.message.text else f"<a href=\"{i.message}\">{_('photo')}</a>"
+        msg_text = f"<code>{utils.escape(i.message.text)}</code>" if i.message.text else f"<a href=\"{i.message}\">{_('photo')}</a>"
         text += f"{author}{msg_text}\n\n"
         last_message_author_id = i.message.author_id
         last_by_bot = i.message.by_bot
