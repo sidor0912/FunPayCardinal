@@ -745,7 +745,7 @@ class TGBot:
                     author = f"<i><b>🛍️ {i.author} ({i.badge}):</b></i> "
             else:
                 author = f"<i><b>🆘 {i.author} ({_('support')}): </b></i>"
-            msg_text = f"<code>{i.text}</code>" if i.text else f"<a href=\"{i.image_link}\">{_('photo')}</a>"
+            msg_text = f"<code>{utils.escape(i.text)}</code>" if i.text else f"<a href=\"{i.image_link}\">{_('photo')}</a>"
             text += f"{author}{msg_text}\n\n"
             last_message_author_id = i.author_id
             last_by_bot = i.by_bot

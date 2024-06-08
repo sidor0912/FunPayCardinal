@@ -182,7 +182,7 @@ def old_send_new_msg_notification_handler(c: Cardinal, e: LastChatMessageChanged
             str(e.chat).startswith("!автовыдача")]):
         return
 
-    text = f"<i><b>👤 {e.chat.name}: </b></i><code>{str(e.chat)}</code>"
+    text = f"<i><b>👤 {e.chat.name}: </b></i><code>{utils.escape(str(e.chat))}</code>"
     kb = keyboards.reply(e.chat.id, e.chat.name, extend=True)
     Thread(target=c.telegram.send_notification, args=(text, kb, utils.NotificationTypes.new_message),
            daemon=True).start()
@@ -253,7 +253,7 @@ def send_new_msg_notification_handler(c: Cardinal, e: NewMessageEvent) -> None:
                 author = f"<i><b>🛍️ {i.message.author} ({i.message.badge}):</b></i> "
         else:
             author = f"<i><b>🆘 {i.message.author} {_('support')}: </b></i>"
-        msg_text = f"<code>{i.message}</code>" if i.message.text else f"<a href=\"{i.message}\">{_('photo')}</a>"
+        msg_text = f"<code>{utils.escape(i.message)}</code>" if i.message.text else f"<a href=\"{i.message}\">{_('photo')}</a>"
         text += f"{author}{msg_text}\n\n"
         last_message_author_id = i.message.author_id
         last_by_bot = i.message.by_bot
