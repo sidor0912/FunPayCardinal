@@ -84,6 +84,8 @@
 
 ## :arrow_down: Установка
 
+Арендовать виртуальный сервер можно на [FirstByte](https://firstbyte.ru/?from=162840). Выбирайте Ubuntu 20+ версии, остальные параметры не важны.
+
 ### :large_blue_diamond: Windows
 
 1. Скачайте и установите [Python](https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe).
@@ -98,9 +100,32 @@
 ### :hotsprings: Linux (Ubuntu)
 
 1. Выполните команду: 
-`wget https://raw.githubusercontent.com/sidor0912/FunPayCardinal/main/linux_install.sh -nc && bash linux_install.sh`
+   `wget https://raw.githubusercontent.com/sidor0912/FunPayCardinal/main/linux_install.sh -nc && bash linux_install.sh`
 2. Следуйте инструкциям установщика.
-Данный скрипт автоматически установит всё необходимое и запустит бота как фоновый процесс.
+   Данный скрипт автоматически установит всё необходимое и запустит бота как фоновый процесс.
+
+#### Решение проблемы с кодировкой latin-1
+
+Если вы сталкиваетесь с ошибками, связанными с кодировкой latin-1, выполните следующие шаги:
+
+1. Выполните команду:  
+   `sudo apt-get install language-pack-ru`
+2. Выполните команду:  
+   `sudo apt-get install language-pack-gnome-ru`
+3. Выполните команду:  
+   `sudo apt-get install language-pack-kde-ru`
+4. Выполните команду:  
+   `exit`
+5. Подключитесь к серверу.
+6. Выполните команду:  
+   `sudo update-locale LANG=ru_RU.utf8`
+7. Если возникает ошибка, вернитесь к шагу 4.
+8. Повторите попытку установки скрипта:  
+   `wget https://raw.githubusercontent.com/sidor0912/FunPayCardinal/main/linux_install.sh -nc && bash linux_install.sh`
+9. Если снова возникает ошибка, вернитесь к шагу 4.
+
+
+
 
 ## :hammer_and_wrench: Настройка конфигов
 
