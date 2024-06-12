@@ -140,37 +140,25 @@ def first_setup():
         config.set("FunPay", "user_agent", user_agent)
 
     while True:
-        print(f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}"
-              f"Нужно ли включать Telegram бота? (1 - да / 0 - нет) {Fore.RED}(Ծ- Ծ){Style.RESET_ALL}")
-
-        tg = input(f"{Fore.MAGENTA}{Style.BRIGHT}└───> {Style.RESET_ALL}").strip()
-        if tg not in ["0", "1"]:
-            print(f"\n{Fore.CYAN}{Style.BRIGHT}Не понял тебя... Попробуй еще раз! {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
+        print(f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}Введи API-токен Telegram-бота {Fore.RED}(._.){Style.RESET_ALL}")
+        token = input(f"{Fore.MAGENTA}{Style.BRIGHT}└───> {Style.RESET_ALL}").strip()
+        if not token or not token.split(":")[0].isdigit():
+            print(f"\n{Fore.CYAN}{Style.BRIGHT}Попробуй еще раз! {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
             continue
-        if tg == "1":
-            while True:
-                print(f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}Введи токен Telegram-бота "
-                      f" {Fore.RED}(._.){Style.RESET_ALL}")
-                token = input(f"{Fore.MAGENTA}{Style.BRIGHT}└───> {Style.RESET_ALL}").strip()
-                if not token:
-                    print(f"\n{Fore.CYAN}{Style.BRIGHT}Попробуй еще раз! {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
-                    continue
-                break
-
-            while True:
-                print(f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}Придумай пароль (его потребует Telegram-бот) "
-                      f" {Fore.RED}ᴖ̮ ̮ᴖ{Style.RESET_ALL}")
-                password = input(f"{Fore.MAGENTA}{Style.BRIGHT}└───> {Style.RESET_ALL}").strip()
-                if not password:
-                    print(f"\n{Fore.CYAN}{Style.BRIGHT}Попробуй еще раз! {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
-                    continue
-                break
-
-            config.set("Telegram", "enabled", "1")
-            config.set("Telegram", "token", token)
-            config.set("Telegram", "secretKey", password)
-
         break
+
+    while True:
+        print(f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}Придумай пароль (его потребует Telegram-бот) "
+              f" {Fore.RED}ᴖ̮ ̮ᴖ{Style.RESET_ALL}")
+        password = input(f"{Fore.MAGENTA}{Style.BRIGHT}└───> {Style.RESET_ALL}").strip()
+        if len(password)<8:
+            print(f"\n{Fore.CYAN}{Style.BRIGHT}Попробуй еще раз! {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
+            continue
+        break
+
+    config.set("Telegram", "enabled", "1")
+    config.set("Telegram", "token", token)
+    config.set("Telegram", "secretKey", password)
 
     while True:
         print(f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}"
@@ -183,10 +171,6 @@ def first_setup():
                 login_password, ip_port = proxy.split("@")
                 login, password = login_password.split(":")
                 ip, port = ip_port.split(":")
-                print(not all([0 <= int(i) < 256 for i in ip.split(".")]))
-                print(ip.count(".") != 3)
-                print(not ip.replace(".", "").isdigit())
-                print(not 0 <= int(port) <= 65535)
                 if not all([0 <= int(i) < 256 for i in ip.split(".")]) or ip.count(".") != 3 \
                         or not ip.replace(".", "").isdigit() or not 0 <= int(port) <= 65535:
                     raise Exception()
@@ -197,8 +181,7 @@ def first_setup():
                 config.set("Proxy", "ip", ip)
                 config.set("Proxy", "port", port)
                 break
-            except Exception as ex:
-                print(ex)
+            except:
                 print(f"\n{Fore.CYAN}{Style.BRIGHT}Неверный формат прокси. Попробуй еще раз! {Fore.RED}(o-_-o){Style.RESET_ALL}")
                 continue
         else:
@@ -206,7 +189,8 @@ def first_setup():
 
     print(f"\n{Fore.CYAN}{Style.BRIGHT}Готово! Сейчас я сохраню конфиг и завершу программу! "
           f"{Fore.RED}ʘ>ʘ{Style.RESET_ALL}")
-    print(f"{Fore.CYAN}{Style.BRIGHT}Запусти меня снова и напиши своему Telegram-боту (если ты его включил). "
+    print(f"{Fore.CYAN}{Style.BRIGHT}Запусти меня снова и напиши своему Telegram-боту. "
           f"Все остальное ты сможешь настроить через него. {Fore.RED}ʕ•ᴥ•ʔ{Style.RESET_ALL}")
     with open("configs/_main.cfg", "w", encoding="utf-8") as f:
         config.write(f)
+    time.sleep(10)
