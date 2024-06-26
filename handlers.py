@@ -69,8 +69,8 @@ def save_init_chats_handler(c: Cardinal, e: InitialChatEvent):
     """
     Кэширует существующие чаты (чтобы не отправлять приветственные сообщения).
     """
-    if c.MAIN_CFG["Greetings"].getboolean("cacheInitChats") and e.chat.id not in c.old_users:
-        c.old_users.append(e.chat.id)
+    if c.MAIN_CFG["Greetings"].getboolean("cacheInitChats"):
+        c.old_users[e.chat.id] = int(time.time())
         cardinal_tools.cache_old_users(c.old_users)
 
 
@@ -126,8 +126,8 @@ def greetings_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChangedEv
     else:
         obj = e.chat
         chat_id, chat_name, mtype, its_me, badge = obj.id, obj.name, obj.last_message_type, not obj.unread, None
-
-    if any([chat_id in c.old_users, its_me, mtype == MessageTypes.DEAR_VENDORS, badge is not None,
+    if any([time.time() - c.old_users.get(chat_id, 0) < float(c.MAIN_CFG["Greetings"]["greetingsCooldown"])*24*60,
+            its_me, mtype == MessageTypes.DEAR_VENDORS, badge is not None,
             (mtype is not MessageTypes.NON_SYSTEM and c.MAIN_CFG["Greetings"].getboolean("ignoreSystemMessages"))]):
         return
 
@@ -147,9 +147,9 @@ def add_old_user_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChange
     else:
         chat_id, mtype = e.chat.id, e.chat.last_message_type
 
-    if not c.MAIN_CFG["Greetings"].getboolean("cacheInitChats") or chat_id in c.old_users or mtype == MessageTypes.DEAR_VENDORS:
+    if not c.MAIN_CFG["Greetings"].getboolean("cacheInitChats") or mtype == MessageTypes.DEAR_VENDORS:
         return
-    c.old_users.append(chat_id)
+    c.old_users[chat_id] = int(time.time())
     cardinal_tools.cache_old_users(c.old_users)
 
 
@@ -181,8 +181,9 @@ def old_send_new_msg_notification_handler(c: Cardinal, e: LastChatMessageChanged
             e.chat.last_message_type is not MessageTypes.NON_SYSTEM, str(e.chat).strip().lower() in c.AR_CFG.sections(),
             str(e.chat).startswith("!автовыдача")]):
         return
-
-    text = f"<i><b>👤 {e.chat.name}: </b></i><code>{utils.escape(str(e.chat))}</code>"
+    user = e.chat.name
+    user = f"🚷 {user}" if user in c.blacklist else f"👤 {user}"
+    text = f"<i><b>{user}: </b></i><code>{utils.escape(str(e.chat))}</code>"
     kb = keyboards.reply(e.chat.id, e.chat.name, extend=True)
     Thread(target=c.telegram.send_notification, args=(text, kb, utils.NotificationTypes.new_message),
            daemon=True).start()
@@ -251,6 +252,8 @@ def send_new_msg_notification_handler(c: Cardinal, e: NewMessageEvent) -> None:
             author = f"<i><b>👤 {i.message.author}: </b></i>"
             if i.message.badge:
                 author = f"<i><b>🛍️ {i.message.author} ({i.message.badge}):</b></i> "
+            elif i.message.author in c.blacklist:
+                author = f"<i><b>🚷 {i.message.author}: </b></i>"
         else:
             author = f"<i><b>🆘 {i.message.author} {_('support')}: </b></i>"
         msg_text = f"<code>{utils.escape(i.message.text)}</code>" if i.message.text else f"<a href=\"{i.message}\">{_('photo')}</a>"

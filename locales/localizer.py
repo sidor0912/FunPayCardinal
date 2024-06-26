@@ -1,19 +1,19 @@
-from locales import ru, eng
-
+from locales import ru, eng, uk
 
 class Localizer:
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, curr_lang: str | None = None):
         if not hasattr(cls, "instance"):
             cls.instance = super(Localizer, cls).__new__(cls)
-        return getattr(cls, "instance")
-
-    def __init__(self, curr_lang: str | None = None):
-        self.languages = {
-            "ru": ru,
-            "eng": eng
-        }
-        self.default_language = "ru"
-        self.current_language = curr_lang if curr_lang in self.languages else self.default_language
+            cls.instance.languages = {
+                "ru": ru,
+                "eng": eng,
+                "uk": uk
+            }
+            cls.instance.default_language = "ru"
+            cls.instance.current_language = cls.instance.default_language
+        if curr_lang in cls.instance.languages:
+            cls.instance.current_language = curr_lang
+        return cls.instance
 
     def translate(self, variable_name: str, *args):
         """

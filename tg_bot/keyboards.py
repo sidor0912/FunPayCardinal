@@ -67,7 +67,7 @@ def power_off(instance_id: int, state: int) -> K:
 def settings_sections(c: Cardinal) -> K:
     lang = c.MAIN_CFG["Other"]["language"]
     langs = {
-        "ru": "🇷🇺", "eng": "🇺🇸"
+        "uk": "🇺🇦", "eng": "🇺🇸", "ru": "🇷🇺"
     }
 
     kb = K()
@@ -150,12 +150,14 @@ def greeting_settings(c: Cardinal):
 
     def l(s):
         return '🟢' if c.MAIN_CFG["Greetings"].getboolean(s) else '🔴'
-
+    cd = float(c.MAIN_CFG["Greetings"]["greetingsCooldown"])
+    cd = int(cd) if int(cd) == cd else cd
     kb = K()\
         .add(B(_("gr_greetings", l("sendGreetings")), None, f"{p}:sendGreetings"))\
         .add(B(_("gr_cache_init_chats", l("cacheInitChats")), None, f"{p}:cacheInitChats"))\
         .add(B(_("gr_ignore_sys_msgs", l("ignoreSystemMessages")), None, f"{p}:ignoreSystemMessages"))\
-        .add(B(_("gr_edit_message"), None, CBT.EDIT_GREETINGS_TEXT))\
+        .add(B(_("gr_edit_message"), None, CBT.EDIT_GREETINGS_TEXT)) \
+        .add(B(_("gr_edit_cooldown").format(cd), None, CBT.EDIT_GREETINGS_COOLDOWN)) \
         .add(B(_("gl_back"), None, CBT.MAIN2))
     return kb
 

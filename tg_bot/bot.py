@@ -81,6 +81,7 @@ class TGBot:
             "get_backup": _("cmd_get_backup"),
             "create_backup": _("cmd_create_backup"),
             "restart": _("cmd_restart"),
+            "change_cookie": _("cmd_change_cookie"),
             "power_off": _("cmd_power_off")
         }
         self.__default_notification_settings = {
@@ -323,6 +324,22 @@ class TGBot:
         self.cardinal.balance = self.cardinal.get_balance()
         self.bot.send_message(m.chat.id, utils.generate_profile_text(self.cardinal),
                               reply_markup=skb.REFRESH_BTN())
+
+    def change_cookie(self, m: Message):
+        """
+        Меняет golden_key аккаунта FunPay.
+        """
+        if len(m.text.split(" ")) == 2:
+            if len(m.text.split(" ")[-1]) != 32 or m.text != m.text.lower():
+                self.bot.send_message(m.chat.id, _("cookie_incorrect_format"))
+                return
+            self.cardinal.account.golden_key = m.text.split(" ")[1]
+            self.cardinal.MAIN_CFG.set("FunPay", "golden_key", m.text.split(" ")[1])
+            self.cardinal.save_config(self.cardinal.MAIN_CFG, "configs/_main.cfg")
+            self.cardinal.account.get(True)
+            self.bot.send_message(m.chat.id, _("cookie_changed"))
+        else:
+            self.bot.send_message(m.chat.id, _("change_cookie_incorrect_msg"))
 
     def update_profile(self, c: CallbackQuery):
         new_msg = self.bot.send_message(c.message.chat.id, _("updating_profile"))
@@ -660,6 +677,27 @@ class TGBot:
                  B(_("gl_edit"), callback_data=CBT.EDIT_GREETINGS_TEXT))
         self.bot.reply_to(m, _("greeting_changed"), reply_markup=keyboard)
 
+    def act_edit_greetings_cooldown(self, c: CallbackQuery):
+        text = _('v_edit_greeting_cooldown')
+        result = self.bot.send_message(c.message.chat.id, text, reply_markup=skb.CLEAR_STATE_BTN())
+        self.set_state(c.message.chat.id, result.id, c.from_user.id, CBT.EDIT_GREETINGS_COOLDOWN)
+        self.bot.answer_callback_query(c.id)
+
+    def edit_greetings_cooldown(self, m: Message):
+        try:
+            cooldown = float(m.text)
+        except:
+            self.bot.reply_to(m, _("gl_error_try_again"), reply_markup=skb.CLEAR_STATE_BTN())
+            return
+        self.clear_state(m.chat.id, m.from_user.id, True)
+        self.cardinal.MAIN_CFG["Greetings"]["greetingsCooldown"] = str(cooldown)
+        logger.info(_("log_greeting_cooldown_changed", m.from_user.username, m.from_user.id, m.text))
+        self.cardinal.save_config(self.cardinal.MAIN_CFG, "configs/_main.cfg")
+        keyboard = K() \
+            .row(B(_("gl_back"), callback_data=f"{CBT.CATEGORY}:gr"),
+                 B(_("gl_edit"), callback_data=CBT.EDIT_GREETINGS_COOLDOWN))
+        self.bot.reply_to(m, _("greeting_cooldown_changed").format(m.text), reply_markup=keyboard)
+
     def act_edit_order_confirm_reply_text(self, c: CallbackQuery):
         variables = ["v_date", "v_date_text", "v_full_date_text", "v_time", "v_full_time", "v_username",
                      "v_order_id", "v_order_title", "v_photo"]
@@ -743,6 +781,8 @@ class TGBot:
                 author = f"<i><b>👤 {i.author}: </b></i>"
                 if i.badge:
                     author = f"<i><b>🛍️ {i.author} ({i.badge}):</b></i> "
+                elif i.author in self.cardinal.blacklist:
+                    author = f"<i><b>🚷 {i.author}: </b></i>"
             else:
                 author = f"<i><b>🆘 {i.author} ({_('support')}): </b></i>"
             msg_text = f"<code>{utils.escape(i.text)}</code>" if i.text else f"<a href=\"{i.image_link}\">{_('photo')}</a>"
@@ -948,6 +988,11 @@ class TGBot:
             self.bot.answer_callback_query(c.id, "The translation may be incomplete and contain errors.\n\n"
                                                  "If you find errors in the translation, let @sidor0912 know.\n\n"
                                                  "Thank you :)", show_alert=True)
+        elif localizer.current_language == "uk":
+            self.bot.answer_callback_query(c.id, "Переклад складено за допомогою ChatGPT.\n"
+                                                 "Повідомте @sidor0912, якщо знайдете помилки.", show_alert=True)
+        elif localizer.current_language == "ru":
+            self.bot.answer_callback_query(c.id, '«А я сейчас вам покажу, откуда на Беларусь готовилось нападение»', show_alert=True)
         self.open_cp(c)
 
     def __register_handlers(self):
@@ -962,12 +1007,16 @@ class TGBot:
 
         self.msg_handler(self.send_settings_menu, commands=["menu"])
         self.msg_handler(self.send_profile, commands=["profile"])
+        self.msg_handler(self.change_cookie, commands=["change_cookie"])
         self.cbq_handler(self.update_profile, lambda c: c.data == CBT.UPDATE_PROFILE)
         self.msg_handler(self.act_manual_delivery_test, commands=["test_lot"])
         self.msg_handler(self.act_upload_image, commands=["upload_img"])
         self.cbq_handler(self.act_edit_greetings_text, lambda c: c.data == CBT.EDIT_GREETINGS_TEXT)
         self.msg_handler(self.edit_greetings_text,
                          func=lambda m: self.check_state(m.chat.id, m.from_user.id, CBT.EDIT_GREETINGS_TEXT))
+        self.cbq_handler(self.act_edit_greetings_cooldown, lambda c: c.data == CBT.EDIT_GREETINGS_COOLDOWN)
+        self.msg_handler(self.edit_greetings_cooldown,
+                         func=lambda m: self.check_state(m.chat.id, m.from_user.id, CBT.EDIT_GREETINGS_COOLDOWN))
         self.cbq_handler(self.act_edit_order_confirm_reply_text, lambda c: c.data == CBT.EDIT_ORDER_CONFIRM_REPLY_TEXT)
         self.msg_handler(self.edit_order_confirm_reply_text,
                          func=lambda m: self.check_state(m.chat.id, m.from_user.id, CBT.EDIT_ORDER_CONFIRM_REPLY_TEXT))

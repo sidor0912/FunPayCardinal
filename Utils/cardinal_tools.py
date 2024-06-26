@@ -13,7 +13,7 @@ import json
 import sys
 import os
 import re
-
+import time
 
 PHOTO_RE = re.compile(r'\$photo=[\d]+')
 ENTITY_RE = re.compile(r"\$photo=\d+|\$new|(\$sleep=(\d+\.\d+|\d+))")
@@ -97,7 +97,7 @@ def load_disabled_plugins() -> list[str]:
             return []
 
 
-def cache_old_users(old_users: list[int]):
+def cache_old_users(old_users: dict[int, float]):
     """
     Сохраняет в кэш список пользователей, которые уже писали на аккаунт.
     """
@@ -107,17 +107,24 @@ def cache_old_users(old_users: list[int]):
         f.write(json.dumps(old_users, ensure_ascii=False))
 
 
-def load_old_users() -> list[int]:
+def load_old_users(greetings_cooldown: float) -> dict[int, float]:
     """
     Загружает из кэша список пользователей, которые уже писали на аккаунт.
 
     :return: список ID чатов.
     """
     if not os.path.exists(f"storage/cache/old_users.json"):
-        return []
+        return dict()
     with open(f"storage/cache/old_users.json", "r", encoding="utf-8") as f:
         users = f.read()
-    return json.loads(users)
+    users = json.loads(users)
+    if type(users) == list:
+        users = {user: time.time() for user in users}
+    else:
+        users = {int(user): time_ for user, time_ in users.items() if
+                 time.time() - time_ < greetings_cooldown*24*60}
+    cache_old_users(users)
+    return users
 
 
 def create_greeting_text(cardinal: Cardinal):

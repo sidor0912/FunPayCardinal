@@ -1,3 +1,4 @@
+import time
 import Utils.config_loader as cfg_loader
 from first_setup import first_setup
 from colorama import Fore, Style
@@ -38,7 +39,7 @@ logo = """[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m
 [38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m"""
 
 
-VERSION = "0.1.12.20"
+VERSION = "0.1.13"
 
 
 def set_console_title(title):
@@ -93,7 +94,22 @@ print(f"{Fore.MAGENTA}{Style.BRIGHT} * Telegram-чат: {Fore.BLUE}{Style.BRIGHT
 if not os.path.exists("configs/_main.cfg"):
     first_setup()
     sys.exit()
+for file_path in ("plugins/del_old_users.py", "storage/plugins/del_old_users_plugin_data.json",
+                  "storage/plugins/del_old_users_settings.json", "plugins/cookie_changer.py"):
+    if os.path.exists(file_path):
+        os.remove(file_path)
 
+directory = 'plugins'
+for filename in os.listdir(directory):
+    if filename.endswith(".py"):  # Проверяем, что файл имеет расширение .py
+        filepath = os.path.join(directory, filename)  # Получаем полный путь к файлу
+        with open(filepath, 'r', encoding='utf-8') as file:
+            data = file.read()  # Читаем содержимое файла
+        # Заменяем подстроку
+        data = data.replace('"<i>Разработчик:</i> " + CREDITS', '"sidor0912"')
+        # Сохраняем изменения обратно в файл
+        with open(filepath, 'w', encoding='utf-8') as file:
+            file.write(data)
 
 try:
     logger.info("$MAGENTAЗагружаю конфиг _main.cfg...")
@@ -110,16 +126,19 @@ try:
 except excs.ConfigParseError as e:
     logger.error(e)
     logger.error("Завершаю программу...")
+    time.sleep(5)
     sys.exit()
 except UnicodeDecodeError:
     logger.error("Произошла ошибка при расшифровке UTF-8. Убедитесь, что кодировка файла = UTF-8, "
                  "а формат конца строк = LF.")
     logger.error("Завершаю программу...")
+    time.sleep(5)
     sys.exit()
 except:
     logger.critical("Произошла непредвиденная ошибка.")
     logger.debug("TRACEBACK", exc_info=True)
     logger.error("Завершаю программу...")
+    time.sleep(5)
     sys.exit()
 
 localizer = Localizer(MAIN_CFG["Other"]["language"])
@@ -133,4 +152,5 @@ except:
     logger.critical("При работе Кардинала произошла необработанная ошибка.")
     logger.debug("TRACEBACK", exc_info=True)
     logger.critical("Завершаю программу...")
+    time.sleep(5)
     sys.exit()

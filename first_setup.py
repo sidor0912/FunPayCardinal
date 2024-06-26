@@ -47,7 +47,8 @@ default_config = {
         "cacheInitChats": "1",
         "ignoreSystemMessages": "0",
         "sendGreetings": "0",
-        "greetingsText": "Привет, $chat_name!"
+        "greetingsText": "Привет, $chat_name!",
+        "greetingsCooldown": "2"
     },
 
     "OrderConfirm": {
@@ -78,7 +79,7 @@ default_config = {
     },
 
     "Other": {
-        "watermark": "🤖 𝑭𝒖𝒏𝑷𝒂𝒚 𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍",
+        "watermark": "🤖 𝑭𝒖𝒏𝑷𝒂𝒚 𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍 🐦",
         "requestsDelay": "4",
         "language": "ru"
     }

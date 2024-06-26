@@ -150,7 +150,7 @@ class Cardinal(object):
         # Тег последнего event'а, после которого обновлялось состояние лотов.
         self.last_state_change_tag: str | None = None
         self.blacklist = cardinal_tools.load_blacklist()  # ЧС.
-        self.old_users = cardinal_tools.load_old_users()  # Уже написавшие пользователи.
+        self.old_users = cardinal_tools.load_old_users(float(self.MAIN_CFG["Greetings"]["greetingsCooldown"]))  # Уже написавшие пользователи.
 
         # Хэндлеры
         self.pre_init_handlers = []
