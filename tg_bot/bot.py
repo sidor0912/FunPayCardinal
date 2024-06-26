@@ -977,7 +977,7 @@ class TGBot:
         self.bot.send_message(c.message.chat.id, _("old_mode_help"))
 
     def empty_callback(self, c: CallbackQuery):
-        self.bot.answer_callback_query(c.id)
+        self.bot.answer_callback_query(c.id, "🤑 @sidor_donate 🤑")
 
     def switch_lang(self, c: CallbackQuery):
         lang = c.data.split(":")[1]
