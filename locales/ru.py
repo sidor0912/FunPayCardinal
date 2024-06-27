@@ -455,8 +455,14 @@ v_time = "<code>$time</code> - текущее время в формате <i>Ч
 v_full_time = "<code>$full_time</code> - текущее время в формате <i>ЧЧ:ММ:СС</i>."
 v_photo = "<code>$photo=[PHOTO ID]</code> - фотография. Вместо <code>PHOTO ID</code> "\
           "впиши ID фотографии, полученный с помощью команды /upload_img"
+v_sleep = "<code>$sleep=[TIME]</code> - задержка. Вместо <code>TIME</code> "\
+          "впиши время задержки в секундах."
 v_order_id = "<code>$order_id</code> - ID заказа (без #)"
+v_order_link = "<code>$order_link</code> - ссылка на заказ"
 v_order_title = "<code>$order_title</code> - название заказа."
+v_game = "<code>$game</code> - название игры."
+v_category = "<code>$category</code> - название подкатегории."
+v_category_fullname = "<code>$category_fullname</code> - полное название подкатегории (название подкатегории + название игры)."
 v_product = "<code>$product</code> - товар(-ы), полученный(-е) из товарного файла. "\
             "Если товарный файл не привязан - не будет заменяться."
 v_chat_id = "<code>$chat_id</code> - ID чата."

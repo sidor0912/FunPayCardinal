@@ -809,6 +809,9 @@ class Review:
     :param html: HTML код отзыва.
     :type html: :obj:`str`
 
+    :param hidden: скрыт ли отзыв?
+    :type hidden: :obj:`bool`
+
     :param order_id: ID заказа, к которому относится отзыв.
     :type order_id: :obj:`str` or :obj:`None`, опционально
 
@@ -818,7 +821,7 @@ class Review:
     :param author_id: ID автора отзыва.
     :type author_id: :obj:`int` or :obj:`None`, опционально
     """
-    def __init__(self, stars: int | None, text: str | None, reply: str | None, anonymous: bool, html: str,
+    def __init__(self, stars: int | None, text: str | None, reply: str | None, anonymous: bool, html: str, hidden: bool,
                  order_id: str | None = None, author: str | None = None, author_id: int | None = None):
         self.stars: int | None = stars
         """Кол-во звезде в отзыве."""
@@ -830,6 +833,8 @@ class Review:
         """Анонимный ли отзыв?"""
         self.html: str = html
         """HTML код отзыва."""
+        self.hidden: bool = hidden
+        """Скрыт ли отзыв?"""
         self.order_id: str | None = order_id[1:] if order_id and order_id.startswith("#") else order_id
         """ID заказа, к которому относится отзыв."""
         self.author: str | None = author

@@ -927,7 +927,7 @@ class Account:
         else:
             stars = int(stars_obj.find("div").get("class")[0].split("rating")[1])
             text = review_obj.find("div", {"class": "review-item-text"}).text.strip()
-
+        hidden = review_obj.find("span", class_="text-warning") is not None
         if not (reply_obj := review_obj.find("div", {"class": "review-item-answer review-compiled-reply"})):
             reply = None
         else:
@@ -936,7 +936,7 @@ class Account:
         if all([not text, not reply]):
             review = None
         else:
-            review = types.Review(stars, text, reply, False, str(reply_obj), order_id, buyer_username, buyer_id)
+            review = types.Review(stars, text, reply, False, str(review_obj), hidden, order_id, buyer_username, buyer_id)
 
         order = types.Order(order_id, status, subcategory, short_description, full_description, sum_, currency,
                             buyer_id, buyer_username, seller_id, seller_username, html_response, review, order_secrets)

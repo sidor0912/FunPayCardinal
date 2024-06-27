@@ -14,10 +14,11 @@ import sys
 import os
 import re
 import time
+import logging
 
 PHOTO_RE = re.compile(r'\$photo=[\d]+')
 ENTITY_RE = re.compile(r"\$photo=\d+|\$new|(\$sleep=(\d+\.\d+|\d+))")
-
+logger = logging.getLogger("cardinal_tools")
 
 def count_products(path: str) -> int:
     """
@@ -309,10 +310,20 @@ def format_order_text(text: str, order: FunPayAPI.types.OrderShortcut | FunPayAP
     date = date_obj.strftime("%d.%m.%Y")
     str_date = f"{date_obj.day} {month_name}"
     str_full_date = str_date + f" {date_obj.year} года"
-
     time_ = date_obj.strftime("%H:%M")
     time_full = date_obj.strftime("%H:%M:%S")
-
+    game = subcategory_fullname = subcategory = ""
+    try:
+        if isinstance(order, FunPayAPI.types.OrderShortcut):
+             game, subcategory = order.subcategory_name.rsplit(", ", 1)
+             subcategory_fullname = f"{subcategory} {game}"
+        else:
+            subcategory_fullname = order.subcategory.fullname
+            game = order.subcategory.category.name
+            subcategory = order.subcategory.name
+    except:
+        logger.warning("Произошла ошибка при парсинге игры из заказа")
+        logger.debug("TRACEBACK", exc_info=True)
     variables = {
         "$full_date_text": str_full_date,
         "$date_text": str_date,
@@ -322,7 +333,11 @@ def format_order_text(text: str, order: FunPayAPI.types.OrderShortcut | FunPayAP
         "$username": order.buyer_username,
         "$order_desc": order.description if isinstance(order, FunPayAPI.types.OrderShortcut) else order.short_description if order.short_description else "",
         "$order_title": order.description if isinstance(order, FunPayAPI.types.OrderShortcut) else order.short_description if order.short_description else "",
-        "$order_id": order.id
+        "$order_id": order.id,
+        "$order_link": f"https://funpay.com/orders/{order.id}/",
+        "$category_fullname": subcategory_fullname,
+        "$category": subcategory,
+        "$game": game
     }
 
     for var in variables:

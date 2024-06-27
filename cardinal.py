@@ -141,6 +141,7 @@ class Cardinal(object):
 
         self.balance: FunPayAPI.types.Balance | None = None
         self.raise_time = {}  # Временные метки поднятия категорий {id игры: след. время поднятия}
+        self.raised_time = {} # Время последнего поднятия категории {id игры: время последнего поднятия}
         self.profile: FunPayAPI.types.UserProfile | None = None  # FunPay профиль для всего кардинала (+ хэндлеров)
         self.tg_profile: FunPayAPI.types.UserProfile | None = None  # FunPay профиль (для Telegram-ПУ)
         self.last_tg_profile_update = datetime.datetime.now()  # Последнее время обновления профиля для TG-ПУ
@@ -314,6 +315,9 @@ class Cardinal(object):
                 self.account.raise_lots(subcat.category.id)
                 logger.info(_("crd_lots_raised", subcat.category.name))
                 raise_ok = True
+                last_time = self.raised_time.get(subcat.category.id)
+                self.raised_time[subcat.category.id] = new_time = int(time.time())
+                time_delta = "" if not last_time else f" Последнее поднятие: {cardinal_tools.time_to_str(new_time-last_time)} назад."
                 time.sleep(0.5)
                 self.account.raise_lots(subcat.category.id)
             except FunPayAPI.exceptions.RaiseError as e:
@@ -346,7 +350,7 @@ class Cardinal(object):
                 next_call = next_time if next_time < next_call else next_call
                 if not raise_ok:
                     continue
-            self.run_handlers(self.post_lots_raise_handlers, (self, subcat.category, error_text))
+            self.run_handlers(self.post_lots_raise_handlers, (self, subcat.category, error_text+time_delta))
         return next_call if next_call < float("inf") else 10
 
     @staticmethod

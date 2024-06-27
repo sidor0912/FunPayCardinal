@@ -426,7 +426,7 @@ class TGBot:
         if not self.cardinal.blacklist:
             self.bot.send_message(m.chat.id, _("blacklist_empty"))
             return
-        blacklist = ", ".join(f"<code>{i}</code>" for i in self.cardinal.blacklist)
+        blacklist = ", ".join(f"<code>{i}</code>" for i in sorted(self.cardinal.blacklist, key=lambda x: x.lower()))
         self.bot.send_message(m.chat.id, blacklist)
 
     def act_edit_watermark(self, m: Message):
@@ -442,15 +442,16 @@ class TGBot:
         if re.fullmatch(r"\[[a-zA-Z]+]", watermark):
             self.bot.reply_to(m, _("watermark_error"))
             return
-
+        preview = f"<a href=\"https://sfunpay.com/s/chat/zb/wl/zbwl4vwc8cc1wsftqnx5.jpg\">⁢</a>" if not\
+            any([i.lower() in watermark.lower() for i in ("🐦", "FPC", "𝑭𝑷𝑪", "𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍", "Cardinal", "Кардинал")]) else ""
         self.cardinal.MAIN_CFG["Other"]["watermark"] = watermark
         self.cardinal.save_config(self.cardinal.MAIN_CFG, "configs/_main.cfg")
         if watermark:
             logger.info(_("log_watermark_changed", m.from_user.username, m.from_user.id, watermark))
-            self.bot.reply_to(m, _("watermark_changed", watermark))
+            self.bot.reply_to(m, preview + _("watermark_changed", watermark))
         else:
             logger.info(_("log_watermark_deleted", m.from_user.username, m.from_user.id))
-            self.bot.reply_to(m, _("watermark_deleted"))
+            self.bot.reply_to(m, preview + _("watermark_deleted"))
 
     def send_logs(self, m: Message):
         """
@@ -661,7 +662,7 @@ class TGBot:
 
     def act_edit_greetings_text(self, c: CallbackQuery):
         variables = ["v_date", "v_date_text", "v_full_date_text", "v_time", "v_full_time", "v_username",
-                     "v_message_text", "v_chat_id", "v_chat_name", "v_photo"]
+                     "v_message_text", "v_chat_id", "v_chat_name", "v_photo", "v_sleep"]
         text = f"{_('v_edit_greeting_text')}\n\n{_('v_list')}:\n" + "\n".join(_(i) for i in variables)
         result = self.bot.send_message(c.message.chat.id, text, reply_markup=skb.CLEAR_STATE_BTN())
         self.set_state(c.message.chat.id, result.id, c.from_user.id, CBT.EDIT_GREETINGS_TEXT)
@@ -700,7 +701,7 @@ class TGBot:
 
     def act_edit_order_confirm_reply_text(self, c: CallbackQuery):
         variables = ["v_date", "v_date_text", "v_full_date_text", "v_time", "v_full_time", "v_username",
-                     "v_order_id", "v_order_title", "v_photo"]
+                     "v_order_id", "v_order_link", "v_order_title", "v_game", "v_category", "v_category_fullname", "v_photo", "v_sleep"]
         text = f"{_('v_edit_order_confirm_text')}\n\n{_('v_list')}:\n" + "\n".join(_(i) for i in variables)
         result = self.bot.send_message(c.message.chat.id, text, reply_markup=skb.CLEAR_STATE_BTN())
         self.set_state(c.message.chat.id, result.id, c.from_user.id, CBT.EDIT_ORDER_CONFIRM_REPLY_TEXT)
@@ -719,7 +720,7 @@ class TGBot:
     def act_edit_review_reply_text(self, c: CallbackQuery):
         stars = int(c.data.split(":")[1])
         variables = ["v_date", "v_date_text", "v_full_date_text", "v_time", "v_full_time", "v_username",
-                     "v_order_id", "v_order_title"]
+                     "v_order_id", "v_order_link", "v_order_title", "v_game", "v_category", "v_category_fullname"]
         text = f"{_('v_edit_review_reply_text', '⭐'*stars)}\n\n{_('v_list')}:\n" + "\n".join(_(i) for i in variables)
         result = self.bot.send_message(c.message.chat.id, text, reply_markup=skb.CLEAR_STATE_BTN())
         self.set_state(c.message.chat.id, result.id, c.from_user.id, CBT.EDIT_REVIEW_REPLY_TEXT, {"stars": stars})

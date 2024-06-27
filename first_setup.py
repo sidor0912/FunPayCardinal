@@ -5,6 +5,7 @@
 import os
 from configparser import ConfigParser
 import time
+import telebot
 from colorama import Fore, Style
 
 
@@ -125,7 +126,7 @@ def first_setup():
 
     while True:
         print(f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}"
-              f"Для начала введи токен (golden_key) твоего FunPay аккаунта {Fore.RED}(._.){Style.RESET_ALL}")
+              f"Для начала введи токен (golden_key) твоего FunPay аккаунта (посмотреть его можно в расширении EditThisCookie) {Fore.RED}(._.){Style.RESET_ALL}")
         golden_key = input(f"{Fore.MAGENTA}{Style.BRIGHT}└───> {Style.RESET_ALL}").strip()
         if len(golden_key) != 32:
             print(f"\n{Fore.CYAN}{Style.BRIGHT}Неверный формат токена. Попробуй еще раз! {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
@@ -134,16 +135,24 @@ def first_setup():
         break
 
     print(f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}"
-          f"Если хочешь, ты можешь указать свой User-agent. Если ты не знаешь, что это такое, просто нажми Enter. "
+          f"Если хочешь, ты можешь указать свой User-agent (введи в Google \"my user agent\"). Или можешь просто нажать Enter. "
           f"{Fore.RED}¯\(°_o)/¯{Style.RESET_ALL}")
     user_agent = input(f"{Fore.MAGENTA}{Style.BRIGHT}└───> {Style.RESET_ALL}").strip()
     if user_agent:
         config.set("FunPay", "user_agent", user_agent)
 
     while True:
-        print(f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}Введи API-токен Telegram-бота {Fore.RED}(._.){Style.RESET_ALL}")
+        print(f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}Введи API-токен Telegram-бота (получить его можно у @BotFather). "
+              f"@username бота должен содержать \"funpay\". {Fore.RED}(._.){Style.RESET_ALL}")
         token = input(f"{Fore.MAGENTA}{Style.BRIGHT}└───> {Style.RESET_ALL}").strip()
-        if not token or not token.split(":")[0].isdigit():
+        try:
+            if not token or not token.split(":")[0].isdigit():
+                raise Exception()
+            username = telebot.TeleBot(token).get_me().username
+            if "funpay" not in username.lower():
+                print(f"\n{Fore.CYAN}{Style.BRIGHT}@username бота должен содержать \"funpay\"! {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
+                continue
+        except:
             print(f"\n{Fore.CYAN}{Style.BRIGHT}Попробуй еще раз! {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
             continue
         break

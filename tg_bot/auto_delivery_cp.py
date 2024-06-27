@@ -226,7 +226,7 @@ $product""")
         split = c.data.split(":")
         lot_index, offset = int(split[1]), int(split[2])
         variables = ["v_date", "v_date_text", "v_full_date_text", "v_time", "v_full_time", "v_username",
-                     "v_product", "v_order_id", "v_order_title", "v_photo"]
+                     "v_product", "v_order_id", "v_order_link", "v_order_title", "v_game", "v_category", "v_category_fullname", "v_photo", "v_sleep"]
         text = f"{_('v_edit_delivery_text')}\n\n{_('v_list')}:\n" + "\n".join(_(i) for i in variables)
         result = bot.send_message(c.message.chat.id, text, reply_markup=CLEAR_STATE_BTN())
         tg.set_state(c.message.chat.id, result.id, c.from_user.id, CBT.EDIT_LOT_DELIVERY_TEXT,
