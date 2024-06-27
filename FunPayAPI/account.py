@@ -920,7 +920,8 @@ class Account:
         else:
             buyer_id, buyer_username = self.id, self.username
             seller_id, seller_username = interlocutor_id, interlocutor_name
-
+        id1, id2 = sorted([buyer_id, seller_id])
+        chat_id = f"users-{id1}-{id2}"
         review_obj = parser.find("div", {"class": "order-review"})
         if not (stars_obj := review_obj.find("div", {"class": "rating"})):
             stars, text,  = None, None
@@ -939,7 +940,7 @@ class Account:
             review = types.Review(stars, text, reply, False, str(review_obj), hidden, order_id, buyer_username, buyer_id)
 
         order = types.Order(order_id, status, subcategory, short_description, full_description, sum_, currency,
-                            buyer_id, buyer_username, seller_id, seller_username, html_response, review, order_secrets)
+                            buyer_id, buyer_username, seller_id, seller_username, chat_id, html_response, review, order_secrets)
         return order
 
     def get_sells(self, start_from: str | None = None, include_paid: bool = True, include_closed: bool = True,
@@ -1079,8 +1080,9 @@ class Account:
                 day, month, year = int(day), utils.MONTHS[month], int(year)
                 h, m = split[1].split(":")
                 order_date = datetime(year, month, day, int(h), int(m))
-
-            order_obj = types.OrderShortcut(order_id, description, price, currency, buyer_username, buyer_id, order_status,
+            id1, id2 = sorted([buyer_id, self.id])
+            chat_id = f"users-{id1}-{id2}"
+            order_obj = types.OrderShortcut(order_id, description, price, currency, buyer_username, buyer_id, chat_id, order_status,
                                             order_date, subcategory_name, str(div))
             sells.append(order_obj)
 

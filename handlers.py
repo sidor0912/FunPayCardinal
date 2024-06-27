@@ -377,9 +377,9 @@ def test_auto_delivery_handler(c: Cardinal, e: NewMessageEvent | LastChatMessage
     if not c.old_mode_enabled:
         if isinstance(e, LastChatMessageChangedEvent):
             return
-        obj, message_text, chat_name = e.message, str(e.message), e.message.chat_name
+        obj, message_text, chat_name, chat_id = e.message, str(e.message), e.message.chat_name, e.message.chat_id
     else:
-        obj, message_text, chat_name = e.chat, str(e.chat), e.chat.name
+        obj, message_text, chat_name, chat_id = e.chat, str(e.chat), e.chat.name, e.chat.id
 
     if not message_text.startswith("!автовыдача"):
         return
@@ -400,7 +400,7 @@ def test_auto_delivery_handler(c: Cardinal, e: NewMessageEvent | LastChatMessage
     date_text = date.strftime("%H:%M")
     html = ORDER_HTML_TEMPLATE.replace("$username", chat_name).replace("$lot_name", lot_name).replace("$date", date_text)
 
-    fake_order = OrderShortcut("ADTEST", lot_name, 0.0, "?", chat_name, 000000, types.OrderStatuses.PAID,
+    fake_order = OrderShortcut("ADTEST", lot_name, 0.0, "?", chat_name, 000000, chat_id, types.OrderStatuses.PAID,
                                date, "Авто-выдача, Тест", html)
 
     fake_event = NewOrderEvent(e.runner_tag, fake_order)

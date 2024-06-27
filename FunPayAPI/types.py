@@ -266,6 +266,9 @@ class OrderShortcut:
     :param buyer_id: ID покупателя.
     :type buyer_id: :obj:`int`
 
+    :param chat_id: ID чата (или его текстовое обозначение).
+    :type chat_id: :obj:`int` or :obj:`str`
+
     :param status: статус заказа.
     :type status: :class:`FunPayAPI.common.enums.OrderStatuses`
 
@@ -282,7 +285,7 @@ class OrderShortcut:
     :type dont_search_amount: :obj:`bool`, опционально
     """
     def __init__(self, id_: str, description: str, price: float, currency: str,
-                 buyer_username: str, buyer_id: int, status: OrderStatuses,
+                 buyer_username: str, buyer_id: int, chat_id: int | str, status: OrderStatuses,
                  date: datetime.datetime, subcategory_name: str, html: str, dont_search_amount: bool = False):
         self.id: str = id_ if not id_.startswith("#") else id_[1:]
         """ID заказа."""
@@ -298,6 +301,8 @@ class OrderShortcut:
         """Никнейм покупателя."""
         self.buyer_id: int = buyer_id
         """ID покупателя."""
+        self.chat_id: int | str = chat_id
+        """ID чата."""
         self.status: OrderStatuses = status
         """Статус заказа."""
         self.date: datetime.datetime = date
@@ -361,6 +366,9 @@ class Order:
     :param seller_username: никнейм продавца.
     :type seller_username: :obj:`str`
 
+    :param chat_id: ID чата (или его текстовое обозначение).
+    :type chat_id: :obj:`int` or :obj:`str`
+
     :param html: HTML код заказа.
     :type html: :obj:`str`
 
@@ -373,7 +381,7 @@ class Order:
     def __init__(self, id_: str, status: OrderStatuses, subcategory: SubCategory, short_description: str | None,
                  full_description: str | None, sum_: float, currency: str,
                  buyer_id: int, buyer_username: str,
-                 seller_id: int, seller_username: str,
+                 seller_id: int, seller_username: str, chat_id: str | int,
                  html: str, review: Review | None, order_secrets: list[str]):
         self.id: str = id_ if not id_.startswith("#") else id_[1:]
         """ID заказа."""
@@ -399,6 +407,8 @@ class Order:
         """ID продавца."""
         self.seller_username: str = seller_username
         """Никнейм продавца."""
+        self.chat_id: str | int = chat_id
+        """ID чата."""
         self.html: str = html
         """HTML код заказа."""
         self.review: Review | None = review
