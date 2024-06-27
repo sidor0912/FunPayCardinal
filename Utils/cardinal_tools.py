@@ -373,10 +373,15 @@ def shut_down():
 
 def set_console_title(title: str) -> None:
     """
-    Изменяет название консоли
+    Изменяет название консоли для Windows и Unix-like систем.
     """
-    if os.name == 'nt':  # Windows
-        import ctypes
-        ctypes.windll.kernel32.SetConsoleTitleW(title)
-    else:  # Assume Unix-like
-        print("\033]0;" + title + "\007")
+    try:
+        if os.name == 'nt':  # Windows
+            import ctypes
+            ctypes.windll.kernel32.SetConsoleTitleW(title)
+        else:  # Assume Unix-like
+            safe_title = title.translate(str.maketrans({"\\": r"\\", "\007": "", "\033": ""}))
+            print(f"\033]0;{safe_title}\007", end="", flush=True)
+    except:
+        logger.warning("Произошла ошибка при изменении названия консоли")
+        logger.debug("TRACEBACK", exc_info=True)
