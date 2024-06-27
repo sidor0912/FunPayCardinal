@@ -209,6 +209,7 @@ class Cardinal(object):
                 self.account.get()
                 self.balance = self.get_balance()
                 greeting_text = cardinal_tools.create_greeting_text(self)
+                cardinal_tools.set_console_title(f"FunPay Cardinal - {self.account.username} ({self.account.id})")
                 for line in greeting_text.split("\n"):
                     logger.info(line)
                 break

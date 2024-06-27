@@ -370,3 +370,13 @@ def shut_down():
         process.terminate()
     except:
         pass
+
+def set_console_title(title: str) -> None:
+    """
+    Изменяет название консоли
+    """
+    if os.name == 'nt':  # Windows
+        import ctypes
+        ctypes.windll.kernel32.SetConsoleTitleW(title)
+    else:  # Assume Unix-like
+        print("\033]0;" + title + "\007")
