@@ -126,7 +126,7 @@ def greetings_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChangedEv
     else:
         obj = e.chat
         chat_id, chat_name, mtype, its_me, badge = obj.id, obj.name, obj.last_message_type, not obj.unread, None
-    if any([time.time() - c.old_users.get(chat_id, 0) < float(c.MAIN_CFG["Greetings"]["greetingsCooldown"])*24*60,
+    if any([time.time() - c.old_users.get(chat_id, 0) < float(c.MAIN_CFG["Greetings"]["greetingsCooldown"])*24*60*60,
             its_me, mtype == MessageTypes.DEAR_VENDORS, badge is not None,
             (mtype is not MessageTypes.NON_SYSTEM and c.MAIN_CFG["Greetings"].getboolean("ignoreSystemMessages"))]):
         return
