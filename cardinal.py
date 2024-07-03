@@ -17,7 +17,7 @@ import random
 import time
 import sys
 import os
-
+from pip._internal.cli.main import main
 import FunPayAPI
 import handlers
 import announcements
@@ -556,8 +556,17 @@ class Cardinal(object):
             self.telegram.setup_commands()
             try:
                 self.telegram.edit_bot()
+            except AttributeError:
+                logger.warning("Произошла ошибка при изменении бота Telegram. Обновляю библиотеку...")
+                logger.debug("TRACEBACK", exc_info=True)
+                try:
+                    main(["install", "-U", "pytelegrambotapi==4.15.2"])
+                    logger.info("Библиотека обновлена.")
+                except:
+                    logger.warning("Произошла ошибка при обновлении библиотеки.")
+                    logger.debug("TRACEBACK", exc_info=True)
             except:
-                logger.debug("Произошла ошибка при изменении бота Telegram.")
+                logger.warning("Произошла ошибка при изменении бота Telegram.")
                 logger.debug("TRACEBACK", exc_info=True)
 
             Thread(target=self.telegram.run, daemon=True).start()
