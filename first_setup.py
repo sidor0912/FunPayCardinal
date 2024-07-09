@@ -147,13 +147,16 @@ def first_setup():
         token = input(f"{Fore.MAGENTA}{Style.BRIGHT}└───> {Style.RESET_ALL}").strip()
         try:
             if not token or not token.split(":")[0].isdigit():
-                raise Exception()
+                raise Exception("Неправильный формат токена")
             username = telebot.TeleBot(token).get_me().username
             if "funpay" not in username.lower():
                 print(f"\n{Fore.CYAN}{Style.BRIGHT}@username бота должен содержать \"funpay\"! {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
                 continue
-        except:
-            print(f"\n{Fore.CYAN}{Style.BRIGHT}Попробуй еще раз! {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
+        except Exception as ex:
+            s = ""
+            if str(ex):
+                s = f" ({str(ex)})"
+            print(f"\n{Fore.CYAN}{Style.BRIGHT}Попробуй еще раз!{s} {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
             continue
         break
 

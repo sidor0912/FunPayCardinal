@@ -330,11 +330,12 @@ class TGBot:
         Меняет golden_key аккаунта FunPay.
         """
         if len(m.text.split(" ")) == 2:
-            if len(m.text.split(" ")[-1]) != 32 or m.text != m.text.lower():
+            golden_key = m.text.split(" ")[-1]
+            if len(golden_key) != 32 or golden_key != golden_key.lower():
                 self.bot.send_message(m.chat.id, _("cookie_incorrect_format"))
                 return
-            self.cardinal.account.golden_key = m.text.split(" ")[1]
-            self.cardinal.MAIN_CFG.set("FunPay", "golden_key", m.text.split(" ")[1])
+            self.cardinal.account.golden_key = golden_key
+            self.cardinal.MAIN_CFG.set("FunPay", "golden_key", golden_key)
             self.cardinal.save_config(self.cardinal.MAIN_CFG, "configs/_main.cfg")
             self.cardinal.account.get(True)
             self.bot.send_message(m.chat.id, _("cookie_changed"))
