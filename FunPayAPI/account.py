@@ -225,7 +225,7 @@ class Account:
             result.append(lot_obj)
         return result
 
-    def get_balance(self, lot_id: int = 20978354) -> types.Balance:
+    def get_balance(self, lot_id: int = 29264129) -> types.Balance:
         """
         Получает информацию о балансе пользователя.
 
