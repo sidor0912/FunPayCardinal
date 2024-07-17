@@ -538,21 +538,31 @@ class LotFields:
         self.__fields: dict = fields
         """Поля лота."""
 
-        self.title_ru: str = self.__fields.get("fields[summary][ru]")
+        self.title_ru: str = self.__fields.get("fields[summary][ru]", "")
         """Русское краткое описание (название) лота."""
-        self.title_en: str = self.__fields.get("fields[summary][en]")
+        self.title_en: str = self.__fields.get("fields[summary][en]", "")
         """Английское краткое описание (название) лота."""
-        self.description_ru: str = self.__fields.get("fields[desc][ru]")
+        self.description_ru: str = self.__fields.get("fields[desc][ru]", "")
         """Русское полное описание лота."""
-        self.description_en: str = self.__fields.get("fields[desc][en]")
+        self.description_en: str = self.__fields.get("fields[desc][en]", "")
         """Английское полное описание лота."""
+        self.payment_msg_ru: str = self.__fields.get("fields[payment_msg][ru]", "")
+        """Русское сообщение покупателю после оплаты"""
+        self.payment_msg_en: str = self.__fields.get("fields[payment_msg][en]", "")
+        """Английское сообщение покупателю после оплаты"""
+        self.images: list[int] = [int(i) for i in self.__fields.get("fields[images]", "").split(",") if i]
+        """ID изображений лота"""
+        self.auto_delivery: bool = self.__fields.get("auto_delivery") == "on"
+        """Включена ли автовыдача FunPay"""
+        self.secrets: list[str] = [i for i in self.__fields.get("secrets", "").strip().split("\n") if i]
+        """Товары встроенной автовыдачи"""
         self.amount: int | None = int(i) if (i := self.__fields.get("amount")) else None
         """Кол-во товара."""
         self.price: float = float(i) if (i := self.__fields.get("price")) else None
         """Цена за 1шт."""
-        self.active: bool = "active" in self.__fields
+        self.active: bool = self.__fields.get("active") == "on"
         """Активен ли лот."""
-        self.deactivate_after_sale: bool = "deactivate_after_sale[]" in self.__fields
+        self.deactivate_after_sale: bool = self.__fields.get("deactivate_after_sale") == "on"
         """Деактивировать ли лот после продажи."""
 
     @property
@@ -597,10 +607,15 @@ class LotFields:
         self.__fields["fields[summary][en]"] = self.title_en
         self.__fields["fields[desc][ru]"] = self.description_ru
         self.__fields["fields[desc][en]"] = self.description_en
+        self.__fields["fields[payment_msg][ru]"] = self.payment_msg_ru
+        self.__fields["fields[payment_msg][en]"] = self.payment_msg_en
         self.__fields["price"] = str(self.price) if self.price is not None else ""
         self.__fields["deactivate_after_sale"] = "on" if self.deactivate_after_sale else ""
         self.__fields["active"] = "on" if self.active else ""
         self.__fields["amount"] = self.amount if self.amount is not None else ""
+        self.__fields["fields[images]"] = ",".join(map(str, self.images))
+        self.__fields["secrets"] = "\n".join(self.secrets)
+        self.__fields["auto_delivery"] = "on" if self.auto_delivery else ""
         return self
 
 

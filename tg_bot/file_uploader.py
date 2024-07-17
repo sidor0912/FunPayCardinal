@@ -3,7 +3,7 @@
 """
 
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 if TYPE_CHECKING:
     from cardinal import Cardinal
     from tg_bot.bot import TGBot
@@ -269,7 +269,7 @@ def init_uploader(cardinal: Cardinal):
         try:
             file_info = tg.bot.get_file(photo.file_id)
             file = tg.bot.download_file(file_info.file_path)
-            image_id = cardinal.account.upload_image(file)
+            image_id = cardinal.account.upload_image(file, type_="chat")
             result = cardinal.account.send_message(chat_id, None, username, image_id)
             if not result:
                 tg.bot.reply_to(m, f'❌ Не удалось отправить сообщение в переписку '
@@ -287,7 +287,7 @@ def init_uploader(cardinal: Cardinal):
                             reply_markup=keyboards.reply(chat_id, username, again=True))
             return
 
-    def upload_image(m: types.Message):
+    def upload_image(m: types.Message, type_: Literal["chat", "offer"] = "chat"):
         tg.clear_state(m.chat.id, m.from_user.id, True)
         if not m.photo:
             tg.bot.send_message(m.chat.id, "❌ Поддерживаются только форматы <code>.png</code>, <code>.jpg</code>, "
@@ -301,16 +301,27 @@ def init_uploader(cardinal: Cardinal):
         try:
             file_info = tg.bot.get_file(photo.file_id)
             file = tg.bot.download_file(file_info.file_path)
-            image_id = cardinal.account.upload_image(file)
+            image_id = cardinal.account.upload_image(file, type_=type_)
         except:
             tg.bot.reply_to(m, f'❌ Не удалось отправить выгрузить изображение. '
                                f'Подробнее в файле <code>logs/log.log</code>')
             return
+        if type_ == "chat":
+            s = f"Используйте этот ID в текстах автовыдачи/автоответа с переменной "\
+                f"<code>$photo</code>\n\n"\
+                f"Например: <code>$photo={image_id}</code>"
+        elif type_ == "offer":
+            s = f"Используйте этот ID для добавления картинок к лотам."
         bot.reply_to(m, f"✅ Изображение выгружено на сервер FunPay.\n\n"
-                        f"<b>ID:</b> <code>{image_id}</code>\n\n"
-                        f"Используйте этот ID в текстах автовыдачи/автоответа с переменной "
-                        f"<code>$photo</code>\n\n"
-                        f"Например: <code>$photo={image_id}</code>")
+                        f"<b>ID:</b> <code>{image_id}</code>\n\n{s}")
+
+    def upload_chat_image(m: types.Message):
+        upload_image(m, type_="chat")
+
+    def upload_offer_image(m: types.Message):
+        upload_image(m, type_="offer")
+
+
 
     tg.cbq_handler(act_upload_products_file, lambda c: c.data == CBT.UPLOAD_PRODUCTS_FILE)
     tg.cbq_handler(act_upload_auto_response_config, lambda c: c.data == "upload_auto_response_config")
@@ -323,7 +334,8 @@ def init_uploader(cardinal: Cardinal):
     tg.file_handler("upload_main_config", upload_main_config)
     tg.file_handler(CBT.UPLOAD_PLUGIN, upload_plugin)
     tg.file_handler(CBT.SEND_FP_MESSAGE, send_funpay_image)
-    tg.file_handler(CBT.UPLOAD_IMAGE, upload_image)
+    tg.file_handler(CBT.UPLOAD_CHAT_IMAGE, upload_chat_image)
+    tg.file_handler(CBT.UPLOAD_OFFER_IMAGE, upload_offer_image)
 
 
 BIND_TO_PRE_INIT = [init_uploader]

@@ -66,12 +66,13 @@ class TGBot:
         self.commands = {
             "menu": _("cmd_menu"),
             "profile": _("cmd_profile"),
-            "test_lot": _("cmd_test_lot"),
-            "upload_img": _("cmd_upload_img"),
             "ban": _("cmd_ban"),
             "unban": _("cmd_unban"),
             "black_list": _("cmd_black_list"),
-            "watermark": _("cmd_watermark"),
+            "restart": _("cmd_restart"),
+            "upload_chat_img": _("cmd_upload_chat_img"),
+            "upload_offer_img": _("cmd_upload_offer_img"),
+            "test_lot": _("cmd_test_lot"),
             "logs": _("cmd_logs"),
             "del_logs": _("cmd_del_logs"),
             "about": _("cmd_about"),
@@ -80,9 +81,9 @@ class TGBot:
             "sys": _("cmd_sys"),
             "get_backup": _("cmd_get_backup"),
             "create_backup": _("cmd_create_backup"),
-            "restart": _("cmd_restart"),
             "change_cookie": _("cmd_change_cookie"),
-            "power_off": _("cmd_power_off")
+            "power_off": _("cmd_power_off"),
+            "watermark": _("cmd_watermark"),
         }
         self.__default_notification_settings = {
             utils.NotificationTypes.ad: 1,
@@ -659,8 +660,9 @@ class TGBot:
         """
         Активирует режим ожидания изображения для последующей выгрузки на FunPay.
         """
+        cbt = CBT.UPLOAD_CHAT_IMAGE if m.text.startswith("/upload_chat_img") else CBT.UPLOAD_OFFER_IMAGE
         result = self.bot.send_message(m.chat.id, _("send_img"), reply_markup=skb.CLEAR_STATE_BTN())
-        self.set_state(m.chat.id, result.id, m.from_user.id, CBT.UPLOAD_IMAGE)
+        self.set_state(m.chat.id, result.id, m.from_user.id, cbt)
 
     def act_edit_greetings_text(self, c: CallbackQuery):
         variables = ["v_date", "v_date_text", "v_full_date_text", "v_time", "v_full_time", "v_username",
@@ -687,12 +689,12 @@ class TGBot:
         self.bot.answer_callback_query(c.id)
 
     def edit_greetings_cooldown(self, m: Message):
+        self.clear_state(m.chat.id, m.from_user.id, True)
         try:
             cooldown = float(m.text)
         except:
-            self.bot.reply_to(m, _("gl_error_try_again"), reply_markup=skb.CLEAR_STATE_BTN())
+            self.bot.reply_to(m, _("gl_error_try_again"))
             return
-        self.clear_state(m.chat.id, m.from_user.id, True)
         self.cardinal.MAIN_CFG["Greetings"]["greetingsCooldown"] = str(cooldown)
         logger.info(_("log_greeting_cooldown_changed", m.from_user.username, m.from_user.id, m.text))
         self.cardinal.save_config(self.cardinal.MAIN_CFG, "configs/_main.cfg")
@@ -1013,7 +1015,7 @@ class TGBot:
         self.msg_handler(self.change_cookie, commands=["change_cookie"])
         self.cbq_handler(self.update_profile, lambda c: c.data == CBT.UPDATE_PROFILE)
         self.msg_handler(self.act_manual_delivery_test, commands=["test_lot"])
-        self.msg_handler(self.act_upload_image, commands=["upload_img"])
+        self.msg_handler(self.act_upload_image, commands=["upload_chat_img", "upload_offer_img"])
         self.cbq_handler(self.act_edit_greetings_text, lambda c: c.data == CBT.EDIT_GREETINGS_TEXT)
         self.msg_handler(self.edit_greetings_text,
                          func=lambda m: self.check_state(m.chat.id, m.from_user.id, CBT.EDIT_GREETINGS_TEXT))

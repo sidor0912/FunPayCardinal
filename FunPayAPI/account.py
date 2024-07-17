@@ -338,7 +338,7 @@ class Account:
             result[i.get("id")] = messages
         return result
 
-    def upload_image(self, image: str | IO[bytes]) -> int:
+    def upload_image(self, image: str | IO[bytes], type_: Literal["chat", "offer"] = "chat") -> int:
         """
         Выгружает изображение на сервер FunPay для дальнейшей отправки в качестве сообщения.
         Для отправки изображения в чат рекомендуется использовать метод :meth:`FunPayAPI.account.Account.send_image`.
@@ -346,9 +346,16 @@ class Account:
         :param image: путь до изображения или представление изображения в виде байтов.
         :type image: :obj:`str` or :obj:`bytes`
 
+        :param type_: куда грузим изображение? ("chat" / "offer").
+        :type type_: :obj:`str` `chat` or `offer`
+
         :return: ID изображения на серверах FunPay.
         :rtype: :obj:`int`
         """
+
+        if type_ not in ("chat", "offer"):
+            raise Exception("Неправильный тип.")
+
         if not self.is_initiated:
             raise exceptions.AccountNotInitiatedError()
 
@@ -371,7 +378,7 @@ class Account:
             "content-type": m.content_type,
         }
 
-        response = self.method("post", "file/addChatImage", headers, m)
+        response = self.method("post", f"file/add{type_.title()}Image", headers, m)
 
         if response.status_code == 400:
             try:
@@ -506,7 +513,7 @@ class Account:
             raise exceptions.AccountNotInitiatedError()
 
         if not isinstance(image, int):
-            image = self.upload_image(image)
+            image = self.upload_image(image, type_="chat")
         result = self.send_message(chat_id, None, chat_name, image, add_to_ignore_list, update_last_saved_message)
         return result
 
@@ -1227,8 +1234,8 @@ class Account:
 
         html_response = response.content.decode()
         bs = BeautifulSoup(html_response, "html.parser")
-
-        result = {"active": "", "deactivate_after_sale": ""}
+        result = {}
+        # result = {"active": "", "deactivate_after_sale": ""}
         result.update({field["name"]: field.get("value") or "" for field in bs.find_all("input")
                        if field["name"] not in ["active", "deactivate_after_sale"]})
         result.update({field["name"]: field.text or "" for field in bs.find_all("textarea")})

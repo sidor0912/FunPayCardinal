@@ -419,7 +419,8 @@ cmd_language = "change language"
 cmd_profile = "account statistics"
 cmd_change_cookie = "change golden_key"
 cmd_test_lot = "create one-time delivery key"
-cmd_upload_img = "upload an image to FunPay"
+cmd_upload_chat_img = "(chat) upload an image to FunPay"
+cmd_upload_offer_img = "(lot) upload an image to FunPay"
 cmd_ban = "add user to the blacklist"
 cmd_unban = "delete user from blacklist"
 cmd_black_list = "blacklist"
@@ -451,7 +452,7 @@ v_full_date_text = "<code>$full_date_text</code> - current date in <i>January 1,
 v_time = "<code>$time</code> - current time in <i>HH:MM</i> format."
 v_full_time = "<code>$full_time</code> - current time in <i>HH:MM:SS</i> format."
 v_photo = "<code>$photo=[PHOTO ID]</code> - photo. Instead of <code>PHOTO ID</code>, "\
-          "type the photo ID obtained with the /upload_img command."
+          "type the photo ID obtained with the /upload_chat_img command."
 v_sleep = "<code>$sleep=[TIME]</code> - delay. Replace <code>TIME</code> "\
           "with the delay time in seconds."
 v_order_id = "<code>$order_id</code> - order ID (without #)"

@@ -420,7 +420,8 @@ cmd_language = "змінити мову"
 cmd_profile = "статистика облікового запису"
 cmd_change_cookie = "змінити golden_key"
 cmd_test_lot = "створити ключ видачі"
-cmd_upload_img = "вивантажити зображення на FunPay"
+cmd_upload_chat_img = "(чат) вивантажити зображення на FunPay"
+cmd_upload_offer_img = "(лот) вивантажити зображення на FunPay"
 cmd_ban = "додати користувача до ЧС"
 cmd_unban = "видалити користувача з ЧС"
 cmd_black_list = "чорний список"
@@ -452,7 +453,7 @@ v_full_date_text = "<code>$full_date_text</code> - поточна дата у ф
 v_time = "<code>$time</code> - поточний час у форматі <i>ГГ:ХХ</i>."
 v_full_time = "<code>$full_time</code> - поточний час у форматі <i>ГГ:ХХ:СС</i>."
 v_photo = "<code>$photo=[PHOTO ID]</code> - фотографія. Замість <code>PHOTO ID</code> "\
-          "впиши ID фотографії, отриманий за допомогою команди /upload_img"
+          "впиши ID фотографії, отриманий за допомогою команди /upload_chat_img"
 v_sleep = "<code>$sleep=[TIME]</code> - затримка. Замініть <code>TIME</code> "\
           "на час затримки в секундах."
 v_order_id = "<code>$order_id</code> - ID замовлення (без #)"
