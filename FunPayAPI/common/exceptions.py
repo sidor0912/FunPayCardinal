@@ -137,6 +137,21 @@ class FeedbackEditingError(RequestFailedError):
                f"{f': {self.error_message}' if self.error_message else '.'}"
 
 
+class LotParsingError(RequestFailedError):
+    """
+    Исключение, которое возбуждается, если при получении полей лота произошла ошибка.
+    """
+    def __init__(self, response: requests.Response, error_message: str | None, lot_id: int):
+        super(LotParsingError, self).__init__(response)
+        self.error_message = error_message
+        self.lot_id = lot_id
+        if not self.error_message:
+            self.log_response = True
+
+    def short_str(self):
+        return f"Не удалось получить данные лота {self.lot_id}" \
+               f"{f': {self.error_message}' if self.error_message else '.'}"
+
 class LotSavingError(RequestFailedError):
     """
     Исключение, которое возбуждается, если при сохранении лота произошла ошибка.

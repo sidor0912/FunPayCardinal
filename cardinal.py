@@ -759,8 +759,11 @@ class Cardinal(object):
             try:
                 if getattr(func, "plugin_uuid") is None or self.plugins[getattr(func, "plugin_uuid")].enabled:
                     func(*args)
-            except:
-                logger.error(_("crd_handler_err"))
+            except Exception as ex:
+                text = _("crd_handler_err")
+                if hasattr(ex, "short_str") and callable(getattr(ex, "short_str")):
+                    text += f" {ex.short_str()}"
+                logger.error(text)
                 logger.debug("TRACEBACK", exc_info=True)
                 continue
 

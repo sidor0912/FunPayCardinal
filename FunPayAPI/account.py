@@ -127,7 +127,7 @@ class Account:
             raise exceptions.RequestFailedError(response)
         return response
 
-    def get(self, update_phpsessid: bool = False) -> Account:
+    def get(self, update_phpsessid: bool = True) -> Account:
         """
         Получает / обновляет данные об аккаунте. Необходимо вызывать каждые 40-60 минут, дабы обновить
         :py:obj:`.Account.phpsessid`.
@@ -160,7 +160,7 @@ class Account:
 
         cookies = response.cookies.get_dict()
         if update_phpsessid or not self.phpsessid:
-            self.phpsessid = cookies["PHPSESSID"]
+            self.phpsessid = cookies.get("PHPSESSID", self.phpsessid)
         if not self.is_initiated:
             self.__setup_categories(html_response)
 
@@ -952,7 +952,7 @@ class Account:
 
     def get_sells(self, start_from: str | None = None, include_paid: bool = True, include_closed: bool = True,
                   include_refunded: bool = True, exclude_ids: list[str] | None = None,
-                  id: Optional[int] = None, buyer: Optional[str] = None,
+                  id: Optional[str] = None, buyer: Optional[str] = None,
                   state: Optional[Literal["closed", "paid", "refunded"]] = None, game: Optional[int] = None,
                   section: Optional[str] = None, server: Optional[int] = None,
                   side: Optional[int] = None, **more_filters) -> tuple[str | None, list[types.OrderShortcut]]:
@@ -975,7 +975,7 @@ class Account:
         :type exclude_ids: :obj:`list` of :obj:`str`, опционально
 
         :param id: ID заказа.
-        :type id: :obj:`int`, опционально
+        :type id: :obj:`str`, опционально
 
         :param buyer: никнейм покупателя.
         :type buyer: :obj:`str`, опционально
@@ -1234,10 +1234,11 @@ class Account:
 
         html_response = response.content.decode()
         bs = BeautifulSoup(html_response, "html.parser")
+        error_message = bs.find("p", class_="lead")
+        if error_message:
+            raise exceptions.LotParsingError(response, error_message.text, lot_id)
         result = {}
-        # result = {"active": "", "deactivate_after_sale": ""}
-        result.update({field["name"]: field.get("value") or "" for field in bs.find_all("input")
-                       if field["name"] not in ["active", "deactivate_after_sale"]})
+        result.update({field["name"]: field.get("value") or "" for field in bs.find_all("input")})
         result.update({field["name"]: field.text or "" for field in bs.find_all("textarea")})
         result.update({
             field["name"]: field.find("option", selected=True)["value"]
