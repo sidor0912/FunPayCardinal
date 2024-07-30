@@ -164,8 +164,8 @@ def first_setup():
         print(f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}Придумай пароль (его потребует Telegram-бот) "
               f" {Fore.RED}ᴖ̮ ̮ᴖ{Style.RESET_ALL}")
         password = input(f"{Fore.MAGENTA}{Style.BRIGHT}└───> {Style.RESET_ALL}").strip()
-        if len(password)<8:
-            print(f"\n{Fore.CYAN}{Style.BRIGHT}Попробуй еще раз! {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
+        if len(password)<8 or password.lower() == password or password.upper() == password or not any([i.isdigit() for i in password]):
+            print(f"\n{Fore.CYAN}{Style.BRIGHT}Это плохой пароль. Попробуй еще раз! {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
             continue
         break
 

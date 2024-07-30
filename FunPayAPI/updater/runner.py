@@ -351,7 +351,9 @@ class Runner:
             logger.error("Не удалось обновить список продаж: превышено кол-во попыток.")
             return events
 
+        saved_orders = {}
         for order in orders_list[1]:
+            saved_orders[order.id] = order
             if order.id not in self.saved_orders:
                 if self.__first_request:
                     events.append(InitialOrderEvent(self.__last_order_event_tag, order))
@@ -359,11 +361,10 @@ class Runner:
                     events.append(NewOrderEvent(self.__last_order_event_tag, order))
                     if order.status == types.OrderStatuses.CLOSED:
                         events.append(OrderStatusChangedEvent(self.__last_order_event_tag, order))
-                self.update_order(order)
 
             elif order.status != self.saved_orders[order.id].status:
                 events.append(OrderStatusChangedEvent(self.__last_order_event_tag, order))
-                self.update_order(order)
+        self.saved_orders = saved_orders
         return events
 
     def update_last_message(self, chat_id: int, message_text: str | None, message_time: str | None = None):
@@ -382,15 +383,6 @@ class Runner:
         if message_text is None:
             message_text = "Изображение"
         self.last_messages[chat_id] = [message_text[:250], message_time]
-
-    def update_order(self, order: types.OrderShortcut):
-        """
-        Обновляет сохраненное состояние переданного заказа.
-
-        :param order: экземпляр заказа, который нужно обновить.
-        :type order: :class:`FunPayAPI.types.OrderShortcut`
-        """
-        self.saved_orders[order.id] = order
 
     def mark_as_by_bot(self, chat_id: int, message_id: int):
         """

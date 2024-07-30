@@ -282,25 +282,25 @@ def process_review_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChan
     if not c.old_mode_enabled:
         if isinstance(e, LastChatMessageChangedEvent):
             return
-        message_type, its_me = e.message.type, f" {c.account.username} " in str(e.message)
-        message_text, chat_id = str(e.message), e.message.chat_id
+        obj = e.message
+        message_type, its_me = obj.type, f" {c.account.username} " in str(obj)
+        message_text, chat_id = str(obj), obj.chat_id
+
     else:
-        message_type, its_me = e.chat.last_message_type, f" {c.account.username} " in str(e.chat)
-        message_text, chat_id = str(e.chat), e.chat.id
+        obj = e.chat
+        message_type, its_me = obj.last_message_type, f" {c.account.username} " in str(obj)
+        message_text, chat_id = str(obj), obj.id
 
     if message_type not in [types.MessageTypes.NEW_FEEDBACK, types.MessageTypes.FEEDBACK_CHANGED] or its_me:
         return
 
     def send_reply():
-        res = fp_utils.RegularExpressions()
-        order_id = res.ORDER_ID.findall(message_text)
-        if not order_id:
-            return
-        order_id = order_id[0][1:]
         try:
-            order = c.account.get_order(order_id)
+            order = c.get_order_from_object(obj)
+            if order is None:
+                raise Exception("Не удалось получить объект заказа.")
         except:
-            logger.error(f"Не удалось получить информацию о заказе #{order_id}.")
+            logger.error(f"Не удалось получить информацию о заказе для сообщения: \"{message_text}\".")
             logger.debug("TRACEBACK", exc_info=True)
             return
 
@@ -332,9 +332,9 @@ def process_review_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChan
 
                 reply_text = cardinal_tools.format_order_text(c.MAIN_CFG["ReviewReply"].get(text), order)
                 reply_text = format_text4review(reply_text)
-                c.account.send_review(order_id, reply_text)
+                c.account.send_review(order.id, reply_text)
             except:
-                logger.error(f"Произошла ошибка при ответе на отзыв {order_id}.")
+                logger.error(f"Произошла ошибка при ответе на отзыв {order.id}.")
                 logger.debug("TRACEBACK", exc_info=True)
         send_review_notification(c, order, chat_id, reply_text)
     Thread(target=send_reply, daemon=True).start()
@@ -400,7 +400,7 @@ def test_auto_delivery_handler(c: Cardinal, e: NewMessageEvent | LastChatMessage
     date_text = date.strftime("%H:%M")
     html = ORDER_HTML_TEMPLATE.replace("$username", chat_name).replace("$lot_name", lot_name).replace("$date", date_text)
 
-    fake_order = OrderShortcut("ADTEST", lot_name, 0.0, "?", chat_name, 000000, chat_id, types.OrderStatuses.PAID,
+    fake_order = OrderShortcut("ADTEST", lot_name, 0.0, Currency.UNKNOWN, chat_name, 000000, chat_id, types.OrderStatuses.PAID,
                                date, "Авто-выдача, Тест", html)
 
     fake_event = NewOrderEvent(e.runner_tag, fake_order)

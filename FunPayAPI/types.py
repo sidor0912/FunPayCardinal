@@ -3,12 +3,26 @@
 """
 from __future__ import annotations
 from typing import Literal, overload, Optional
+
+import FunPayAPI.common.enums
 from .common.utils import RegularExpressions
-from .common.enums import MessageTypes, OrderStatuses, SubCategoryTypes
+from .common.enums import MessageTypes, OrderStatuses, SubCategoryTypes, Currency
 import datetime
 
 
-class ChatShortcut:
+class BaseOrderInfo:
+    """
+    Класс, представляющий информацию о заказе.
+    """
+    def __init__(self):
+        self._order: Order | None = None
+        """Объект заказа"""
+        self._order_attempt_made: bool = False
+        """Пытались ли уже получить заказ?"""
+        self._order_attempt_error: bool = False
+        """Возникла ли ошибка при получении заказа?"""
+
+class ChatShortcut(BaseOrderInfo):
     """
     Данный класс представляет виджет чата со страницы https://funpay.com/chat/
 
@@ -44,6 +58,7 @@ class ChatShortcut:
         """Тип последнего сообщения."""
         self.html: str = html
         """HTML код виджета чата."""
+        BaseOrderInfo.__init__(self)
 
     def get_last_message_type(self) -> MessageTypes:
         """
@@ -134,7 +149,7 @@ class Chat:
         """Последние 100 сообщений чата."""
 
 
-class Message:
+class Message(BaseOrderInfo):
     """
     Данный класс представляет отдельное сообщение.
 
@@ -190,6 +205,7 @@ class Message:
         """Отправлено ли сообщение с помощью :meth:`FunPayAPI.Account.send_message`?"""
         self.badge: str | None = badge_text
         """Текст бэйджика тех. поддержки или автовыдачи FunPay."""
+        BaseOrderInfo.__init__(self)
 
     def get_message_type(self) -> MessageTypes:
         """
@@ -244,7 +260,7 @@ class Message:
         return self.text if self.text is not None else self.image_link if self.image_link is not None else ""
 
 
-class OrderShortcut:
+class OrderShortcut(BaseOrderInfo):
     """
     Данный класс представляет виджет заказа со страницы https://funpay.com/orders/trade
 
@@ -258,7 +274,7 @@ class OrderShortcut:
     :type price: :obj:`float`
 
     :param currency: валюта заказа.
-    :type currency: :obj:`str`
+    :type currency: :class:`FunPayAPI.common.enums.Currency`
 
     :param buyer_username: никнейм покупателя.
     :type buyer_username: :obj:`str`
@@ -284,7 +300,7 @@ class OrderShortcut:
     :param dont_search_amount: не искать кол-во товара.
     :type dont_search_amount: :obj:`bool`, опционально
     """
-    def __init__(self, id_: str, description: str, price: float, currency: str,
+    def __init__(self, id_: str, description: str, price: float, currency: Currency,
                  buyer_username: str, buyer_id: int, chat_id: int | str, status: OrderStatuses,
                  date: datetime.datetime, subcategory_name: str, html: str, dont_search_amount: bool = False):
         self.id: str = id_ if not id_.startswith("#") else id_[1:]
@@ -293,7 +309,7 @@ class OrderShortcut:
         """Описание заказа."""
         self.price: float = price
         """Цена заказа."""
-        self.currency: str = currency
+        self.currency: Currency = currency
         """Валюта заказа."""
         self.amount: int | None = self.parse_amount() if not dont_search_amount else None
         """Кол-во товаров."""
@@ -311,6 +327,7 @@ class OrderShortcut:
         """Название подкатегории, к которой относится заказ."""
         self.html: str = html
         """HTML код виджета заказа."""
+        BaseOrderInfo.__init__(self)
 
     def parse_amount(self) -> int:
         """
@@ -352,7 +369,7 @@ class Order:
     :type sum_: :obj:`float`
 
     :param currency: валюта заказа.
-    :type currency: :obj:`str`
+    :type currency: :class:`FunPayAPI.common.enums.Currency`
 
     :param buyer_id: ID покупателя.
     :type buyer_id: :obj:`int`
@@ -379,7 +396,7 @@ class Order:
     :type order_secrets: :obj:`list` of :obj:`str`
     """
     def __init__(self, id_: str, status: OrderStatuses, subcategory: SubCategory, short_description: str | None,
-                 full_description: str | None, sum_: float, currency: str,
+                 full_description: str | None, sum_: float, currency: Currency,
                  buyer_id: int, buyer_username: str,
                  seller_id: int, seller_username: str, chat_id: str | int,
                  html: str, review: Review | None, order_secrets: list[str]):
@@ -397,7 +414,7 @@ class Order:
         """Полное описание заказа."""
         self.sum: float = sum_
         """Сумма заказа."""
-        self.currency: str = currency
+        self.currency: Currency = currency
         """Валюта заказа."""
         self.buyer_id: int = buyer_id
         """ID покупателя."""
@@ -415,6 +432,9 @@ class Order:
         """Объект отзыва заказа."""
         self.order_secrets: list[str] = order_secrets
         """Список товаров автовыдачи FunPay заказа."""
+
+    def __str__(self):
+        return f"#{self.id}"
 
 class Category:
     """
@@ -636,7 +656,7 @@ class LotShortcut:
     :type price: :obj:`float`
 
     :param currency: валюта лота.
-    :type currency: :obj:`str`
+    :type currency: :class:`FunPayAPI.common.enums.Currency`
 
     :param subcategory: подкатегория лота.
     :type subcategory: :class:`FunPayAPI.types.SubCategory`
@@ -645,7 +665,7 @@ class LotShortcut:
     :type html: :obj:`str`
     """
     def __init__(self, id_: int | str, server: str | None,
-                 description: str | None, price: float, currency: str, subcategory: SubCategory, seller: str, stars: float | int | None, html: str):
+                 description: str | None, price: float, currency: Currency, subcategory: SubCategory, seller: str, stars: float | int | None, html: str):
         self.id: int | str = id_
         if isinstance(self.id, str) and self.id.isnumeric():
             self.id = int(self.id)
@@ -658,7 +678,7 @@ class LotShortcut:
         """Краткое описание (название) лота."""
         self.price: float = price
         """Цена лота."""
-        self.currency: str = currency
+        self.currency: Currency = currency
         """Валюта лота."""
         self.seller: str = seller
         """Никнейм продавца."""

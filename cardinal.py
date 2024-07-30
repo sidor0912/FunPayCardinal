@@ -1,5 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Callable
+
+from FunPayAPI import types
+
 if TYPE_CHECKING:
     from configparser import ConfigParser
 
@@ -22,7 +25,7 @@ import FunPayAPI
 import handlers
 import announcements
 from locales.localizer import Localizer
-
+from FunPayAPI import utils as fp_utils
 from Utils import cardinal_tools
 import tg_bot.bot
 
@@ -217,7 +220,7 @@ class Cardinal(object):
                 logger.error(_("crd_acc_get_timeout_err"))
             except (FunPayAPI.exceptions.UnauthorizedError, FunPayAPI.exceptions.RequestFailedError) as e:
                 logger.error(e.short_str())
-                logger.debug(e)
+                logger.debug(f"TRACEBACK {e}")
             except:
                 logger.error(_("crd_acc_get_unexpected_err"))
                 logger.debug("TRACEBACK", exc_info=True)
@@ -311,6 +314,7 @@ class Cardinal(object):
             # В любом другом случае пытаемся поднять лоты всех категорий, относящихся к игре
             raise_ok = False
             error_text = ""
+            time_delta = ""
             try:
                 time.sleep(0.5)
                 self.account.raise_lots(subcat.category.id)
@@ -351,8 +355,44 @@ class Cardinal(object):
                 next_call = next_time if next_time < next_call else next_call
                 if not raise_ok:
                     continue
-            self.run_handlers(self.post_lots_raise_handlers, (self, subcat.category, error_text+time_delta))
+            self.run_handlers(self.post_lots_raise_handlers, (self, subcat.category, error_text + time_delta))
         return next_call if next_call < float("inf") else 10
+
+    def get_order_from_object(self, obj: types.OrderShortcut | types.Message | types.ChatShortcut,
+                              order_id: str | None = None) -> None | types.Order:
+        if obj._order_attempt_error:
+            return
+        if obj._order_attempt_made:
+
+            while obj._order is None and not obj._order_attempt_error:
+                time.sleep(0.1)
+            return obj._order                
+        obj._order_attempt_made = True
+        if type(obj) not in (types.Message, types.ChatShortcut, types.OrderShortcut):
+            obj._order_attempt_error = True
+            raise Exception("Неправильный тип объекта")
+        if not order_id:
+            if isinstance(obj, types.OrderShortcut):
+                order_id = obj.id
+                if order_id == "ADTEST":
+                    obj._order_attempt_error = True
+                    return
+            elif isinstance(obj, types.Message) or isinstance(obj, types.ChatShortcut):
+                order_id = fp_utils.RegularExpressions().ORDER_ID.findall(str(obj))
+                if not order_id:
+                    obj._order_attempt_error = True
+                    return
+                order_id = order_id[0][1:]
+        for i in range(2, -1, -1):
+            try:
+                obj._order = self.account.get_order(order_id)
+                logger.info(f"Получил информацию о заказе {obj._order}")
+                return obj._order
+            except:
+                logger.warning(f"Произошла ошибка при получении заказа #{order_id}. Осталось {i} попыток.")
+                logger.debug("TRACEBACK", exc_info=True)
+                time.sleep(1)
+        obj._order_attempt_error = True
 
     @staticmethod
     def split_text(text: str) -> list[str]:
@@ -402,7 +442,7 @@ class Cardinal(object):
                 entities.extend(self.split_text(text))
         return entities
 
-    def send_message(self, chat_id: int, message_text: str, chat_name: str | None = None,  attempts: int = 3,
+    def send_message(self, chat_id: int | str, message_text: str, chat_name: str | None = None,  attempts: int = 3,
                      watermark: bool = True) -> list[FunPayAPI.types.Message] | None:
         """
         Отправляет сообщение в чат FunPay.
@@ -556,7 +596,7 @@ class Cardinal(object):
             self.telegram.setup_commands()
             try:
                 self.telegram.edit_bot()
-            except AttributeError:
+            except AttributeError: #todo убрать когда-то
                 logger.warning("Произошла ошибка при изменении бота Telegram. Обновляю библиотеку...")
                 logger.debug("TRACEBACK", exc_info=True)
                 try:

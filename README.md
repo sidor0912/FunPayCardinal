@@ -19,7 +19,6 @@
 - [Установка](#arrow_down-установка)
   - [Windows](#large_blue_diamond-windows)
   - [Linux (Ubuntu)](#hotsprings-linux-ubuntu)
-- [Настройка конфигов](#hammer_and_wrench-настройка-конфигов)
 - [Установка плагинов](#electric_plug-установка-плагинов)
 - [Мне нужна помощь](#question-мне-нужна-помощь)
 - [Star it!](#star-star-it!)
@@ -125,15 +124,6 @@
 9. Если снова возникает ошибка, вернитесь к шагу 4.
 
 
-
-
-## :hammer_and_wrench: Настройка конфигов
-
-1. Все конфиги находятся в папке `configs`
-2. Все инструкции по настройке конфигов находятся внутри самих конфигов.
-3. Основной конфиг со всеми переключателями: `configs/_main.cfg`
-4. Конфиг автоответчика: `configs/auto_response.cfg`
-5. Конфиг автовыдачи: `configs/auto_delivery.cfg`
 
 ## :electric_plug: Установка плагинов
 

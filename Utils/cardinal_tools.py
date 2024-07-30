@@ -119,6 +119,7 @@ def load_old_users(greetings_cooldown: float) -> dict[int, float]:
     with open(f"storage/cache/old_users.json", "r", encoding="utf-8") as f:
         users = f.read()
     users = json.loads(users)
+    #todo убрать позже, конвертация для старых версий кардинала
     if type(users) == list:
         users = {user: time.time() for user in users}
     else:

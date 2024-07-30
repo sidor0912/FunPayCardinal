@@ -5,7 +5,7 @@
 import string
 import random
 import re
-
+from .enums import Currency
 
 MONTHS = {
     "января": 1,
@@ -58,6 +58,18 @@ def parse_wait_time(response: str) -> int:
         return (int(response[1])) * 3600 - 60*30
     else:
         return 10
+
+
+def parse_currency(s: str) -> Currency:
+    if any([i.lower() in s.lower() for i in ("RUB", "₽")]):
+        return Currency.RUB
+    if any([i.lower() in s.lower() for i in ("EUR", "€")]):
+        return Currency.EUR
+    if any([i.lower() in s.lower() for i in ("USD", "$")]):
+        return Currency.USD
+    if "¤" in s:
+        return Currency.RUB
+    return Currency.UNKNOWN
 
 
 class RegularExpressions(object):

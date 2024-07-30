@@ -118,6 +118,17 @@ class Currency(Enum):
     """Рубль"""
     EUR = 2
     """Евро"""
+    UNKNOWN = 3
+    """Неизвестная валюта"""
+
+    def __str__(self):
+        if self == Currency.USD:
+            return "$"
+        elif self == Currency.RUB:
+            return "₽"
+        elif self == Currency.EUR:
+            return "€"
+        return "¤"
 
 
 class Wallet(Enum):

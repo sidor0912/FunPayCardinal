@@ -1,5 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Literal, Any, Optional, IO
+
+import FunPayAPI.common.enums
+from FunPayAPI.common.utils import parse_currency
 if TYPE_CHECKING:
     from .updater.runner import Runner
 
@@ -213,7 +216,7 @@ class Account:
                 price = float(offer.find("div", {"class": "tc-price"})["data-s"])
             else:
                 price = float(offer.find("div", {"class": "tc-price"}).find("div").text.split()[0])
-            currency = offer.find("div", {"class": "tc-price"}).find("span", class_= "unit").text
+            currency = parse_currency(str(offer.find("div", {"class": "tc-price"}).find("span", class_= "unit").text))
             seller_soup = offer.find("div", class_="tc-user")
             seller = seller_soup.find("div", class_="media-user-name").text.strip()
             rating_stars_soup = seller_soup.find("div", class_="rating-stars")
@@ -290,7 +293,9 @@ class Account:
         if not json_response.get("chat") or not json_response["chat"].get("messages"):
             return []
         if isinstance(chat_id, int):
-            interlocutor_id = int(json_response["chat"]["node"]["name"].split("-")[2])
+            interlocutors = json_response["chat"]["node"]["name"].split("-")[1:]
+            interlocutors.remove(str(self.id))
+            interlocutor_id = int(interlocutors[0])
         else:
             interlocutor_id = None
         return self.__parse_messages(json_response["chat"]["messages"], chat_id, interlocutor_id,
@@ -329,7 +334,9 @@ class Account:
                 result[i.get("id")] = []
                 continue
             if isinstance(i.get("id"), int):
-                interlocutor_id = int(i["data"]["node"]["name"].split("-")[2])
+                interlocutors = i["data"]["node"]["name"].split("-")[1:]
+                interlocutors.remove(str(self.id))
+                interlocutor_id = int(interlocutors[0])
                 interlocutor_name = chats_data[i.get("id")]
             else:
                 interlocutor_id = None
@@ -377,7 +384,7 @@ class Account:
             "x-requested-with": "XMLHttpRequest",
             "content-type": m.content_type,
         }
-
+        #file/addChatImage, file/addOfferImage
         response = self.method("post", f"file/add{type_.title()}Image", headers, m)
 
         if response.status_code == 400:
@@ -821,7 +828,7 @@ class Account:
                     price = float(j.find("div", {"class": "tc-price"})["data-s"])
                 else:
                     price = float(j.find("div", {"class": "tc-price"}).find("div").text.split(" ")[0])
-                currency = j.find("div", {"class": "tc-price"}).find("span", class_="unit").text
+                currency = parse_currency(str(j.find("div", {"class": "tc-price"}).find("span", class_="unit").text))
                 lot_obj = types.LotShortcut(offer_id, server, description, price, currency, subcategory_obj, username, None, str(j))
                 user_obj.add_lot(lot_obj)
         return user_obj
@@ -859,6 +866,19 @@ class Account:
             history = []
         return types.Chat(chat_id, name, link, text, html_response, history)
 
+    def get_order_shortcut(self, order_id: str) -> types.OrderShortcut:
+        """
+        Получает краткую информацию о заказе. РАБОТАЕТ ТОЛЬКО ДЛЯ ПРОДАЖ.
+
+        :param order_id: ID заказа.
+        :type order_id: :obj:`str`
+
+        :return: объекст заказа.
+        :rtype: :class:`FunPayAPI.types.OrderShortcut`
+        """
+        #todo взаимодействие с покупками
+        return self.runner.saved_orders.get(order_id, self.get_sells(id=order_id)[1][0])
+
     def get_order(self, order_id: str) -> types.Order:
         """
         Получает полную информацию о заказе.
@@ -891,7 +911,7 @@ class Account:
         short_description = None
         full_description = None
         sum_ = None
-        currency = "?"
+        currency = FunPayAPI.common.enums.Currency.UNKNOWN
         subcategory = None
         order_secrets = []
         for div in parser.find_all("div", {"class": "param-item"}):
@@ -903,7 +923,7 @@ class Account:
                 full_description = div.find("div").text
             elif h.text == "Сумма":
                 sum_ = float(div.find("span").text.replace(" ", ""))
-                currency = div.find("strong").text
+                currency = parse_currency(str(div.find("strong").text))
             elif h.text in ("Категория", "Валюта"):
                 subcategory_link = div.find("a").get("href")
                 subcategory_split = subcategory_link.split("/")
@@ -1059,7 +1079,7 @@ class Account:
             tc_price = div.find("div", {"class": "tc-price"}).text
             tc_price = tc_price.replace(" ", "")
             price = float(tc_price[:-1])
-            currency = tc_price[-1]
+            currency = parse_currency(tc_price)
 
             buyer_div = div.find("div", {"class": "media-user-name"}).find("span")
             buyer_username = buyer_div.text
@@ -1438,7 +1458,7 @@ class Account:
                         interlocutor_username = author
                         ids[interlocutor_id] = interlocutor_username
 
-            if self.chat_id_private and (image_link := parser.find("a", {"class": "chat-img-link"})):
+            if self.chat_id_private(chat_id) and (image_link := parser.find("a", {"class": "chat-img-link"})):
                 image_link = image_link.get("href")
                 message_text = None
             else:
