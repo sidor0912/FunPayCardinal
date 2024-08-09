@@ -1,6 +1,7 @@
 """
 Проверка на обновления.
 """
+import time
 from logging import getLogger
 from locales.localizer import Localizer
 import requests
@@ -23,32 +24,39 @@ class Release:
     """
     Класс, описывающий релиз.
     """
-    def __init__(self, name: str, description: str, sources_link: str, exe_link: str):
+    def __init__(self, name: str, description: str, sources_link: str):
         """
         :param name: название релиза.
         :param description: описание релиза (список изменений).
         :param sources_link: ссылка на архив с исходниками.
-        :param exe_link: ссылка на архив с exe.
         """
         self.name = name
         self.description = description
         self.sources_link = sources_link
-        self.exe_link = exe_link
 
 
 # Получение данных о новом релизе
-def get_tags() -> list[str] | None:
+def get_tags(current_tag: str) -> list[str] | None:
     """
     Получает все теги с GitHub репозитория.
+    :param current_tag: текущий тег.
 
     :return: список тегов.
     """
     try:
-        response = requests.get("https://api.github.com/repos/sidor0912/FunPayCardinal/tags", headers=HEADERS)
-        if not response.status_code == 200:
-            logger.debug(f"Update status code is {response.status_code}!")
-            return None
-        json_response = response.json()
+        page = 1
+        json_response: list[dict] = []
+        while not any([el.get("name") == current_tag for el in json_response]):
+            if page != 1:
+                time.sleep(1)
+            response = requests.get(f"https://api.github.com/repos/sidor0912/FunPayCardinal/tags?page={page}",
+                                    headers=HEADERS)
+            if not response.status_code == 200 or not response.json():
+                logger.debug(f"Update status code is {response.status_code}!")
+                return None
+            else:
+                json_response.extend(response.json())
+                page += 1
         tags = [i.get("name") for i in json_response]
         return tags or None
     except:
@@ -77,43 +85,61 @@ def get_next_tag(tags: list[str], current_tag: str):
     return tags[curr_index-1]
 
 
-def get_release(tag: str) -> Release | None:
+def get_releases(from_tag: str) -> list[Release] | None:
     """
-    Получает данные о релизе.
+    Получает данные о доступных релизах, начиная с тега.
 
-    :param tag: тег релиза.
+    :param from_tag: тег релиза, с которого начинать поиск.
 
-    :return: данные релиза.
+    :return: данные релизов.
     """
     try:
-        response = requests.get(f"https://api.github.com/repos/sidor0912/FunPayCardinal/releases/tags/{tag}",
-                                headers=HEADERS)
-        if not response.status_code == 200:
-            logger.debug(f"Update status code is {response.status_code}!")
-            return None
-        json_response = response.json()
-        name = json_response.get("name")
-        description = json_response.get("body")
-        sources = json_response.get("zipball_url")
-        exe = f"https://github.com/sidor0912/FunPayCardinal/archive/refs/tags/{tag}.zip"
-        return Release(name, description, sources, exe)
+        page = 1
+        json_response: list[dict] = []
+        while not any([el.get("tag_name") == from_tag for el in json_response]):
+            if page != 1:
+                time.sleep(1)
+            response = requests.get(f"https://api.github.com/repos/sidor0912/FunPayCardinal/releases?page={page}",
+                                    headers=HEADERS)
+            if not response.status_code == 200 or not response.json():
+                logger.debug(f"Update status code is {response.status_code}!")
+                return None
+            else:
+                json_response.extend(response.json())
+                page += 1
+        result = []
+        to_append = False
+        for el in json_response[::-1]:
+            if (name := el.get("tag_name")) == from_tag:
+                to_append = True
+
+            if to_append:
+                description = el.get("body")
+                sources = el.get("zipball_url")
+                if "#unskippable" in description:
+                    to_append = False
+                release = Release(name, description, sources)
+                result.append(release)
+                if not to_append:
+                    break
+        return result if result else None
     except:
         logger.debug("TRACEBACK", exc_info=True)
         return None
 
 
-def get_new_release(current_tag) -> int | Release:
+def get_new_releases(current_tag) -> int | list[Release]:
     """
     Проверяет на наличие обновлений.
 
     :param current_tag: тег текущей версии.
 
-    :return: объект релиза или код ошибки:
+    :return: список объектов релизов или код ошибки:
         1 - произошла ошибка при получении списка тегов.
         2 - текущий тег является последним.
         3 - не удалось получить данные о релизе.
     """
-    tags = get_tags()
+    tags = get_tags(current_tag)
     if tags is None:
         return 1
 
@@ -121,10 +147,10 @@ def get_new_release(current_tag) -> int | Release:
     if next_tag is None:
         return 2
 
-    release = get_release(next_tag)
-    if release is None:
+    releases = get_releases(next_tag)
+    if releases is None:
         return 3
-    return release
+    return releases
 
 
 #  Загрузка нового релиза

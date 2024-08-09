@@ -271,7 +271,7 @@ update_backup = "✅ Backup of configs, storage and plugins <code>backup.zip</co
                         "⚠️ DO NOT SEND this archive to ANYONE. It contains ABSOLUTELY ALL content and settings of the bot (including golden_key and product files)."
 update_backup_error = "❌ Failed to back up configs, storage and plugins."
 update_backup_not_found = "❌ Backup not found."
-update_downloaded = "✅ The update is downloaded. Installing ..."
+update_downloaded = "✅ The update {} is downloaded. Installing ..."
 update_download_error = "❌ An error occurred while downloading the update."
 update_done = "✅ The update is installed! Restart the FPC with the /restart command."
 update_done_exe = "✅ The update is installed! New <code>FPC.exe</code> is in <code>update</code> folder. "\

@@ -506,16 +506,18 @@ class TGBot:
 
     def check_updates(self, m: Message):
         curr_tag = f"v{self.cardinal.VERSION}"
-        release = updater.get_new_release(curr_tag)
-        if isinstance(release, int):
+        releases = updater.get_new_releases(curr_tag)
+        if isinstance(releases, int):
             errors = {
                 1: ["update_no_tags", ()],
                 2: ["update_lasted", (curr_tag,)],
                 3: ["update_get_error", ()],
             }
-            self.bot.send_message(m.chat.id, _(errors[release][0], *errors[release][1]))
+            self.bot.send_message(m.chat.id, _(errors[releases][0], *errors[releases][1]))
             return
-        self.bot.send_message(m.chat.id, _("update_available", release.name, release.description))
+        for release in releases:
+            self.bot.send_message(m.chat.id, _("update_available", release.name, release.description))
+            time.sleep(1)
         self.bot.send_message(m.chat.id, _("update_update"))
 
     def get_backup (self, m: Message):
@@ -537,23 +539,24 @@ class TGBot:
 
     def update(self, m: Message):
         curr_tag = f"v{self.cardinal.VERSION}"
-        release = updater.get_new_release(curr_tag)
-        if isinstance(release, int):
+        releases = updater.get_new_releases(curr_tag)
+        if isinstance(releases, int):
             errors = {
                 1: ["update_no_tags", ()],
                 2: ["update_lasted", (curr_tag,)],
                 3: ["update_get_error", ()],
             }
-            self.bot.send_message(m.chat.id, _(errors[release][0], *errors[release][1]))
+            self.bot.send_message(m.chat.id, _(errors[releases][0], *errors[releases][1]))
             return
 
         if not self.create_backup(m):
             return
-        if updater.download_zip(release.exe_link if getattr(sys, "frozen", False) else release.sources_link) \
+        release = releases[-1]
+        if updater.download_zip(release.sources_link) \
                 or (release_folder := updater.extract_update_archive()) == 1:
             self.bot.send_message(m.chat.id, _("update_download_error"))
             return
-        self.bot.send_message(m.chat.id, _("update_downloaded"))
+        self.bot.send_message(m.chat.id, _("update_downloaded").format(release.name))
 
         if updater.install_release(release_folder):
             self.bot.send_message(m.chat.id, _("update_install_error"))
