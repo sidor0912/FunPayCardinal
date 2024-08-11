@@ -535,6 +535,9 @@ ntfc_new_order_ad_disabled = "ℹ️ The goods will not be delivered because aut
 ntfc_new_order_ad_disabled_for_lot = "ℹ️ The goods will not be delivered because auto-delivery is disabled for this item."
 ntfc_new_order_user_blocked = "ℹ️ The goods will not be delivered, because the user is on the black list and the auto-delivery lock is on."
 ntfc_new_order_will_be_delivered = "ℹ️ The product will be delivered as soon as possible."
+ntfc_new_review = "🔮 You received {} for the order <code>{}</code>!\n\n💬<b>Review:</b>\n<code>{}</code>{}"
+ntfc_review_reply_text = "\n\n🗨️<b>Reply:</b> \n<code>{}</code>"
+
 
 # cardinal.py logs
 crd_proxy_detected = "Proxy detected."

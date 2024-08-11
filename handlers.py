@@ -269,10 +269,10 @@ def send_new_msg_notification_handler(c: Cardinal, e: NewMessageEvent) -> None:
 def send_review_notification(c: Cardinal, order: Order, chat_id: int, reply_text: str | None):
     if not c.telegram:
         return
-    reply_text = f"\n\n🗨️<b>Ответ:</b> \n<code>{utils.escape(reply_text)}</code>" if reply_text else ""
+    reply_text = _("ntfc_review_reply_text").format(utils.escape(reply_text)) if reply_text else ""
     Thread(target=c.telegram.send_notification,
-           args=(f"🔮 Вы получили {'⭐' * order.review.stars} за заказ <code>{order.id}</code>!\n\n"
-                 f"💬<b>Отзыв:</b>\n<code>{utils.escape(order.review.text)}</code>{reply_text}",
+           args=(_("ntfc_new_review").format('⭐' * order.review.stars, order.id, utils.escape(order.review.text),
+                                             reply_text),
                  keyboards.new_order(order.id, order.buyer_username, chat_id),
                  utils.NotificationTypes.review),
            daemon=True).start()
