@@ -248,7 +248,7 @@ not_blacklisted = "❌ <code>{}</code> is not blacklisted."
 user_unbanned = "✅ <code>{}</code> is no longer blacklisted."
 blacklist_empty = "❌ Blacklist is empty."
 
-act_edit_watermark = "Enter a new watermark text. For example:\n\n<code>𝑭𝒖𝒏𝑷𝒂𝒚 𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍</code>\n" \
+act_edit_watermark = "Enter a new watermark text. For example:\n{}\n<code>𝑭𝒖𝒏𝑷𝒂𝒚 𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍</code>\n" \
                      "<code>FunPay Cardinal</code>\n<code>[FunPay / Cardinal]</code>\n<code>𝑭𝑷𝑪</code>\n" \
                      "<code>FPC</code>\n<code>🤖</code>\n<code>🐦</code>\n\n" \
                      "You can copy examples by clicking and edit them as you like.\nKeep in mind that on FunPay, the emoji " \
@@ -319,6 +319,7 @@ refund_complete = "✅ The #{} order has been refunded."
 updating_profile = "Updating account statistics (this may take some time)..."
 profile_updating_error = "❌ Failed to update account statistics."
 
+act_change_golden_key = "Enter golden_key"
 cookie_changed = "✅ golden_key successfully changed. Restart the bot with the /restart command."
 change_cookie_incorrect_msg = "❌ Command entered incorrectly! /change_cookie [golden_key]"
 cookie_incorrect_format = "❌ Incorrect format of golden_key. Please try again."
@@ -452,9 +453,9 @@ v_date_text = "<code>$date_text</code> - current date in <i>January 1</i> format
 v_full_date_text = "<code>$full_date_text</code> - current date in <i>January 1, 2020</i> format."
 v_time = "<code>$time</code> - current time in <i>HH:MM</i> format."
 v_full_time = "<code>$full_time</code> - current time in <i>HH:MM:SS</i> format."
-v_photo = "<code>$photo=[PHOTO ID]</code> - photo. Instead of <code>PHOTO ID</code>, "\
+v_photo = "<code>$photo=[PHOTO ID]</code> - photo. Instead of <code>[PHOTO ID]</code>, "\
           "type the photo ID obtained with the /upload_chat_img command."
-v_sleep = "<code>$sleep=[TIME]</code> - delay. Replace <code>TIME</code> "\
+v_sleep = "<code>$sleep=[TIME]</code> - delay. Replace <code>[TIME]</code> "\
           "with the delay time in seconds."
 v_order_id = "<code>$order_id</code> - order ID (without #)"
 v_order_link = "<code>$order_link</code> - link to the order"

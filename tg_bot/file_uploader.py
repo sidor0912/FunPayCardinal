@@ -20,13 +20,15 @@ import os
 logger = logging.getLogger("TGBot")
 
 
-def check_file(tg: TGBot, msg: types.Message) -> bool:
+def check_file(tg: TGBot, msg: types.Message, type_: Literal["py", "cfg", "json", "txt"] | None = None) -> bool:
     """
-    Проверяет выгруженный файл. Чистит состояние пользователя. Отправляет сообщение в TG в зависимости от ошибки.
+    Проверяет выгруженный файл. Отправляет сообщение в TG в зависимости от ошибки.
 
     :param tg: экземпляр TG бота.
 
     :param msg: экземпляр сообщения.
+
+    :param type_: формат файла.
 
     :return: True, если все ок, False, если файл проверку не прошел.
     """
@@ -36,6 +38,11 @@ def check_file(tg: TGBot, msg: types.Message) -> bool:
     if not any((msg.document.file_name.endswith(".cfg"), msg.document.file_name.endswith(".txt"),
                 msg.document.file_name.endswith(".py"), msg.document.file_name.endswith(".json"))):
         tg.bot.send_message(msg.chat.id, "❌ Файл должен быть текстовым.")
+        return False
+    if type_ is not None and not msg.document.file_name.endswith(f".{type_}"):
+        tg.bot.send_message(msg.chat.id, f"❌ Неправильный формат файла: "
+                                         f"<b><u>.{msg.document.file_name.split('.')[-1]}</u></b> "
+                                         f"(вместо <b><u>.{type_}</u></b>)")
         return False
     if msg.document.file_size >= 20971520:
         tg.bot.send_message(msg.chat.id, "❌ Размер файла не должен превышать 20МБ.")
@@ -237,7 +244,8 @@ def init_uploader(cardinal: Cardinal):
 
     def upload_plugin(m: types.Message):
         offset = tg.get_state(m.chat.id, m.from_user.id)["data"]["offset"]
-        if not check_file(tg, m):
+        tg.clear_state(m.chat.id, m.from_user.id, True)
+        if not check_file(tg, m, type_="py"):
             return
         if not download_file(tg, m, f"{utils.escape(m.document.file_name)}",
                              custom_path=f"plugins"):

@@ -324,22 +324,28 @@ class TGBot:
         self.bot.send_message(m.chat.id, utils.generate_profile_text(self.cardinal),
                               reply_markup=skb.REFRESH_BTN())
 
+    def act_change_cookie(self, m: Message):
+        """
+        Активирует режим ввода golden_key.
+        """
+        result = self.bot.send_message(m.chat.id, _("act_change_golden_key"), reply_markup=skb.CLEAR_STATE_BTN())
+        self.set_state(m.chat.id, result.id, m.from_user.id, CBT.CHANGE_GOLDEN_KEY)
+
     def change_cookie(self, m: Message):
         """
         Меняет golden_key аккаунта FunPay.
         """
-        if len(m.text.split(" ")) == 2:
-            golden_key = m.text.split(" ")[-1]
-            if len(golden_key) != 32 or golden_key != golden_key.lower():
-                self.bot.send_message(m.chat.id, _("cookie_incorrect_format"))
-                return
-            self.cardinal.account.golden_key = golden_key
-            self.cardinal.MAIN_CFG.set("FunPay", "golden_key", golden_key)
-            self.cardinal.save_config(self.cardinal.MAIN_CFG, "configs/_main.cfg")
-            self.cardinal.account.get(True)
-            self.bot.send_message(m.chat.id, _("cookie_changed"))
-        else:
-            self.bot.send_message(m.chat.id, _("change_cookie_incorrect_msg"))
+        self.clear_state(m.chat.id, m.from_user.id, True)
+        golden_key = m.text
+        if len(golden_key) != 32 or golden_key != golden_key.lower() or len(golden_key.split()) != 1:
+            self.bot.send_message(m.chat.id, _("cookie_incorrect_format"))
+            return
+        self.bot.delete_message(m.chat.id, m.id)
+        self.cardinal.account.golden_key = golden_key
+        self.cardinal.MAIN_CFG.set("FunPay", "golden_key", golden_key)
+        self.cardinal.save_config(self.cardinal.MAIN_CFG, "configs/_main.cfg")
+        self.cardinal.account.get(True)
+        self.bot.send_message(m.chat.id, _("cookie_changed"))
 
     def update_profile(self, c: CallbackQuery):
         new_msg = self.bot.send_message(c.message.chat.id, _("updating_profile"))
@@ -433,7 +439,10 @@ class TGBot:
         """
         Активирует режим ввода вотемарки сообщений.
         """
-        result = self.bot.send_message(m.chat.id, _("act_edit_watermark"), reply_markup=skb.CLEAR_STATE_BTN())
+        watermark = self.cardinal.MAIN_CFG["Other"]["watermark"]
+        watermark = f"\n<code>{watermark}</code>" if watermark else ""
+        result = self.bot.send_message(m.chat.id, _("act_edit_watermark").format(watermark),
+                                       reply_markup=skb.CLEAR_STATE_BTN())
         self.set_state(m.chat.id, result.id, m.from_user.id, CBT.EDIT_WATERMARK)
 
     def edit_watermark(self, m: Message):
@@ -990,7 +999,7 @@ class TGBot:
         localizer.current_language = lang
         self.cardinal.MAIN_CFG["Other"]["language"] = lang
         self.cardinal.save_config(self.cardinal.MAIN_CFG, "configs/_main.cfg")
-        if localizer.current_language == "eng":
+        if localizer.current_language == "en":
             self.bot.answer_callback_query(c.id, "The translation may be incomplete and contain errors.\n\n"
                                                  "If you find errors in the translation, let @sidor0912 know.\n\n"
                                                  "Thank you :)", show_alert=True)
@@ -1013,7 +1022,9 @@ class TGBot:
 
         self.msg_handler(self.send_settings_menu, commands=["menu", "start"])
         self.msg_handler(self.send_profile, commands=["profile"])
-        self.msg_handler(self.change_cookie, commands=["change_cookie"])
+        self.msg_handler(self.act_change_cookie, commands=["change_cookie"])
+        self.msg_handler(self.change_cookie, func=lambda m: self.check_state(m.chat.id, m.from_user.id,
+                                                                             CBT.CHANGE_GOLDEN_KEY))
         self.cbq_handler(self.update_profile, lambda c: c.data == CBT.UPDATE_PROFILE)
         self.msg_handler(self.act_manual_delivery_test, commands=["test_lot"])
         self.msg_handler(self.act_upload_image, commands=["upload_chat_img", "upload_offer_img"])

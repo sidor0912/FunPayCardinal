@@ -140,7 +140,7 @@ def load_main_config(config_path: str):
         "Other": {
             "watermark": "any+empty",
             "requestsDelay": [str(i) for i in range(1, 101)],
-            "language": ["ru", "eng", "uk"]
+            "language": ["ru", "en", "uk"]
         }
     }
 
@@ -161,6 +161,10 @@ def load_main_config(config_path: str):
                     config.write(f)
             elif section_name == "Other" and param_name == "language" and param_name not in config[section_name]:
                 config.set("Other", "language", "ru")
+                with open("configs/_main.cfg", "w", encoding="utf-8") as f:
+                    config.write(f)
+            elif section_name == "Other" and param_name == "language" and config[section_name][param_name] == "eng":
+                config.set("Other", "language", "en")
                 with open("configs/_main.cfg", "w", encoding="utf-8") as f:
                     config.write(f)
             elif section_name == "Greetings" and param_name == "greetingsCooldown" and param_name not in config[section_name]:

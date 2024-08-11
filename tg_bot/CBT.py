@@ -665,7 +665,7 @@ LANG = "63"
 Callback для смены языка.
 Использование: CBT.LANG:{lang}
 
-lang: ru / eng - язык.
+lang: ru / en / uk - язык.
 """
 
 
@@ -674,4 +674,11 @@ EDIT_GREETINGS_COOLDOWN = "64"
 Callback для активации режима ввода кулдауна приветственного сообщения.
 
 User-state: ожидается сообщение с кулдауном приветственного сообщения (в днях).
+"""
+
+CHANGE_GOLDEN_KEY = "65"
+"""
+Callback для активации режима ввода golden_key.
+
+User-state: ожидается сообщение с golden_key.
 """

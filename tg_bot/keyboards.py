@@ -67,7 +67,7 @@ def power_off(instance_id: int, state: int) -> K:
 def settings_sections(c: Cardinal) -> K:
     lang = c.MAIN_CFG["Other"]["language"]
     langs = {
-        "uk": "🇺🇦", "eng": "🇺🇸", "ru": "🇷🇺"
+        "uk": "🇺🇦", "en": "🇺🇸", "ru": "🇷🇺"
     }
 
     kb = K()

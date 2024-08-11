@@ -246,7 +246,7 @@ not_blacklisted = "❌ <code>{}</code> не в ЧС."
 user_unbanned = "✅ <code>{}</code> видалений з ЧС."
 blacklist_empty = "❌ Чорний список порожній."
 
-act_edit_watermark = "Введи новий текст водяного знака. Наприклад:\n\n<code>𝑭𝒖𝒏𝑷𝒂𝒚 𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍</code>\n" \
+act_edit_watermark = "Введи новий текст водяного знака. Наприклад:\n{}\n<code>𝑭𝒖𝒏𝑷𝒂𝒚 𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍</code>\n" \
                      "<code>FunPay Cardinal</code>\n<code>[FunPay / Cardinal]</code>\n<code>𝑭𝑷𝑪</code>\n" \
                      "<code>FPC</code>\n<code>🤖</code>\n<code>🐦</code>\n\n" \
                      "Приклади можна скопіювати натисканням і відредагувати на свій розсуд.\nВрахуй, що на FunPay емодзі " \
@@ -319,8 +319,8 @@ refund_complete = "✅ Кошти за замовлення <code>#{}</code> п�
 updating_profile = "Оновлюю статистику облікового запису (це може зайняти деякий час)..."
 profile_updating_error = "❌ Не вдалося оновити статистику облікового запису."
 
+act_change_golden_key = "Введи golden_key"
 cookie_changed = "✅ golden_key успішно змінено. Перезапустіть бота командою /restart."
-change_cookie_incorrect_msg = "❌ Команда введена неправильно! /change_cookie [golden_key]"
 cookie_incorrect_format = "❌ Неправильний формат golden_key. Спробуй ще раз."
 
 ad_lot_not_found_err = "❌ Не вдалося виявити лот з індексом <code>{}</code>."
@@ -453,9 +453,9 @@ v_date_text = "<code>$date_text</code> - поточна дата у формат
 v_full_date_text = "<code>$full_date_text</code> - поточна дата у форматі <i>1 січня 2001 року</i>."
 v_time = "<code>$time</code> - поточний час у форматі <i>ГГ:ХХ</i>."
 v_full_time = "<code>$full_time</code> - поточний час у форматі <i>ГГ:ХХ:СС</i>."
-v_photo = "<code>$photo=[PHOTO ID]</code> - фотографія. Замість <code>PHOTO ID</code> "\
+v_photo = "<code>$photo=[PHOTO ID]</code> - фотографія. Замість <code>[PHOTO ID]</code> "\
           "впиши ID фотографії, отриманий за допомогою команди /upload_chat_img"
-v_sleep = "<code>$sleep=[TIME]</code> - затримка. Замініть <code>TIME</code> "\
+v_sleep = "<code>$sleep=[TIME]</code> - затримка. Замініть <code>[TIME]</code> "\
           "на час затримки в секундах."
 v_order_id = "<code>$order_id</code> - ID замовлення (без #)"
 v_order_link = "<code>$order_link</code> - посилання на замовлення"

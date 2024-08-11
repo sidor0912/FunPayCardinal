@@ -1,4 +1,5 @@
-from locales import ru, eng, uk
+from locales import ru, en, uk
+
 
 class Localizer:
     def __new__(cls, curr_lang: str | None = None):
@@ -6,7 +7,7 @@ class Localizer:
             cls.instance = super(Localizer, cls).__new__(cls)
             cls.instance.languages = {
                 "ru": ru,
-                "eng": eng,
+                "en": en,
                 "uk": uk
             }
             cls.instance.default_language = "ru"
