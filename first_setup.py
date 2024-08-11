@@ -53,6 +53,7 @@ default_config = {
     },
 
     "OrderConfirm": {
+        "watermark": "1",
         "sendReply": "0",
         "replyText": "$username, спасибо за подтверждение заказа $order_id!\nЕсли не сложно, оставь, пожалуйста, отзыв!"
     },

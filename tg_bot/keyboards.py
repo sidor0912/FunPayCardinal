@@ -172,7 +172,9 @@ def order_confirm_reply_settings(c: Cardinal):
     """
     kb = K()\
         .add(B(_("oc_send_reply", bool_to_text(int(c.MAIN_CFG['OrderConfirm']['sendReply']))),
-               None, f"{CBT.SWITCH}:OrderConfirm:sendReply"))\
+               None, f"{CBT.SWITCH}:OrderConfirm:sendReply")) \
+        .add(B(_("oc_watermark", bool_to_text(int(c.MAIN_CFG['OrderConfirm']['watermark']))),
+               None, f"{CBT.SWITCH}:OrderConfirm:watermark")) \
         .add(B(_("oc_edit_message"), None, CBT.EDIT_ORDER_CONFIRM_REPLY_TEXT))\
         .add(B(_("gl_back"), None, CBT.MAIN2))
     return kb

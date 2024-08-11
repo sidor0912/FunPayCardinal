@@ -722,7 +722,8 @@ def send_thank_u_message_handler(c: Cardinal, e: OrderStatusChangedEvent):
     logger.info(f"Пользователь $YELLOW{e.order.buyer_username}$RESET подтвердил выполнение заказа "
                 f"$YELLOW{e.order.id}.$RESET")
     logger.info(f"Отправляю ответное сообщение ...")
-    Thread(target=c.send_message, args=(chat.id, text, e.order.buyer_username), kwargs={'watermark': False}, daemon=True).start()
+    Thread(target=c.send_message, args=(chat.id, text, e.order.buyer_username),
+           kwargs={'watermark': c.MAIN_CFG["OrderConfirm"].getboolean("watermark")}, daemon=True).start()
 
 
 def send_order_confirmed_notification_handler(cardinal: Cardinal, event: OrderStatusChangedEvent):

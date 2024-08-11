@@ -110,6 +110,7 @@ def load_main_config(config_path: str):
         },
 
         "OrderConfirm": {
+            "watermark": ["0", "1"],
             "sendReply": ["0", "1"],
             "replyText": "any"
         },
@@ -149,7 +150,7 @@ def load_main_config(config_path: str):
 
         for param_name in values[section_name]:
 
-            # UPDATE 009
+            # UPDATE
             if section_name == "FunPay" and param_name == "oldMsgGetMode" and param_name not in config[section_name]:
                 config.set("FunPay", "oldMsgGetMode", "0")
                 with open("configs/_main.cfg", "w", encoding="utf-8") as f:
@@ -166,7 +167,11 @@ def load_main_config(config_path: str):
                 config.set("Greetings", "greetingsCooldown", "2")
                 with open("configs/_main.cfg", "w", encoding="utf-8") as f:
                     config.write(f)
-            # END OF UPDATE 009
+            elif section_name == "OrderConfirm" and param_name == "watermark" and param_name not in config[section_name]:
+                config.set("OrderConfirm", "watermark", "1")
+                with open("configs/_main.cfg", "w", encoding="utf-8") as f:
+                    config.write(f)
+            # END OF UPDATE
 
             try:
                 if values[section_name][param_name] == "any":
