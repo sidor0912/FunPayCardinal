@@ -1011,7 +1011,7 @@ class TGBot:
         self.cbq_handler(self.param_disabled, lambda c: c.data.startswith(CBT.PARAM_DISABLED))
         self.msg_handler(self.run_file_handlers, content_types=["photo", "document"], func=lambda m: self.is_file_handler(m))
 
-        self.msg_handler(self.send_settings_menu, commands=["menu"])
+        self.msg_handler(self.send_settings_menu, commands=["menu", "start"])
         self.msg_handler(self.send_profile, commands=["profile"])
         self.msg_handler(self.change_cookie, commands=["change_cookie"])
         self.cbq_handler(self.update_profile, lambda c: c.data == CBT.UPDATE_PROFILE)
