@@ -21,7 +21,7 @@
   - [Linux (Ubuntu)](#hotsprings-linux-ubuntu)
 - [Установка плагинов](#electric_plug-установка-плагинов)
 - [Мне нужна помощь](#question-мне-нужна-помощь)
-- [Star it!](#star-star-it!)
+- [Star it](#star-star-it)
 
 
 ## :robot: **Возможности**
@@ -137,5 +137,5 @@
 ## :question: Мне нужна помощь
 Если у вас остались какие-либо вопросы, мы с радостью ответим на них в нашем [Telegram чате](https://t.me/funpay_cardinal).
 
-## :star: Star it!
+## :star: Star it
 Если вам удобно пользоваться FunPay Cardinal, не забудьте поставить :star: звезду :star: данному проекту в правом верхнем углу GitHub-страницы (нужно быть авторизованным в свой аккаунт) :)
