@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from cardinal import Cardinal
 
@@ -22,7 +23,6 @@ from telebot.types import InlineKeyboardMarkup as K, InlineKeyboardButton as B, 
 from tg_bot import utils, static_keyboards as skb, keyboards as kb, CBT
 from Utils import cardinal_tools, updater
 from locales.localizer import Localizer
-
 
 logger = logging.getLogger("TGBot")
 localizer = Localizer()
@@ -184,7 +184,8 @@ class TGBot:
         if chat_id not in self.notification_settings:
             self.notification_settings[chat_id] = {}
 
-        self.notification_settings[chat_id][notification_type] = not self.is_notification_enabled(chat_id, notification_type)
+        self.notification_settings[chat_id][notification_type] = not self.is_notification_enabled(chat_id,
+                                                                                                  notification_type)
         utils.save_notification_settings(self.notification_settings)
         return self.notification_settings[chat_id][notification_type]
 
@@ -281,7 +282,9 @@ class TGBot:
                 self.cardinal.account.logout()
             for chat_id in self.cardinal.telegram.notification_settings.keys():
                 try:
-                    self.cardinal.telegram.bot.send_message(chat_id=chat_id, text=_("access_granted_notification", m.from_user.username, m.from_user.id))
+                    self.cardinal.telegram.bot.send_message(chat_id=chat_id,
+                                                            text=_("access_granted_notification", m.from_user.username,
+                                                                   m.from_user.id))
                 except:
                     logger.error(_("log_tg_notification_error", chat_id))
                     logger.debug("TRACEBACK", exc_info=True)
@@ -451,8 +454,8 @@ class TGBot:
         if re.fullmatch(r"\[[a-zA-Z]+]", watermark):
             self.bot.reply_to(m, _("watermark_error"))
             return
-        preview = f"<a href=\"https://sfunpay.com/s/chat/zb/wl/zbwl4vwc8cc1wsftqnx5.jpg\">⁢</a>" if not\
-            any([i.lower() in watermark.lower() for i in ("🐦", "FPC", "𝑭𝑷𝑪", "𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍", "Cardinal", "Кардинал")]) else\
+        preview = f"<a href=\"https://sfunpay.com/s/chat/zb/wl/zbwl4vwc8cc1wsftqnx5.jpg\">⁢</a>" if not \
+            any([i.lower() in watermark.lower() for i in ("🐦", "FPC", "𝑭𝑷𝑪", "𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍", "Cardinal", "Кардинал")]) else \
             f"<a href=\"https://sfunpay.com/s/chat/kd/8i/kd8isyquw660kcueck3g.jpg\">⁢</a>"
         self.cardinal.MAIN_CFG["Other"]["watermark"] = watermark
         self.cardinal.save_config(self.cardinal.MAIN_CFG, "configs/_main.cfg")
@@ -529,17 +532,19 @@ class TGBot:
             time.sleep(1)
         self.bot.send_message(m.chat.id, _("update_update"))
 
-    def get_backup (self, m: Message):
-        logger.info(f"[IMPORTANT] Получаю бэкап по запросу пользователя $MAGENTA@{m.from_user.username} (id: {m.from_user.id})$RESET.")
+    def get_backup(self, m: Message):
+        logger.info(
+            f"[IMPORTANT] Получаю бэкап по запросу пользователя $MAGENTA@{m.from_user.username} (id: {m.from_user.id})$RESET.")
         if os.path.exists("backup.zip"):
             with open(file_path := "backup.zip", 'rb') as file:
                 modification_time = os.path.getmtime(file_path)
                 formatted_time = time.strftime('%d.%m.%Y %H:%M:%S', time.localtime(modification_time))
-                self.bot.send_document(chat_id=m.chat.id, document=InputFile(file), caption=f'{_("update_backup")}\n\n{formatted_time}')
+                self.bot.send_document(chat_id=m.chat.id, document=InputFile(file),
+                                       caption=f'{_("update_backup")}\n\n{formatted_time}')
         else:
             self.bot.send_message(m.chat.id, _("update_backup_not_found"))
 
-    def create_backup (self, m: Message):
+    def create_backup(self, m: Message):
         if updater.create_backup():
             self.bot.send_message(m.chat.id, _("update_backup_error"))
             return False
@@ -565,7 +570,7 @@ class TGBot:
                 or (release_folder := updater.extract_update_archive()) == 1:
             self.bot.send_message(m.chat.id, _("update_download_error"))
             return
-        self.bot.send_message(m.chat.id, _("update_downloaded").format(release.name))
+        self.bot.send_message(m.chat.id, _("update_downloaded").format(release.name, str(len(releases) - 1)))
 
         if updater.install_release(release_folder):
             self.bot.send_message(m.chat.id, _("update_install_error"))
@@ -645,7 +650,7 @@ class TGBot:
             username = split[2]
         except IndexError:
             username = None
-        result = self.bot.send_message(c.message.chat.id, _("enter_msg_text"),  reply_markup=skb.CLEAR_STATE_BTN())
+        result = self.bot.send_message(c.message.chat.id, _("enter_msg_text"), reply_markup=skb.CLEAR_STATE_BTN())
         self.set_state(c.message.chat.id, result.id, c.from_user.id,
                        CBT.SEND_FP_MESSAGE, {"node_id": node_id, "username": username})
         self.bot.answer_callback_query(c.id)
@@ -715,7 +720,8 @@ class TGBot:
 
     def act_edit_order_confirm_reply_text(self, c: CallbackQuery):
         variables = ["v_date", "v_date_text", "v_full_date_text", "v_time", "v_full_time", "v_username",
-                     "v_order_id", "v_order_link", "v_order_title", "v_game", "v_category", "v_category_fullname", "v_photo", "v_sleep"]
+                     "v_order_id", "v_order_link", "v_order_title", "v_game", "v_category", "v_category_fullname",
+                     "v_photo", "v_sleep"]
         text = f"{_('v_edit_order_confirm_text')}\n\n{_('v_list')}:\n" + "\n".join(_(i) for i in variables)
         result = self.bot.send_message(c.message.chat.id, text, reply_markup=skb.CLEAR_STATE_BTN())
         self.set_state(c.message.chat.id, result.id, c.from_user.id, CBT.EDIT_ORDER_CONFIRM_REPLY_TEXT)
@@ -735,7 +741,7 @@ class TGBot:
         stars = int(c.data.split(":")[1])
         variables = ["v_date", "v_date_text", "v_full_date_text", "v_time", "v_full_time", "v_username",
                      "v_order_id", "v_order_link", "v_order_title", "v_game", "v_category", "v_category_fullname"]
-        text = f"{_('v_edit_review_reply_text', '⭐'*stars)}\n\n{_('v_list')}:\n" + "\n".join(_(i) for i in variables)
+        text = f"{_('v_edit_review_reply_text', '⭐' * stars)}\n\n{_('v_list')}:\n" + "\n".join(_(i) for i in variables)
         result = self.bot.send_message(c.message.chat.id, text, reply_markup=skb.CLEAR_STATE_BTN())
         self.set_state(c.message.chat.id, result.id, c.from_user.id, CBT.EDIT_REVIEW_REPLY_TEXT, {"stars": stars})
         self.bot.answer_callback_query(c.id)
@@ -749,7 +755,7 @@ class TGBot:
         keyboard = K() \
             .row(B(_("gl_back"), callback_data=f"{CBT.CATEGORY}:rr"),
                  B(_("gl_edit"), callback_data=f"{CBT.EDIT_REVIEW_REPLY_TEXT}:{stars}"))
-        self.bot.reply_to(m, _("review_reply_changed", '⭐'*stars), reply_markup=keyboard)
+        self.bot.reply_to(m, _("review_reply_changed", '⭐' * stars), reply_markup=keyboard)
 
     def open_reply_menu(self, c: CallbackQuery):
         """
@@ -886,7 +892,8 @@ class TGBot:
         """
         Открывает 2 страницу основного меню настроек (редактирует сообщение).
         """
-        self.bot.edit_message_text(_("desc_main"), c.message.chat.id, c.message.id, reply_markup=skb.SETTINGS_SECTIONS_2())
+        self.bot.edit_message_text(_("desc_main"), c.message.chat.id, c.message.id,
+                                   reply_markup=skb.SETTINGS_SECTIONS_2())
         self.bot.answer_callback_query(c.id)
 
     def switch_param(self, c: CallbackQuery):
@@ -911,7 +918,8 @@ class TGBot:
         }
         self.bot.edit_message_reply_markup(c.message.chat.id, c.message.id,
                                            reply_markup=sections[section](self.cardinal))
-        logger.info(_("log_param_changed", c.from_user.username, c.from_user.id, option, section, self.cardinal.MAIN_CFG[section][option]))
+        logger.info(_("log_param_changed", c.from_user.username, c.from_user.id, option, section,
+                      self.cardinal.MAIN_CFG[section][option]))
         self.bot.answer_callback_query(c.id)
 
     def switch_chat_notification(self, c: CallbackQuery):
@@ -980,9 +988,9 @@ class TGBot:
             .row(B(_("gl_back"), callback_data=f"{CBT.CATEGORY}:rr"),
                  B(_("gl_edit"), callback_data=f"{CBT.EDIT_REVIEW_REPLY_TEXT}:{stars}"))
         if not text:
-            self.bot.send_message(c.message.chat.id, _("review_reply_empty", "⭐"*stars), reply_markup=keyboard)
+            self.bot.send_message(c.message.chat.id, _("review_reply_empty", "⭐" * stars), reply_markup=keyboard)
         else:
-            self.bot.send_message(c.message.chat.id, _("review_reply_text", "⭐"*stars,
+            self.bot.send_message(c.message.chat.id, _("review_reply_text", "⭐" * stars,
                                                        self.cardinal.MAIN_CFG['ReviewReply'][f'star{stars}ReplyText']),
                                   reply_markup=keyboard)
         self.bot.answer_callback_query(c.id)
@@ -1007,7 +1015,8 @@ class TGBot:
             self.bot.answer_callback_query(c.id, "Переклад складено за допомогою ChatGPT.\n"
                                                  "Повідомте @sidor0912, якщо знайдете помилки.", show_alert=True)
         elif localizer.current_language == "ru":
-            self.bot.answer_callback_query(c.id, '«А я сейчас вам покажу, откуда на Беларусь готовилось нападение»', show_alert=True)
+            self.bot.answer_callback_query(c.id, '«А я сейчас вам покажу, откуда на Беларусь готовилось нападение»',
+                                           show_alert=True)
         self.open_cp(c)
 
     def __register_handlers(self):
@@ -1018,7 +1027,8 @@ class TGBot:
         self.msg_handler(self.reg_admin, func=lambda msg: msg.from_user.id not in self.authorized_users)
         self.cbq_handler(self.ignore_unauthorized_users, lambda c: c.from_user.id not in self.authorized_users)
         self.cbq_handler(self.param_disabled, lambda c: c.data.startswith(CBT.PARAM_DISABLED))
-        self.msg_handler(self.run_file_handlers, content_types=["photo", "document"], func=lambda m: self.is_file_handler(m))
+        self.msg_handler(self.run_file_handlers, content_types=["photo", "document"],
+                         func=lambda m: self.is_file_handler(m))
 
         self.msg_handler(self.send_settings_menu, commands=["menu", "start"])
         self.msg_handler(self.send_profile, commands=["profile"])
@@ -1149,12 +1159,13 @@ class TGBot:
         if "funpay" not in name.lower():
             for m_name in add_to_name:
                 if len(name) + 2 + len(m_name) <= limit:
-                    new_name = f"{(name+' ').ljust(limit - len(m_name)-1, 'ㅤ')} {m_name}"
+                    new_name = f"{(name + ' ').ljust(limit - len(m_name) - 1, 'ㅤ')} {m_name}"
                     break
             if new_name != name:
                 self.bot.set_my_name(new_name)
         time.sleep(1)
-        self.bot.set_my_short_description("🛠️ github.com/sidor0912/FunPayCardinal 💰 @sidor_donate 👨‍💻 @sidor0912 🧩 @fpc_plugins 🔄 @fpc_updates 💬 @funpay_cardinal ")
+        self.bot.set_my_short_description(
+            "🛠️ github.com/sidor0912/FunPayCardinal 💰 @sidor_donate 👨‍💻 @sidor0912 🧩 @fpc_plugins 🔄 @fpc_updates 💬 @funpay_cardinal ")
         self.bot.set_my_description(f"""🐦 𝑭𝒖𝒏𝑷𝒂𝒚 𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍 v{self.cardinal.VERSION}🐦
 
 🤖 Автовыдача товаров

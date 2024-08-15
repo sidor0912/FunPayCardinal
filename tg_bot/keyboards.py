@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from cardinal import Cardinal
 
@@ -18,7 +19,6 @@ from locales.localizer import Localizer
 import logging
 import random
 import os
-
 
 logger = logging.getLogger("TGBot")
 localizer = Localizer()
@@ -77,13 +77,13 @@ def settings_sections(c: Cardinal) -> K:
         cb = f"{CBT.LANG}:{i}" if lang != i else CBT.EMPTY
         lang_buttons.append(B(langs[i], callback_data=cb))
 
-    kb.row(*lang_buttons)\
-        .add(B(_("mm_global"), callback_data=f"{CBT.CATEGORY}:main"))\
-        .add(B(_("mm_notifications"), callback_data=f"{CBT.CATEGORY}:tg"))\
-        .add(B(_("mm_autoresponse"), callback_data=f"{CBT.CATEGORY}:ar"))\
-        .add(B(_("mm_autodelivery"), callback_data=f"{CBT.CATEGORY}:ad"))\
-        .add(B(_("mm_blacklist"),  callback_data=f"{CBT.CATEGORY}:bl"))\
-        .add(B(_("mm_templates"), callback_data=f"{CBT.TMPLT_LIST}:0"))\
+    kb.row(*lang_buttons) \
+        .add(B(_("mm_global"), callback_data=f"{CBT.CATEGORY}:main")) \
+        .add(B(_("mm_notifications"), callback_data=f"{CBT.CATEGORY}:tg")) \
+        .add(B(_("mm_autoresponse"), callback_data=f"{CBT.CATEGORY}:ar")) \
+        .add(B(_("mm_autodelivery"), callback_data=f"{CBT.CATEGORY}:ad")) \
+        .add(B(_("mm_blacklist"), callback_data=f"{CBT.CATEGORY}:bl")) \
+        .add(B(_("mm_templates"), callback_data=f"{CBT.TMPLT_LIST}:0")) \
         .add(B(_("gl_next"), callback_data=CBT.MAIN2))
     return kb
 
@@ -101,15 +101,15 @@ def main_settings(c: Cardinal) -> K:
     def l(s):
         return '🟢' if c.MAIN_CFG["FunPay"].getboolean(s) else '🔴'
 
-    kb = K()\
+    kb = K() \
         .row(B(_("gs_autoraise", l('autoRaise')), None, f"{p}:autoRaise"),
-             B(_("gs_autoresponse", l('autoResponse')), None, f"{p}:autoResponse"))\
+             B(_("gs_autoresponse", l('autoResponse')), None, f"{p}:autoResponse")) \
         .row(B(_("gs_autodelivery", l('autoDelivery')), None, f"{p}:autoDelivery"),
-             B(_("gs_nultidelivery", l('multiDelivery')), None, f"{p}:multiDelivery"))\
+             B(_("gs_nultidelivery", l('multiDelivery')), None, f"{p}:multiDelivery")) \
         .row(B(_("gs_autorestore", l('autoRestore')), None, f"{p}:autoRestore"),
-             B(_("gs_autodisable", l('autoDisable')), None, f"{p}:autoDisable"))\
+             B(_("gs_autodisable", l('autoDisable')), None, f"{p}:autoDisable")) \
         .row(B(_("gs_old_msg_mode", l('oldMsgGetMode')), None, f"{p}:oldMsgGetMode"),
-             B(f"❔", None, f"{CBT.OLD_MOD_HELP}"))\
+             B(f"❔", None, f"{CBT.OLD_MOD_HELP}")) \
         .add(B(_("gl_back"), None, CBT.MAIN))
     return kb
 
@@ -127,13 +127,13 @@ def new_message_view_settings(c: Cardinal) -> K:
     def l(s):
         return '🟢' if c.MAIN_CFG["NewMessageView"].getboolean(s) else '🔴'
 
-    kb = K()\
-        .add(B(_("mv_incl_my_msg", l("includeMyMessages")), None, f"{p}:includeMyMessages"))\
-        .add(B(_("mv_incl_fp_msg", l("includeFPMessages")), None, f"{p}:includeFPMessages"))\
-        .add(B(_("mv_incl_bot_msg", l("includeBotMessages")), None, f"{p}:includeBotMessages"))\
-        .add(B(_("mv_only_my_msg", l("notifyOnlyMyMessages")), None, f"{p}:notifyOnlyMyMessages"))\
-        .add(B(_("mv_only_fp_msg", l("notifyOnlyFPMessages")), None, f"{p}:notifyOnlyFPMessages"))\
-        .add(B(_("mv_only_bot_msg", l("notifyOnlyBotMessages")), None, f"{p}:notifyOnlyBotMessages"))\
+    kb = K() \
+        .add(B(_("mv_incl_my_msg", l("includeMyMessages")), None, f"{p}:includeMyMessages")) \
+        .add(B(_("mv_incl_fp_msg", l("includeFPMessages")), None, f"{p}:includeFPMessages")) \
+        .add(B(_("mv_incl_bot_msg", l("includeBotMessages")), None, f"{p}:includeBotMessages")) \
+        .add(B(_("mv_only_my_msg", l("notifyOnlyMyMessages")), None, f"{p}:notifyOnlyMyMessages")) \
+        .add(B(_("mv_only_fp_msg", l("notifyOnlyFPMessages")), None, f"{p}:notifyOnlyFPMessages")) \
+        .add(B(_("mv_only_bot_msg", l("notifyOnlyBotMessages")), None, f"{p}:notifyOnlyBotMessages")) \
         .add(B(_("gl_back"), None, CBT.MAIN2))
     return kb
 
@@ -150,12 +150,12 @@ def greeting_settings(c: Cardinal):
 
     def l(s):
         return '🟢' if c.MAIN_CFG["Greetings"].getboolean(s) else '🔴'
+
     cd = float(c.MAIN_CFG["Greetings"]["greetingsCooldown"])
     cd = int(cd) if int(cd) == cd else cd
-    kb = K()\
-        .add(B(_("gr_greetings", l("sendGreetings")), None, f"{p}:sendGreetings"))\
-        .add(B(_("gr_cache_init_chats", l("cacheInitChats")), None, f"{p}:cacheInitChats"))\
-        .add(B(_("gr_ignore_sys_msgs", l("ignoreSystemMessages")), None, f"{p}:ignoreSystemMessages"))\
+    kb = K() \
+        .add(B(_("gr_greetings", l("sendGreetings")), None, f"{p}:sendGreetings")) \
+        .add(B(_("gr_ignore_sys_msgs", l("ignoreSystemMessages")), None, f"{p}:ignoreSystemMessages")) \
         .add(B(_("gr_edit_message"), None, CBT.EDIT_GREETINGS_TEXT)) \
         .add(B(_("gr_edit_cooldown").format(cd), None, CBT.EDIT_GREETINGS_COOLDOWN)) \
         .add(B(_("gl_back"), None, CBT.MAIN2))
@@ -170,12 +170,12 @@ def order_confirm_reply_settings(c: Cardinal):
 
     :return: объект клавиатуры настроек ответа на подтверждение заказа.
     """
-    kb = K()\
+    kb = K() \
         .add(B(_("oc_send_reply", bool_to_text(int(c.MAIN_CFG['OrderConfirm']['sendReply']))),
                None, f"{CBT.SWITCH}:OrderConfirm:sendReply")) \
         .add(B(_("oc_watermark", bool_to_text(int(c.MAIN_CFG['OrderConfirm']['watermark']))),
                None, f"{CBT.SWITCH}:OrderConfirm:watermark")) \
-        .add(B(_("oc_edit_message"), None, CBT.EDIT_ORDER_CONFIRM_REPLY_TEXT))\
+        .add(B(_("oc_edit_message"), None, CBT.EDIT_ORDER_CONFIRM_REPLY_TEXT)) \
         .add(B(_("gl_back"), None, CBT.MAIN2))
     return kb
 
@@ -213,18 +213,18 @@ def notifications_settings(c: Cardinal, chat_id: int) -> K:
     def l(nt):
         return '🔔' if c.telegram.is_notification_enabled(chat_id, nt) else '🔕'
 
-    kb = K()\
+    kb = K() \
         .row(B(_("ns_new_msg", l(n.new_message)), None, f"{p}:{n.new_message}"),
-             B(_("ns_cmd", l(n.command)), None, f"{p}:{n.command}"))\
+             B(_("ns_cmd", l(n.command)), None, f"{p}:{n.command}")) \
         .row(B(_("ns_new_order", l(n.new_order)), None, f"{p}:{n.new_order}"),
-             B(_("ns_order_confirmed", l(n.order_confirmed)), None, f"{p}:{n.order_confirmed}"))\
+             B(_("ns_order_confirmed", l(n.order_confirmed)), None, f"{p}:{n.order_confirmed}")) \
         .row(B(_("ns_lot_activate", l(n.lots_restore)), None, f"{p}:{n.lots_restore}"),
-             B(_("ns_lot_deactivate", l(n.lots_deactivate)), None, f"{p}:{n.lots_deactivate}"))\
+             B(_("ns_lot_deactivate", l(n.lots_deactivate)), None, f"{p}:{n.lots_deactivate}")) \
         .row(B(_("ns_delivery", l(n.delivery)), None, f"{p}:{n.delivery}"),
-             B(_("ns_raise", l(n.lots_raise)), None, f"{p}:{n.lots_raise}"))\
-        .add(B(_("ns_new_review", l(n.review)), None, f"{p}:{n.review}"))\
-        .add(B(_("ns_bot_start", l(n.bot_start)), None, f"{p}:{n.bot_start}"))\
-        .add(B(_("ns_other", l(n.other)), None, f"{p}:{n.other}"))\
+             B(_("ns_raise", l(n.lots_raise)), None, f"{p}:{n.lots_raise}")) \
+        .add(B(_("ns_new_review", l(n.review)), None, f"{p}:{n.review}")) \
+        .add(B(_("ns_bot_start", l(n.bot_start)), None, f"{p}:{n.bot_start}")) \
+        .add(B(_("ns_other", l(n.other)), None, f"{p}:{n.other}")) \
         .add(B(_("gl_back"), None, CBT.MAIN))
     return kb
 
@@ -244,8 +244,8 @@ def announcements_settings(c: Cardinal, chat_id: int):
     def l(nt):
         return '🔔' if c.telegram.is_notification_enabled(chat_id, nt) else '🔕'
 
-    kb = K()\
-        .add(B(_("an_an", l(n.announcement)), None, f"{p}:{n.announcement}"))\
+    kb = K() \
+        .add(B(_("an_an", l(n.announcement)), None, f"{p}:{n.announcement}")) \
         .add(B(_("an_ad", l(n.ad)), None, f"{p}:{n.ad}"))
     return kb
 
@@ -263,12 +263,13 @@ def blacklist_settings(c: Cardinal) -> K:
     def l(s):
         return '🟢' if c.MAIN_CFG["BlockList"].getboolean(s) else '🔴'
 
-    kb = K()\
-        .add(B(_("bl_autodelivery", l("blockDelivery")), None, f"{p}:blockDelivery"))\
-        .add(B(_("bl_autoresponse", l("blockResponse")), None, f"{p}:blockResponse"))\
-        .add(B(_("bl_new_msg_notifications", l("blockNewMessageNotification")), None, f"{p}:blockNewMessageNotification"))\
-        .add(B(_("bl_new_order_notifications", l("blockNewOrderNotification")), None, f"{p}:blockNewOrderNotification"))\
-        .add(B(_("bl_command_notifications", l("blockCommandNotification")), None, f"{p}:blockCommandNotification"))\
+    kb = K() \
+        .add(B(_("bl_autodelivery", l("blockDelivery")), None, f"{p}:blockDelivery")) \
+        .add(B(_("bl_autoresponse", l("blockResponse")), None, f"{p}:blockResponse")) \
+        .add(
+        B(_("bl_new_msg_notifications", l("blockNewMessageNotification")), None, f"{p}:blockNewMessageNotification")) \
+        .add(B(_("bl_new_order_notifications", l("blockNewOrderNotification")), None, f"{p}:blockNewOrderNotification")) \
+        .add(B(_("bl_command_notifications", l("blockCommandNotification")), None, f"{p}:blockCommandNotification")) \
         .add(B(_("gl_back"), None, CBT.MAIN))
     return kb
 
@@ -292,9 +293,10 @@ def commands_list(c: Cardinal, offset: int) -> K:
         #  CBT.EDIT_CMD:номер команды:смещение (для кнопки назад)
         kb.add(B(cmd, None, f"{CBT.EDIT_CMD}:{offset + index}:{offset}"))
 
-    kb = add_navigation_buttons(kb, offset, MENU_CFG.AR_BTNS_AMOUNT, len(commands), len(c.RAW_AR_CFG.sections()), CBT.CMD_LIST)
+    kb = add_navigation_buttons(kb, offset, MENU_CFG.AR_BTNS_AMOUNT, len(commands), len(c.RAW_AR_CFG.sections()),
+                                CBT.CMD_LIST)
 
-    kb.add(B(_("ar_to_ar"), None, f"{CBT.CATEGORY}:ar"))\
+    kb.add(B(_("ar_to_ar"), None, f"{CBT.CATEGORY}:ar")) \
         .add(B(_("ar_to_mm"), None, CBT.MAIN))
     return kb
 
@@ -311,12 +313,12 @@ def edit_command(c: Cardinal, command_index: int, offset: int) -> K:
     """
     command = c.RAW_AR_CFG.sections()[command_index]
     command_obj = c.RAW_AR_CFG[command]
-    kb = K()\
-        .add(B(_("ar_edit_response"), None, f"{CBT.EDIT_CMD_RESPONSE_TEXT}:{command_index}:{offset}"))\
-        .add(B(_("ar_edit_notification"), None, f"{CBT.EDIT_CMD_NOTIFICATION_TEXT}:{command_index}:{offset}"))\
+    kb = K() \
+        .add(B(_("ar_edit_response"), None, f"{CBT.EDIT_CMD_RESPONSE_TEXT}:{command_index}:{offset}")) \
+        .add(B(_("ar_edit_notification"), None, f"{CBT.EDIT_CMD_NOTIFICATION_TEXT}:{command_index}:{offset}")) \
         .add(B(_("ar_notification", bool_to_text(command_obj.get('telegramNotification'), '🔔', '🔕')),
-               None, f"{CBT.SWITCH_CMD_NOTIFICATION}:{command_index}:{offset}"))\
-        .add(B(_("gl_delete"), None, f"{CBT.DEL_CMD}:{command_index}:{offset}"))\
+               None, f"{CBT.SWITCH_CMD_NOTIFICATION}:{command_index}:{offset}")) \
+        .add(B(_("gl_delete"), None, f"{CBT.DEL_CMD}:{command_index}:{offset}")) \
         .row(B(_("gl_back"), None, f"{CBT.CMD_LIST}:{offset}"),
              B(_("gl_refresh"), None, f"{CBT.EDIT_CMD}:{command_index}:{offset}"))
     return kb
@@ -343,12 +345,12 @@ def products_files_list(offset: int) -> K:
     keyboard = add_navigation_buttons(keyboard, offset, MENU_CFG.PF_BTNS_AMOUNT, len(files),
                                       len(os.listdir("storage/products")), CBT.PRODUCTS_FILES_LIST)
 
-    keyboard.add(B(_("ad_to_ad"), None, f"{CBT.CATEGORY}:ad"))\
+    keyboard.add(B(_("ad_to_ad"), None, f"{CBT.CATEGORY}:ad")) \
         .add(B(_("ad_to_mm"), None, CBT.MAIN))
     return keyboard
 
 
-def products_file_edit(file_number: int, offset: int, confirmation: bool = False)\
+def products_file_edit(file_number: int, offset: int, confirmation: bool = False) \
         -> K:
     """
     Генерирует клавиатуру изменения товарного файла (CBT.EDIT_PRODUCTS_FILE:<file_index>:<offset>).
@@ -359,8 +361,8 @@ def products_file_edit(file_number: int, offset: int, confirmation: bool = False
 
     :return: объект клавиатуры изменения товарного файла.
     """
-    keyboard = K()\
-        .add(B(_("gf_add_goods"), None, f"{CBT.ADD_PRODUCTS_TO_FILE}:{file_number}:{file_number}:{offset}:0"))\
+    keyboard = K() \
+        .add(B(_("gf_add_goods"), None, f"{CBT.ADD_PRODUCTS_TO_FILE}:{file_number}:{file_number}:{offset}:0")) \
         .add(B(_("gf_download"), None, f"download_products_file:{file_number}:{offset}"))
     if not confirmation:
         keyboard.add(B(_("gl_delete"), None, f"del_products_file:{file_number}:{offset}"))
@@ -393,7 +395,7 @@ def lots_list(cardinal: Cardinal, offset: int) -> K:
     keyboard = add_navigation_buttons(keyboard, offset, MENU_CFG.AD_BTNS_AMOUNT, len(lots),
                                       len(cardinal.AD_CFG.sections()), CBT.AD_LOTS_LIST)
 
-    keyboard.add(B(_("ad_to_ad"), None, f"{CBT.CATEGORY}:ad"))\
+    keyboard.add(B(_("ad_to_ad"), None, f"{CBT.CATEGORY}:ad")) \
         .add(B(_("ad_to_mm"), None, CBT.MAIN))
     return keyboard
 
@@ -421,8 +423,8 @@ def funpay_lots_list(c: Cardinal, offset: int):
                                       len(c.tg_profile.get_common_lots()), CBT.FP_LOTS_LIST)
 
     keyboard.row(B(_("fl_manual"), None, f"{CBT.ADD_AD_TO_LOT_MANUALLY}:{offset}"),
-                 B(_("gl_refresh"), None, f"update_funpay_lots:{offset}"))\
-        .add(B(_("ad_to_ad"), None, f"{CBT.CATEGORY}:ad"))\
+                 B(_("gl_refresh"), None, f"update_funpay_lots:{offset}")) \
+        .add(B(_("ad_to_ad"), None, f"{CBT.CATEGORY}:ad")) \
         .add(B(_("ad_to_mm"), None, CBT.MAIN))
     return keyboard
 
@@ -440,8 +442,8 @@ def edit_lot(c: Cardinal, lot_number: int, offset: int) -> K:
     lot = c.AD_CFG.sections()[lot_number]
     lot_obj = c.AD_CFG[lot]
     file_name = lot_obj.get("productsFileName")
-    kb = K()\
-        .add(B(_("ea_edit_delivery_text"),  None, f"{CBT.EDIT_LOT_DELIVERY_TEXT}:{lot_number}:{offset}"))
+    kb = K() \
+        .add(B(_("ea_edit_delivery_text"), None, f"{CBT.EDIT_LOT_DELIVERY_TEXT}:{lot_number}:{offset}"))
     if not file_name:
         kb.add(B(_("ea_link_goods_file"), None, f"{CBT.BIND_PRODUCTS_FILE}:{lot_number}:{offset}"))
     else:
@@ -465,11 +467,11 @@ def edit_lot(c: Cardinal, lot_number: int, offset: int) -> K:
         return '⚪' if not p[s][0] else '🔴' if lot_obj.getboolean(p[s][1]) else '🟢'
 
     kb.row(B(_("ea_delivery", l("ad")), None, f"{f'{sl}:disable:{info}' if p['ad'][0] else dis}"),
-           B(_("ea_multidelivery", l("md")), None, f"{f'{sl}:disableMultiDelivery:{info}' if p['md'][0] else dis}"))\
+           B(_("ea_multidelivery", l("md")), None, f"{f'{sl}:disableMultiDelivery:{info}' if p['md'][0] else dis}")) \
         .row(B(_("ea_restore", l("ares")), None, f"{f'{sl}:disableAutoRestore:{info}' if p['ares'][0] else dis}"),
-             B(_("ea_deactivate", l("adis")), None, f"{f'{sl}:disableAutoDisable:{info}' if p['adis'][0] else dis}"))\
+             B(_("ea_deactivate", l("adis")), None, f"{f'{sl}:disableAutoDisable:{info}' if p['adis'][0] else dis}")) \
         .row(B(_("ea_test"), None, f"test_auto_delivery:{info}"),
-             B(_("gl_delete"), None, f"{CBT.DEL_AD_LOT}:{info}"))\
+             B(_("gl_delete"), None, f"{CBT.DEL_AD_LOT}:{info}")) \
         .row(B(_("gl_back"), None, f"{CBT.AD_LOTS_LIST}:{offset}"),
              B(_("gl_refresh"), None, f"{CBT.EDIT_AD_LOT}:{info}"))
     return kb
@@ -497,9 +499,10 @@ def new_order(order_id: str, username: str, node_id: int,
         else:
             kb.add(B(_("ord_refund"), None, f"{CBT.REQUEST_REFUND}:{order_id}:{node_id}:{username}"))
 
-    kb.add(B(_("ord_open"), url=f"https://funpay.com/orders/{order_id}/"))\
+    kb.add(B(_("ord_open"), url=f"https://funpay.com/orders/{order_id}/")) \
         .row(B(_("ord_answer"), None, f"{CBT.SEND_FP_MESSAGE}:{node_id}:{username}"),
-             B(_("ord_templates"), None, f"{CBT.TMPLT_LIST_ANS_MODE}:0:{node_id}:{username}:2:{order_id}:{1 if no_refund else 0}"))
+             B(_("ord_templates"), None,
+               f"{CBT.TMPLT_LIST_ANS_MODE}:0:{node_id}:{username}:2:{order_id}:{1 if no_refund else 0}"))
     return kb
 
 
@@ -519,7 +522,7 @@ def reply(node_id: int, username: str, again: bool = False, extend: bool = False
     if extend:
         bts.append(B(_("msg_more"), None, f"{CBT.EXTEND_CHAT}:{node_id}:{username}"))
     bts.append(B(f"🌐 {username}", url=f"https://funpay.com/chat/?node={node_id}"))
-    kb = K()\
+    kb = K() \
         .row(*bts)
     return kb
 
@@ -544,7 +547,7 @@ def templates_list(c: Cardinal, offset: int) -> K:
 
     kb = add_navigation_buttons(kb, offset, MENU_CFG.TMPLT_BTNS_AMOUNT, len(templates),
                                 len(c.telegram.answer_templates), CBT.TMPLT_LIST)
-    kb.add(B(_("tmplt_add"), None, f"{CBT.ADD_TMPLT}:{offset}"))\
+    kb.add(B(_("tmplt_add"), None, f"{CBT.ADD_TMPLT}:{offset}")) \
         .add(B(_("gl_back"), None, CBT.MAIN))
     return kb
 
@@ -560,7 +563,7 @@ def edit_template(c: Cardinal, template_index: int, offset: int) -> K:
     :return: объект клавиатуры изменения шаблона ответа.
     """
     kb = K() \
-        .add(B(_("gl_delete"), None, f"{CBT.DEL_TMPLT}:{template_index}:{offset}"))\
+        .add(B(_("gl_delete"), None, f"{CBT.DEL_TMPLT}:{template_index}:{offset}")) \
         .add(B(_("gl_back"), None, f"{CBT.TMPLT_LIST}:{offset}"))
     return kb
 
@@ -632,7 +635,7 @@ def plugins_list(c: Cardinal, offset: int):
     kb = add_navigation_buttons(kb, offset, MENU_CFG.PLUGINS_BTNS_AMOUNT, len(plugins),
                                 len(list(c.plugins.keys())), CBT.PLUGINS_LIST)
 
-    kb.add(B(_("pl_add"), None, f"{CBT.UPLOAD_PLUGIN}:{offset}"))\
+    kb.add(B(_("pl_add"), None, f"{CBT.UPLOAD_PLUGIN}:{offset}")) \
         .add(B(_("gl_back"), None, CBT.MAIN2))
     return kb
 

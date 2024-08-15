@@ -5,13 +5,13 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from cardinal import Cardinal
 
 from FunPayAPI.types import OrderShortcut, Order
 from FunPayAPI import exceptions, utils as fp_utils
 from FunPayAPI.updater.events import *
-
 
 from tg_bot import utils, keyboards
 from Utils import cardinal_tools
@@ -23,15 +23,12 @@ import logging
 import time
 import re
 
-
 LAST_STACK_ID = ""
 MSG_LOG_LAST_STACK_ID = ""
-
 
 logger = logging.getLogger("FPC.handlers")
 localizer = Localizer()
 _ = localizer.translate
-
 
 ORDER_HTML_TEMPLATE = """<a href="https://funpay.com/orders/DELITEST/" class="tc-item">
    <div class="tc-date" bis_skin_checked="1">
@@ -60,7 +57,6 @@ ORDER_HTML_TEMPLATE = """<a href="https://funpay.com/orders/DELITEST/" class="tc
    <div class="tc-price text-nowrap tc-seller-sum" bis_skin_checked="1">999999.0 <span class="unit">₽</span></div>
 </a>"""
 
-
 AMOUNT_EXPRESSION = re.compile(r'\d+ шт\.')
 
 
@@ -69,7 +65,7 @@ def save_init_chats_handler(c: Cardinal, e: InitialChatEvent):
     """
     Кэширует существующие чаты (чтобы не отправлять приветственные сообщения).
     """
-    if c.MAIN_CFG["Greetings"].getboolean("cacheInitChats"):
+    if c.MAIN_CFG["Greetings"].getboolean("sendGreetings"):
         c.old_users[e.chat.id] = int(time.time())
         cardinal_tools.cache_old_users(c.old_users)
 
@@ -126,7 +122,8 @@ def greetings_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChangedEv
     else:
         obj = e.chat
         chat_id, chat_name, mtype, its_me, badge = obj.id, obj.name, obj.last_message_type, not obj.unread, None
-    if any([time.time() - c.old_users.get(chat_id, 0) < float(c.MAIN_CFG["Greetings"]["greetingsCooldown"])*24*60*60,
+    if any([time.time() - c.old_users.get(chat_id, 0) < float(
+            c.MAIN_CFG["Greetings"]["greetingsCooldown"]) * 24 * 60 * 60,
             its_me, mtype == MessageTypes.DEAR_VENDORS, badge is not None,
             (mtype is not MessageTypes.NON_SYSTEM and c.MAIN_CFG["Greetings"].getboolean("ignoreSystemMessages"))]):
         return
@@ -147,7 +144,7 @@ def add_old_user_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChange
     else:
         chat_id, mtype = e.chat.id, e.chat.last_message_type
 
-    if not c.MAIN_CFG["Greetings"].getboolean("cacheInitChats") or mtype == MessageTypes.DEAR_VENDORS:
+    if not c.MAIN_CFG["Greetings"].getboolean("sendGreetings") or mtype == MessageTypes.DEAR_VENDORS:
         return
     c.old_users[chat_id] = int(time.time())
     cardinal_tools.cache_old_users(c.old_users)
@@ -177,7 +174,8 @@ def send_response_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChang
 
 
 def old_send_new_msg_notification_handler(c: Cardinal, e: LastChatMessageChangedEvent):
-    if any([not c.old_mode_enabled, not c.telegram, not e.chat.unread, c.bl_msg_notification_enabled and e.chat.name in c.blacklist,
+    if any([not c.old_mode_enabled, not c.telegram, not e.chat.unread,
+            c.bl_msg_notification_enabled and e.chat.name in c.blacklist,
             e.chat.last_message_type is not MessageTypes.NON_SYSTEM, str(e.chat).strip().lower() in c.AR_CFG.sections(),
             str(e.chat).startswith("!автовыдача")]):
         return
@@ -314,7 +312,7 @@ def process_review_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChan
         reply_text = None
         if c.MAIN_CFG["ReviewReply"].getboolean(toggle) and c.MAIN_CFG["ReviewReply"].get(text):
             try:
-                #Укорачиваем текст до 1000 символов, до 10 строк
+                # Укорачиваем текст до 1000 символов, до 10 строк
                 def format_text4review(text_: str):
                     text_ = text_[:1001]
                     if len(text_) > 1000:
@@ -323,7 +321,7 @@ def process_review_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChan
                         for char in (".", "!", "\n"):
                             index1 = text_.rfind(char)
                             indexes.extend([index1, text_[:index1].rfind(char)])
-                        text_ = text_[:max(indexes, key = lambda x: (x<ln-1, x))]+"📜"
+                        text_ = text_[:max(indexes, key=lambda x: (x < ln - 1, x))] + "📜"
                     while text_.count("\n") > 9 and "\n\n" in text_:
                         text_ = text_[::-1].replace("\n\n", "\n", text_.count("\n") - 9)[::-1]
                     if text_.count("\n") > 9:
@@ -337,6 +335,7 @@ def process_review_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChan
                 logger.error(f"Произошла ошибка при ответе на отзыв {order.id}.")
                 logger.debug("TRACEBACK", exc_info=True)
         send_review_notification(c, order, chat_id, reply_text)
+
     Thread(target=send_reply, daemon=True).start()
 
 
@@ -398,9 +397,11 @@ def test_auto_delivery_handler(c: Cardinal, e: NewMessageEvent | LastChatMessage
     del c.delivery_tests[key]
     date = datetime.now()
     date_text = date.strftime("%H:%M")
-    html = ORDER_HTML_TEMPLATE.replace("$username", chat_name).replace("$lot_name", lot_name).replace("$date", date_text)
+    html = ORDER_HTML_TEMPLATE.replace("$username", chat_name).replace("$lot_name", lot_name).replace("$date",
+                                                                                                      date_text)
 
-    fake_order = OrderShortcut("ADTEST", lot_name, 0.0, Currency.UNKNOWN, chat_name, 000000, chat_id, types.OrderStatuses.PAID,
+    fake_order = OrderShortcut("ADTEST", lot_name, 0.0, Currency.UNKNOWN, chat_name, 000000, chat_id,
+                               types.OrderStatuses.PAID,
                                date, "Авто-выдача, Тест", html)
 
     fake_event = NewOrderEvent(e.runner_tag, fake_order)
@@ -416,7 +417,7 @@ def send_categories_raised_notification_handler(c: Cardinal, cat: types.Category
 
     text = f"""⤴️<b><i>Поднял все лоты категории</i></b> <code>{cat.name}</code>\n<tg-spoiler>{error_text}</tg-spoiler>"""
     Thread(target=c.telegram.send_notification,
-           args=(text, ),
+           args=(text,),
            kwargs={"notification_type": utils.NotificationTypes.lots_raise}, daemon=True).start()
 
 
@@ -693,7 +694,7 @@ def update_lots_states(cardinal: Cardinal, event: NewOrderEvent):
         text = f"""🔴 <b>Деактивировал лоты:</b>
         
 <code>{lots}</code>"""
-        Thread(target=cardinal.telegram.send_notification, args=(text, ),
+        Thread(target=cardinal.telegram.send_notification, args=(text,),
                kwargs={"notification_type": utils.NotificationTypes.lots_deactivate}, daemon=True).start()
     if restored:
         lots = "\n".join(restored)
@@ -735,10 +736,11 @@ def send_order_confirmed_notification_handler(cardinal: Cardinal, event: OrderSt
 
     chat = cardinal.account.get_chat_by_name(event.order.buyer_username, True)
     Thread(target=cardinal.telegram.send_notification,
-           args=(f"""🪙 Пользователь <a href="https://funpay.com/chat/?node={chat.id}">{event.order.buyer_username}</a> """
-                 f"""подтвердил выполнение заказа <code>{event.order.id}</code>.""",
-                 keyboards.new_order(event.order.id, event.order.buyer_username, chat.id),
-                 utils.NotificationTypes.order_confirmed),
+           args=(
+           f"""🪙 Пользователь <a href="https://funpay.com/chat/?node={chat.id}">{event.order.buyer_username}</a> """
+           f"""подтвердил выполнение заказа <code>{event.order.id}</code>.""",
+           keyboards.new_order(event.order.id, event.order.buyer_username, chat.id),
+           utils.NotificationTypes.order_confirmed),
            daemon=True).start()
 
 
@@ -790,5 +792,3 @@ BIND_TO_ORDER_STATUS_CHANGED = [send_thank_u_message_handler, send_order_confirm
 BIND_TO_POST_DELIVERY = [send_delivery_notification_handler]
 
 BIND_TO_POST_START = [send_bot_started_notification_handler]
-
-

@@ -8,7 +8,6 @@ import time
 import telebot
 from colorama import Fore, Style
 
-
 default_config = {
     "FunPay": {
         "golden_key": "",
@@ -45,7 +44,6 @@ default_config = {
     },
 
     "Greetings": {
-        "cacheInitChats": "1",
         "ignoreSystemMessages": "0",
         "sendGreetings": "0",
         "greetingsText": "Привет, $chat_name!",
@@ -106,7 +104,7 @@ def create_config_obj(settings) -> ConfigParser:
 
     :return: объект конфига.
     """
-    config = ConfigParser(delimiters=(":", ), interpolation=None)
+    config = ConfigParser(delimiters=(":",), interpolation=None)
     config.optionxform = str
     config.read_dict(settings)
     return config
@@ -130,7 +128,8 @@ def first_setup():
               f"Для начала введи токен (golden_key) твоего FunPay аккаунта (посмотреть его можно в расширении EditThisCookie) {Fore.RED}(._.){Style.RESET_ALL}")
         golden_key = input(f"{Fore.MAGENTA}{Style.BRIGHT}└───> {Style.RESET_ALL}").strip()
         if len(golden_key) != 32:
-            print(f"\n{Fore.CYAN}{Style.BRIGHT}Неверный формат токена. Попробуй еще раз! {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
+            print(
+                f"\n{Fore.CYAN}{Style.BRIGHT}Неверный формат токена. Попробуй еще раз! {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
             continue
         config.set("FunPay", "golden_key", golden_key)
         break
@@ -143,15 +142,17 @@ def first_setup():
         config.set("FunPay", "user_agent", user_agent)
 
     while True:
-        print(f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}Введи API-токен Telegram-бота (получить его можно у @BotFather). "
-              f"@username бота должен содержать \"funpay\". {Fore.RED}(._.){Style.RESET_ALL}")
+        print(
+            f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}Введи API-токен Telegram-бота (получить его можно у @BotFather). "
+            f"@username бота должен содержать \"funpay\". {Fore.RED}(._.){Style.RESET_ALL}")
         token = input(f"{Fore.MAGENTA}{Style.BRIGHT}└───> {Style.RESET_ALL}").strip()
         try:
             if not token or not token.split(":")[0].isdigit():
                 raise Exception("Неправильный формат токена")
             username = telebot.TeleBot(token).get_me().username
             if "funpay" not in username.lower():
-                print(f"\n{Fore.CYAN}{Style.BRIGHT}@username бота должен содержать \"funpay\"! {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
+                print(
+                    f"\n{Fore.CYAN}{Style.BRIGHT}@username бота должен содержать \"funpay\"! {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
                 continue
         except Exception as ex:
             s = ""
@@ -165,8 +166,10 @@ def first_setup():
         print(f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}Придумай пароль (его потребует Telegram-бот) "
               f" {Fore.RED}ᴖ̮ ̮ᴖ{Style.RESET_ALL}")
         password = input(f"{Fore.MAGENTA}{Style.BRIGHT}└───> {Style.RESET_ALL}").strip()
-        if len(password)<8 or password.lower() == password or password.upper() == password or not any([i.isdigit() for i in password]):
-            print(f"\n{Fore.CYAN}{Style.BRIGHT}Это плохой пароль. Попробуй еще раз! {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
+        if len(password) < 8 or password.lower() == password or password.upper() == password or not any(
+                [i.isdigit() for i in password]):
+            print(
+                f"\n{Fore.CYAN}{Style.BRIGHT}Это плохой пароль. Попробуй еще раз! {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
             continue
         break
 
@@ -196,7 +199,8 @@ def first_setup():
                 config.set("Proxy", "port", port)
                 break
             except:
-                print(f"\n{Fore.CYAN}{Style.BRIGHT}Неверный формат прокси. Попробуй еще раз! {Fore.RED}(o-_-o){Style.RESET_ALL}")
+                print(
+                    f"\n{Fore.CYAN}{Style.BRIGHT}Неверный формат прокси. Попробуй еще раз! {Fore.RED}(o-_-o){Style.RESET_ALL}")
                 continue
         else:
             break

@@ -15,7 +15,6 @@ gl_configure = "⚙️ Configure"
 gl_pcs = "pcs."
 gl_last_update = "Last update"
 
-
 # Main menu
 mm_global = "⚙️ Global switches"
 mm_notifications = "🔔 Notification settings"
@@ -110,7 +109,6 @@ tmplt_add_another = "➕ Add another"
 
 # Greeting settings
 gr_greetings = "{} Greet users"
-gr_cache_init_chats = "{} Ignore existing chats"
 gr_ignore_sys_msgs = "{} Ignore system messages"
 gr_edit_message = "✏️ Change the text of the welcome message"
 gr_edit_cooldown = "✏️ Cooldown: {} days"
@@ -147,13 +145,11 @@ cfg_upload_ad = "⤴️ Upload auto-delivery config"
 an_an = "{} Announcements"
 an_ad = "{} Advertisement"
 
-
 # New order
 ord_refund = "💸 Make a refund"
 ord_open = "🌐 Open order page"
 ord_answer = "📨 Answer"
 ord_templates = "📝 Templates"
-
 
 # New message
 msg_reply = "📨 Reply"
@@ -161,21 +157,20 @@ msg_reply2 = "📨 Reply"
 msg_templates = "📝 Templates"
 msg_more = "➕ More"
 
-
 # Messages texts
-access_denied = "👋 Hi, <b><i>{}</i></b>!\n\n❌ You are an unauthorized user.\n\n"\
-                "🔑 Send me the <u><b>secret key</b></u> you entered during the initial setup to "\
+access_denied = "👋 Hi, <b><i>{}</i></b>!\n\n❌ You are an unauthorized user.\n\n" \
+                "🔑 Send me the <u><b>secret key</b></u> you entered during the initial setup to " \
                 "gain access to the control panel."
 
-access_granted = "🔓 Access granted!\n\n"\
-                 "🔕 Keep in mind that I <b><u>don't send any notifications to this chat</u></b>.\n\n"\
-                 "🔔 You can set up notifications for <b><u>this chat</u></b> in the settings menu.\n\n"\
+access_granted = "🔓 Access granted!\n\n" \
+                 "🔕 Keep in mind that I <b><u>don't send any notifications to this chat</u></b>.\n\n" \
+                 "🔔 You can set up notifications for <b><u>this chat</u></b> in the settings menu.\n\n" \
                  "⚙️ To open the <i>FunPay Cardinal</i> settings menu, send me /menu."
 
 access_granted_notification = "<b>🚨 ATTENTION! 🚨\n\n\n</b>" * 3 + "\n\n\n🔐 \"<a href=\"tg://user?id={1}\"> {0} </a>\" <b>(ID: {1}) has just accessed the Telegram Control Panel! 🔓\n\ngolden_key of the account has been reset.</b>"
 
-param_disabled = "❌ This parameter is disabled globally and cannot be changed for this lot.\n\n"\
-                 "❔ Switching global parameters is available in the global switch menu "\
+param_disabled = "❌ This parameter is disabled globally and cannot be changed for this lot.\n\n" \
+                 "❔ Switching global parameters is available in the global switch menu " \
                  "(/menu -> ⚙️ Global switches)."
 
 old_mode_help = """<b>New Message Receiving Mode</b>
@@ -269,13 +264,13 @@ update_get_error = "❌ Failed to get new version information. Try again later."
 update_available = "<b><u>New version available!</u></b>\n\n\n{}\n\n{}"
 update_update = "To update, enter the command /update"
 update_backup = "✅ Backup of configs, storage and plugins <code>backup.zip</code>.\n\n" \
-                        "⚠️ DO NOT SEND this archive to ANYONE. It contains ABSOLUTELY ALL content and settings of the bot (including golden_key and product files)."
+                "⚠️ DO NOT SEND this archive to ANYONE. It contains ABSOLUTELY ALL content and settings of the bot (including golden_key and product files)."
 update_backup_error = "❌ Failed to back up configs, storage and plugins."
 update_backup_not_found = "❌ Backup not found."
-update_downloaded = "✅ The update {} is downloaded. Installing ..."
+update_downloaded = "✅ The update {} is downloaded (skipped {} items). Installing..."
 update_download_error = "❌ An error occurred while downloading the update."
 update_done = "✅ The update is installed! Restart the FPC with the /restart command."
-update_done_exe = "✅ The update is installed! New <code>FPC.exe</code> is in <code>update</code> folder. "\
+update_done_exe = "✅ The update is installed! New <code>FPC.exe</code> is in <code>update</code> folder. " \
                   "Turn off <i>FPC</i>, replace old <code>FPC.exe</code> with new one and run <code>Start.bat</code>. "
 update_install_error = "❌ An error occurred while installing the update."
 
@@ -287,7 +282,7 @@ power_off_2 = """Just for the record:
 you have to go to the server or go to your computer (or wherever you have me) and run me manually!"""
 power_off_3 = "Not that I'm imposing, but if you want to apply changes to the main config, " \
               "you can just restart me with the /restart command."
-power_off_4 = "Do you even read my messages? Let's put you to the test: yes = no, no = yes."\
+power_off_4 = "Do you even read my messages? Let's put you to the test: yes = no, no = yes." \
               "I'm sure you don't even read my messages, but I write important info here."
 power_off_5 = "Hell yeah?.."
 power_off_6 = "Okay, okay, I'm off..."
@@ -328,7 +323,7 @@ ad_lot_not_found_err = "❌ Lot with index <code>{}</code> not found."
 ad_already_ad_err = "❌ Lot <code>{}</code> is already set up for auto-delivery."
 ad_lot_already_exists = "❌ The lot <code>{}</code> already has auto-delivery linked to it."
 ad_lot_linked = "✅ Auto-delivery linked to lot <code>{}</code>."
-ad_link_gf = "Enter the goods file name.\nSend <code>-</code>, if you want to unlink the goods file.\n\n"\
+ad_link_gf = "Enter the goods file name.\nSend <code>-</code>, if you want to unlink the goods file.\n\n" \
              "If the goods file does not exist, it will be created automatically."
 ad_gf_unlinked = "✅ Goods file successfully unlinked from <code>{}</code>."
 ad_gf_linked = "✅ The goods file <code>storage/products/{}</code> linked to <code>{}</code>."
@@ -344,7 +339,7 @@ copy_lot_name = "Send the name of the lot exactly as on FunPay."
 
 act_create_gf = "Enter the name of the new goods file."
 gf_name_invalid = "❌ Invalid file name.\n\n" \
-                  "Only <b><u>English</u></b> and <b><u>Russian</u></b> characters are allowed in the name,"\
+                  "Only <b><u>English</u></b> and <b><u>Russian</u></b> characters are allowed in the name," \
                   "as well as <code>_</code>, <code>-</code> and <code>space</code>."
 gf_already_exists_err = "❌ Goods file <code>{}</code> already exists."
 gf_creation_err = "❌ An error occurred while creating the <code>{}</code> file."
@@ -355,7 +350,7 @@ gf_send_new_goods = "Enter the goods you want to add to goods file.\n\nEach new 
 gf_add_goods_err = "❌ Failed to add new goods."
 gf_new_goods = "✅ <code>{}</code> item(s) added to <code>storage/products/{}</code>."
 gf_empty_error = "❌ File storage/products/{} is empty."
-gf_linked_err = "❌ File <code>storage/products/{}</code> is linked to one ore more lots.\n"\
+gf_linked_err = "❌ File <code>storage/products/{}</code> is linked to one ore more lots.\n" \
                 "Before deleting this goods file, unlink it from all lots."
 gf_deleting_err = "❌ Failed to delete file <code>storage/products/{}</code>."
 
@@ -411,7 +406,7 @@ desc_or = "Here you can configure your response to feedback."
 desc_an = "Here you can configure notifications about announcements."
 desc_cfg = "Hare you can download and upload configs."
 desc_tmplt = "Here you can add and delete answer templates."
-desc_pl = "Here you can get information about the plugins, as well as configure them.\n\n"\
+desc_pl = "Here you can get information about the plugins, as well as configure them.\n\n" \
           "⚠️ <b><u>After activating / deactivating / adding / removing a plugin, you must restart the bot!</u></b>" \
           " (/restart)"
 
@@ -453,9 +448,9 @@ v_date_text = "<code>$date_text</code> - current date in <i>January 1</i> format
 v_full_date_text = "<code>$full_date_text</code> - current date in <i>January 1, 2020</i> format."
 v_time = "<code>$time</code> - current time in <i>HH:MM</i> format."
 v_full_time = "<code>$full_time</code> - current time in <i>HH:MM:SS</i> format."
-v_photo = "<code>$photo=[PHOTO ID]</code> - photo. Instead of <code>[PHOTO ID]</code>, "\
+v_photo = "<code>$photo=[PHOTO ID]</code> - photo. Instead of <code>[PHOTO ID]</code>, " \
           "type the photo ID obtained with the /upload_chat_img command."
-v_sleep = "<code>$sleep=[TIME]</code> - delay. Replace <code>[TIME]</code> "\
+v_sleep = "<code>$sleep=[TIME]</code> - delay. Replace <code>[TIME]</code> " \
           "with the delay time in seconds."
 v_order_id = "<code>$order_id</code> - order ID (without #)"
 v_order_link = "<code>$order_link</code> - link to the order"
@@ -468,7 +463,6 @@ v_chat_id = "<code>$chat_id</code> - chat ID."
 v_chat_name = "<code>$chat_name</code> - chat name."
 v_message_text = "<code>$message_text</code> - interlocutors message text."
 v_username = "<code>$username</code> - interlocutors username."
-
 
 # Exception texts
 exc_param_not_found = "The option \"{}\" not found."
@@ -530,7 +524,7 @@ log_pl_delete_handler_err = "An error occurred when executing the $YELLOW\"{}\"$
 log_new_msg = "$MAGENTA┌──$RESET New message in chat with $YELLOW{} (CID: {}):"
 log_sending_greetings = "User $YELLOW{} (CID: {})$RESET wrote for the first time! Sending greetings..."
 log_new_cmd = "Received the command $YELLOW{}$RESET in the chat with the user $YELLOW{} (CID: {})$RESET."
-ntfc_new_order = "💰 <b>New order:</b> <code>{}</code>\n\n<b><i>🙍‍♂️ Buyer:</i></b>  <code>{}</code>\n"\
+ntfc_new_order = "💰 <b>New order:</b> <code>{}</code>\n\n<b><i>🙍‍♂️ Buyer:</i></b>  <code>{}</code>\n" \
                  "<b><i>💵 Order amount:</i></b>  <code>{}</code>\n<b><i>📇 ID:</i></b> <code>#{}</code>\n\n<i>{}</i>"
 ntfc_new_order_not_in_cfg = "ℹ️ The goods will not be delivered because auto-delivery is not linked to the lot."
 ntfc_new_order_ad_disabled = "ℹ️ The goods will not be delivered because auto-delivery is disabled in global switches."

@@ -50,7 +50,7 @@ def create_config_obj(config_path: str) -> ConfigParser:
 
     :return: объект конфига.
     """
-    config = ConfigParser(delimiters=(":", ), interpolation=None)
+    config = ConfigParser(delimiters=(":",), interpolation=None)
     config.optionxform = str
     config.read_file(codecs.open(config_path, "r", "utf8"))
     return config
@@ -102,7 +102,6 @@ def load_main_config(config_path: str):
         },
 
         "Greetings": {
-            "cacheInitChats": ["0", "1"],
             "ignoreSystemMessages": ["0", "1"],
             "sendGreetings": ["0", "1"],
             "greetingsText": "any",
@@ -148,6 +147,13 @@ def load_main_config(config_path: str):
         if section_name not in config.sections():
             raise ConfigParseError(config_path, section_name, SectionNotFoundError())
 
+        # UPDATE
+        if section_name == "Greetings" and "cacheInitChats" in config[section_name]:
+            config.remove_option(section_name, "cacheInitChats")
+            with open("configs/_main.cfg", "w", encoding="utf-8") as f:
+                config.write(f)
+        # END OF UPDATE
+
         for param_name in values[section_name]:
 
             # UPDATE
@@ -155,7 +161,8 @@ def load_main_config(config_path: str):
                 config.set("FunPay", "oldMsgGetMode", "0")
                 with open("configs/_main.cfg", "w", encoding="utf-8") as f:
                     config.write(f)
-            elif section_name == "Greetings" and param_name == "ignoreSystemMessages" and param_name not in config[section_name]:
+            elif section_name == "Greetings" and param_name == "ignoreSystemMessages" and param_name not in config[
+                section_name]:
                 config.set("Greetings", "ignoreSystemMessages", "0")
                 with open("configs/_main.cfg", "w", encoding="utf-8") as f:
                     config.write(f)
@@ -167,14 +174,17 @@ def load_main_config(config_path: str):
                 config.set("Other", "language", "en")
                 with open("configs/_main.cfg", "w", encoding="utf-8") as f:
                     config.write(f)
-            elif section_name == "Greetings" and param_name == "greetingsCooldown" and param_name not in config[section_name]:
+            elif section_name == "Greetings" and param_name == "greetingsCooldown" and param_name not in config[
+                section_name]:
                 config.set("Greetings", "greetingsCooldown", "2")
                 with open("configs/_main.cfg", "w", encoding="utf-8") as f:
                     config.write(f)
-            elif section_name == "OrderConfirm" and param_name == "watermark" and param_name not in config[section_name]:
+            elif section_name == "OrderConfirm" and param_name == "watermark" and param_name not in config[
+                section_name]:
                 config.set("OrderConfirm", "watermark", "1")
                 with open("configs/_main.cfg", "w", encoding="utf-8") as f:
                     config.write(f)
+
             # END OF UPDATE
 
             try:
