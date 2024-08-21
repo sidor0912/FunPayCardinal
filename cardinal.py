@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Callable
 
 from FunPayAPI import types
+from FunPayAPI.common.enums import SubCategoryTypes
 
 if TYPE_CHECKING:
     from configparser import ConfigParser
@@ -30,7 +31,6 @@ from Utils import cardinal_tools
 import tg_bot.bot
 
 from threading import Thread
-
 
 logger = logging.getLogger("FPC")
 localizer = Localizer()
@@ -68,6 +68,7 @@ class PluginData:
     """
     Класс, описывающий плагин.
     """
+
     def __init__(self, name: str, version: str, desc: str, credentials: str, uuid: str,
                  path: str, plugin: ModuleType, settings_page: bool, delete_handler: Callable | None, enabled: bool):
         """
@@ -144,7 +145,7 @@ class Cardinal(object):
 
         self.balance: FunPayAPI.types.Balance | None = None
         self.raise_time = {}  # Временные метки поднятия категорий {id игры: след. время поднятия}
-        self.raised_time = {} # Время последнего поднятия категории {id игры: время последнего поднятия}
+        self.raised_time = {}  # Время последнего поднятия категории {id игры: время последнего поднятия}
         self.profile: FunPayAPI.types.UserProfile | None = None  # FunPay профиль для всего кардинала (+ хэндлеров)
         self.tg_profile: FunPayAPI.types.UserProfile | None = None  # FunPay профиль (для Telegram-ПУ)
         self.last_tg_profile_update = datetime.datetime.now()  # Последнее время обновления профиля для TG-ПУ
@@ -154,7 +155,8 @@ class Cardinal(object):
         # Тег последнего event'а, после которого обновлялось состояние лотов.
         self.last_state_change_tag: str | None = None
         self.blacklist = cardinal_tools.load_blacklist()  # ЧС.
-        self.old_users = cardinal_tools.load_old_users(float(self.MAIN_CFG["Greetings"]["greetingsCooldown"]))  # Уже написавшие пользователи.
+        self.old_users = cardinal_tools.load_old_users(
+            float(self.MAIN_CFG["Greetings"]["greetingsCooldown"]))  # Уже написавшие пользователи.
 
         # Хэндлеры
         self.pre_init_handlers = []
@@ -302,7 +304,11 @@ class Cardinal(object):
         # Время следующего вызова функции (по умолчанию - бесконечность).
         next_call = float("inf")
 
-        for subcat in self.profile.get_sorted_lots(2):
+        for subcat in sorted(set(list(self.profile.get_sorted_lots(2).keys()) +
+                                 list(self.curr_profile.get_sorted_lots(2).keys()) +
+                                 list(self.tg_profile.get_sorted_lots(2).keys())), key=lambda x: x.category.name):
+            if subcat.type is SubCategoryTypes.CURRENCY:
+                continue
             # Если id категории текущей подкатегории уже находится в self.game_ids, но время поднятия подкатегорий
             # данной категории еще не настало - пропускам эту подкатегорию.
             if (saved_time := self.raise_time.get(subcat.category.id)) and saved_time > int(time.time()):
@@ -322,14 +328,15 @@ class Cardinal(object):
                 raise_ok = True
                 last_time = self.raised_time.get(subcat.category.id)
                 self.raised_time[subcat.category.id] = new_time = int(time.time())
-                time_delta = "" if not last_time else f" Последнее поднятие: {cardinal_tools.time_to_str(new_time-last_time)} назад."
+                time_delta = "" if not last_time else f" Последнее поднятие: {cardinal_tools.time_to_str(new_time - last_time)} назад."
                 time.sleep(0.5)
                 self.account.raise_lots(subcat.category.id)
             except FunPayAPI.exceptions.RaiseError as e:
                 if e.error_message is not None:
                     error_text = e.error_message
                 if e.wait_time is not None:
-                    logger.warning(_("crd_raise_time_err", subcat.category.name, error_text, cardinal_tools.time_to_str(e.wait_time)))
+                    logger.warning(_("crd_raise_time_err", subcat.category.name, error_text,
+                                     cardinal_tools.time_to_str(e.wait_time)))
                     next_time = int(time.time()) + e.wait_time
                 else:
                     logger.error(_("crd_raise_unexpected_err", subcat.category.name))
@@ -366,7 +373,7 @@ class Cardinal(object):
 
             while obj._order is None and not obj._order_attempt_error:
                 time.sleep(0.1)
-            return obj._order                
+            return obj._order
         obj._order_attempt_made = True
         if type(obj) not in (types.Message, types.ChatShortcut, types.OrderShortcut):
             obj._order_attempt_error = True
@@ -442,7 +449,7 @@ class Cardinal(object):
                 entities.extend(self.split_text(text))
         return entities
 
-    def send_message(self, chat_id: int | str, message_text: str, chat_name: str | None = None,  attempts: int = 3,
+    def send_message(self, chat_id: int | str, message_text: str, chat_name: str | None = None, attempts: int = 3,
                      watermark: bool = True) -> list[FunPayAPI.types.Message] | None:
         """
         Отправляет сообщение в чат FunPay.
@@ -590,13 +597,13 @@ class Cardinal(object):
                            file_uploader]:
                 self.add_handlers_from_plugin(module)
 
-        self.run_handlers(self.pre_init_handlers, (self, ))
+        self.run_handlers(self.pre_init_handlers, (self,))
 
         if self.MAIN_CFG["Telegram"].getboolean("enabled"):
             self.telegram.setup_commands()
             try:
                 self.telegram.edit_bot()
-            except AttributeError: #todo убрать когда-то
+            except AttributeError:  # todo убрать когда-то
                 logger.warning("Произошла ошибка при изменении бота Telegram. Обновляю библиотеку...")
                 logger.debug("TRACEBACK", exc_info=True)
                 try:
@@ -614,7 +621,7 @@ class Cardinal(object):
         self.__init_account()
         self.runner = FunPayAPI.Runner(self.account, self.old_mode_enabled)
         self.__update_profile()
-        self.run_handlers(self.post_init_handlers, (self, ))
+        self.run_handlers(self.post_init_handlers, (self,))
         return self
 
     def run(self):
@@ -635,8 +642,8 @@ class Cardinal(object):
         Запускает кардинал после остановки. Не используется.
         """
         self.run_id += 1
-        self.run_handlers(self.pre_start_handlers, (self, ))
-        self.run_handlers(self.post_start_handlers, (self, ))
+        self.run_handlers(self.pre_start_handlers, (self,))
+        self.run_handlers(self.post_start_handlers, (self,))
         self.process_events()
 
     def stop(self):
@@ -644,8 +651,8 @@ class Cardinal(object):
         Останавливает кардинал. Не используется.
         """
         self.run_id += 1
-        self.run_handlers(self.pre_start_handlers, (self, ))
-        self.run_handlers(self.post_stop_handlers, (self, ))
+        self.run_handlers(self.pre_stop_handlers, (self,))
+        self.run_handlers(self.post_stop_handlers, (self,))
 
     def update_lots_and_categories(self):
         """
