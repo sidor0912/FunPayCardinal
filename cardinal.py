@@ -475,11 +475,13 @@ class Cardinal(object):
             while current_attempts:
                 try:
                     if isinstance(entity, str):
-                        msg = self.account.send_message(chat_id, entity, chat_name, None, True, self.old_mode_enabled)
+                        msg = self.account.send_message(chat_id, entity, chat_name, None, True, self.old_mode_enabled,
+                                                        self.old_mode_enabled and self.keep_sent_messages_unread)
                         result.append(msg)
                         logger.info(_("crd_msg_sent", chat_id))
                     elif isinstance(entity, int):
-                        msg = self.account.send_image(chat_id, entity, chat_name, True, self.old_mode_enabled)
+                        msg = self.account.send_image(chat_id, entity, chat_name, True, self.old_mode_enabled,
+                                                      self.old_mode_enabled and self.keep_sent_messages_unread)
                         result.append(msg)
                         logger.info(_("crd_msg_sent", chat_id))
                     elif isinstance(entity, float):
@@ -873,6 +875,10 @@ class Cardinal(object):
     @property
     def old_mode_enabled(self) -> bool:
         return self.MAIN_CFG["FunPay"].getboolean("oldMsgGetMode")
+
+    @property
+    def keep_sent_messages_unread(self) -> bool:
+        return self.MAIN_CFG["FunPay"].getboolean("keepSentMessagesUnread")
 
     @property
     def bl_delivery_enabled(self) -> bool:

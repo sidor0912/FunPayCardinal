@@ -109,8 +109,11 @@ def main_settings(c: Cardinal) -> K:
         .row(B(_("gs_autorestore", l('autoRestore')), None, f"{p}:autoRestore"),
              B(_("gs_autodisable", l('autoDisable')), None, f"{p}:autoDisable")) \
         .row(B(_("gs_old_msg_mode", l('oldMsgGetMode')), None, f"{p}:oldMsgGetMode"),
-             B(f"❔", None, f"{CBT.OLD_MOD_HELP}")) \
-        .add(B(_("gl_back"), None, CBT.MAIN))
+             B(f"❔", None, f"{CBT.OLD_MOD_HELP}"))
+    if c.old_mode_enabled:
+        kb = kb.add(
+            B(_("gs_keep_sent_messages_unread", l('keepSentMessagesUnread')), None, f"{p}:keepSentMessagesUnread"))
+    kb = kb.add(B(_("gl_back"), None, CBT.MAIN))
     return kb
 
 

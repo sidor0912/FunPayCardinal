@@ -406,7 +406,7 @@ class Account:
 
     def send_message(self, chat_id: int | str, text: Optional[str] = None, chat_name: Optional[str] = None,
                      image_id: Optional[int] = None, add_to_ignore_list: bool = True,
-                     update_last_saved_message: bool = False) -> types.Message:
+                     update_last_saved_message: bool = False, leave_as_unread: bool = False) -> types.Message:
         """
         Отправляет сообщение в чат.
 
@@ -427,6 +427,9 @@ class Account:
 
         :param update_last_saved_message: обновлять ли последнее сохраненное сообщение на отправленное в Runner'е?
         :type update_last_saved_message: :obj:`bool`, опционально.
+
+        :param leave_as_unread: оставлять ли сообщение непрочитанным при отправке?
+        :type leave_as_unread: :obj:`bool`, опционально
 
         :return: экземпляр отправленного сообщения.
         :rtype: :class:`FunPayAPI.types.Message`
@@ -459,7 +462,7 @@ class Account:
             }
         ]
         payload = {
-            "objects": json.dumps(objects),
+            "objects": "" if leave_as_unread else json.dumps(objects),
             "request": json.dumps(request),
             "csrf_token": self.csrf_token
         }
@@ -471,22 +474,34 @@ class Account:
 
         if (error_text := resp.get("error")) is not None:
             raise exceptions.MessageNotDeliveredError(response, error_text, chat_id)
-
-        mes = json_response["objects"][0]["data"]["messages"][-1]
-        parser = BeautifulSoup(mes["html"].replace("<br>", "\n"), "html.parser")
-        try:
-            if image_link := parser.find("a", {"class": "chat-img-link"}):
-                image_link = image_link.get("href")
-                message_text = None
-            else:
-                message_text = parser.find("div", {"class": "chat-msg-text"}).text.replace(self.__bot_character, "", 1)
-        except Exception as e:
-            logger.debug("SEND_MESSAGE RESPONSE")
-            logger.debug(response.content.decode())
-            raise e
-
-        message_obj = types.Message(int(mes["id"]), message_text, chat_id, chat_name, self.username, self.id,
-                                    mes["html"], image_link)
+        if leave_as_unread:
+            message_text = text
+            fake_html = f"""
+            <div class="chat-msg-item" id="message-0000000000">
+                <div class="chat-message">
+                    <div class="chat-msg-body">
+                        <div class="chat-msg-text">{message_text}</div>
+                    </div>
+                </div>
+            </div>
+            """
+            message_obj = types.Message(0, message_text, chat_id, chat_name, self.username, self.id, fake_html, None)
+        else:
+            mes = json_response["objects"][0]["data"]["messages"][-1]
+            parser = BeautifulSoup(mes["html"].replace("<br>", "\n"), "html.parser")
+            try:
+                if image_link := parser.find("a", {"class": "chat-img-link"}):
+                    image_link = image_link.get("href")
+                    message_text = None
+                else:
+                    message_text = parser.find("div", {"class": "chat-msg-text"}).text. \
+                        replace(self.__bot_character, "", 1)
+            except Exception as e:
+                logger.debug("SEND_MESSAGE RESPONSE")
+                logger.debug(response.content.decode())
+                raise e
+            message_obj = types.Message(int(mes["id"]), message_text, chat_id, chat_name, self.username, self.id,
+                                        mes["html"], image_link)
         if self.runner and isinstance(chat_id, int):
             if add_to_ignore_list:
                 self.runner.mark_as_by_bot(chat_id, message_obj.id)
@@ -495,7 +510,8 @@ class Account:
         return message_obj
 
     def send_image(self, chat_id: int, image: int | str | IO[bytes], chat_name: Optional[str] = None,
-                   add_to_ignore_list: bool = True, update_last_saved_message: bool = False) -> types.Message:
+                   add_to_ignore_list: bool = True, update_last_saved_message: bool = False,
+                   leave_as_unread: bool = False) -> types.Message:
         """
         Отправляет изображение в чат. Доступно только для личных чатов.
 
@@ -516,6 +532,9 @@ class Account:
         :param update_last_saved_message: обновлять ли последнее сохраненное сообщение на отправленное в Runner'е?
         :type update_last_saved_message: :obj:`bool`, опционально
 
+        :param leave_as_unread: оставлять ли сообщение непрочитанным при отправке?
+        :type leave_as_unread: :obj:`bool`, опционально
+
         :return: объект отправленного сообщения.
         :rtype: :class:`FunPayAPI.types.Message`
         """
@@ -524,7 +543,8 @@ class Account:
 
         if not isinstance(image, int):
             image = self.upload_image(image, type_="chat")
-        result = self.send_message(chat_id, None, chat_name, image, add_to_ignore_list, update_last_saved_message)
+        result = self.send_message(chat_id, None, chat_name, image, add_to_ignore_list, update_last_saved_message,
+                                   leave_as_unread)
         return result
 
     def send_review(self, order_id: str, text: str, rating: Literal[1, 2, 3, 4, 5] = 5) -> str:

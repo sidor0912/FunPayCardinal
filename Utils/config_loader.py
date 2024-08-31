@@ -75,7 +75,8 @@ def load_main_config(config_path: str):
             "multiDelivery": ["0", "1"],
             "autoRestore": ["0", "1"],
             "autoDisable": ["0", "1"],
-            "oldMsgGetMode": ["0", "1"]
+            "oldMsgGetMode": ["0", "1"],
+            "keepSentMessagesUnread": ["0", "1"]
         },
 
         "Telegram": {
@@ -182,6 +183,11 @@ def load_main_config(config_path: str):
             elif section_name == "OrderConfirm" and param_name == "watermark" and param_name not in config[
                 section_name]:
                 config.set("OrderConfirm", "watermark", "1")
+                with open("configs/_main.cfg", "w", encoding="utf-8") as f:
+                    config.write(f)
+            elif section_name == "FunPay" and param_name == "keepSentMessagesUnread" and \
+                    param_name not in config[section_name]:
+                config.set("FunPay", "keepSentMessagesUnread", "0")
                 with open("configs/_main.cfg", "w", encoding="utf-8") as f:
                     config.write(f)
 
