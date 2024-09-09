@@ -52,20 +52,20 @@ def parse_wait_time(response: str) -> int:
     elif "мин" in response:
         response = response.split()
         # ["Подождите", "n", "минут."]
-        return (int(response[1])-1) * 60
+        return (int(response[1]) - 1) * 60
     elif "час" in response:
         response = response.split()
-        return (int(response[1])) * 3600 - 60*30
+        return (int(response[1])) * 3600 - 60 * 30
     else:
         return 10
 
 
 def parse_currency(s: str) -> Currency:
-    if any([i.lower() in s.lower() for i in ("RUB", "₽")]):
+    if any([i in s.lower() for i in ("rub", "₽")]):
         return Currency.RUB
-    if any([i.lower() in s.lower() for i in ("EUR", "€")]):
+    if any([i in s.lower() for i in ("eur", "€")]):
         return Currency.EUR
-    if any([i.lower() in s.lower() for i in ("USD", "$")]):
+    if any([i in s.lower() for i in ("usd", "$")]):
         return Currency.USD
     if "¤" in s:
         return Currency.RUB
@@ -78,6 +78,7 @@ class RegularExpressions(object):
     элементы текстов.
     Класс является singleton'ом.
     """
+
     def __new__(cls, *args, **kwargs):
         if not hasattr(cls, "instance"):
             setattr(cls, "instance", super(RegularExpressions, cls).__new__(cls))
@@ -90,7 +91,8 @@ class RegularExpressions(object):
         Лучше всего использовать вместе с MessageTypesRes.ORDER_PURCHASED2
         """
 
-        self.ORDER_PURCHASED2 = re.compile(r"[a-zA-Z0-9]+, не забудьте потом нажать кнопку («Подтвердить выполнение заказа»|«Подтвердить получение валюты»)\.")
+        self.ORDER_PURCHASED2 = re.compile(
+            r"[a-zA-Z0-9]+, не забудьте потом нажать кнопку («Подтвердить выполнение заказа»|«Подтвердить получение валюты»)\.")
         """
         Скомпилированное регулярное выражение, описывающее сообщение об оплате заказа (2).
         Лучше всего использовать вместе с MessageTypesRes.ORDER_PURCHASED
@@ -145,7 +147,8 @@ class RegularExpressions(object):
         Скомпилированное регулярное выражение, описывающее сообщение о возврате денежных средств.
         """
 
-        self.REFUND_BY_ADMIN = re.compile(r"Администратор [a-zA-Z0-9]+ вернул деньги покупателю [a-zA-Z0-9]+ по заказу #[A-Z0-9]{8}\.")
+        self.REFUND_BY_ADMIN = re.compile(
+            r"Администратор [a-zA-Z0-9]+ вернул деньги покупателю [a-zA-Z0-9]+ по заказу #[A-Z0-9]{8}\.")
         """
         Скомпилированное регулярное выражение, описывающее сообщение о возврате денежных средств администратором.
         """

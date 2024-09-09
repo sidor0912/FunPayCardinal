@@ -14,6 +14,7 @@ class BaseOrderInfo:
     """
     Класс, представляющий информацию о заказе.
     """
+
     def __init__(self):
         self._order: Order | None = None
         """Объект заказа"""
@@ -21,6 +22,7 @@ class BaseOrderInfo:
         """Пытались ли уже получить заказ?"""
         self._order_attempt_error: bool = False
         """Возникла ли ошибка при получении заказа?"""
+
 
 class ChatShortcut(BaseOrderInfo):
     """
@@ -44,6 +46,7 @@ class ChatShortcut(BaseOrderInfo):
     :param determine_msg_type: определять ли тип последнего сообщения?
     :type determine_msg_type: :obj:`bool`, опционально
     """
+
     def __init__(self, id_: int, name: str, last_message_text: str,
                  unread: bool, html: str, determine_msg_type: bool = True):
         self.id: int = id_
@@ -133,6 +136,7 @@ class Chat:
     :param messages: последние 100 сообщений чата.
     :type messages: :obj:`list` of :class:`FunPayAPI.types.Message` or :obj:`None`
     """
+
     def __init__(self, id_: int, name: str, looking_link: str | None, looking_text: str | None,
                  html: str, messages: Optional[list[Message]] = None):
         self.id: int = id_
@@ -180,6 +184,7 @@ class Message(BaseOrderInfo):
     :param determine_msg_type: определять ли тип сообщения.
     :type determine_msg_type: :obj:`bool`, опционально
     """
+
     def __init__(self, id_: int, text: str | None, chat_id: int | str, chat_name: str | None,
                  author: str | None, author_id: int, html: str,
                  image_link: str | None = None, determine_msg_type: bool = True, badge_text: Optional[str] = None):
@@ -300,6 +305,7 @@ class OrderShortcut(BaseOrderInfo):
     :param dont_search_amount: не искать кол-во товара.
     :type dont_search_amount: :obj:`bool`, опционально
     """
+
     def __init__(self, id_: str, description: str, price: float, currency: Currency,
                  buyer_username: str, buyer_id: int, chat_id: int | str, status: OrderStatuses,
                  date: datetime.datetime, subcategory_name: str, html: str, dont_search_amount: bool = False):
@@ -395,6 +401,7 @@ class Order:
     :param order_secrets: cписок товаров автовыдачи FunPay.
     :type order_secrets: :obj:`list` of :obj:`str`
     """
+
     def __init__(self, id_: str, status: OrderStatuses, subcategory: SubCategory, short_description: str | None,
                  full_description: str | None, sum_: float, currency: Currency,
                  buyer_id: int, buyer_username: str,
@@ -436,6 +443,7 @@ class Order:
     def __str__(self):
         return f"#{self.id}"
 
+
 class Category:
     """
     Класс, описывающий категорию (игру).
@@ -449,6 +457,7 @@ class Category:
     :param subcategories: подкатегории.
     :type subcategories: :obj:`list` of :class:`FunPayAPI.types.SubCategory` or :obj:`None`, опционально
     """
+
     def __init__(self, id_: int, name: str, subcategories: list[SubCategory] | None = None):
         self.id: int = id_
         """ID категории (game_id / data-id)."""
@@ -524,6 +533,7 @@ class SubCategory:
     :param category: родительская категория (игра).
     :type category: :class:`FunPayAPI.types.Category`
     """
+
     def __init__(self, id_: int, name: str, type_: SubCategoryTypes, category: Category):
         self.id: int = id_
         """ID подкатегории."""
@@ -552,6 +562,7 @@ class LotFields:
     :param fields: словарь с полями.
     :type fields: :obj:`dict`
     """
+
     def __init__(self, lot_id: int, fields: dict):
         self.lot_id: int = lot_id
         """ID лота."""
@@ -639,6 +650,25 @@ class LotFields:
         return self
 
 
+class SellerShortcut:
+    def __init__(self, id_: int, username: str, profile_photo: str, online: bool, stars: None | int, reviews: int,
+                 html: str):
+        self.id: int = id_
+        """ID пользователя."""
+        self.username: str = username
+        """Никнейм пользователя."""
+        self.profile_photo: str = profile_photo
+        """Ссылка на фото профиля."""
+        self.online: bool = online
+        """Онлайн ли пользователь."""
+        self.stars: int | None = stars
+        """Количество звезд."""
+        self.reviews: int = reviews
+        """Количество отзывов."""
+        self.html: str = html
+        """HTML код страницы пользователя."""
+
+
 class LotShortcut:
     """
     Данный класс представляет виджет лота.
@@ -664,8 +694,10 @@ class LotShortcut:
     :param html: HTML код виджета лота.
     :type html: :obj:`str`
     """
+
     def __init__(self, id_: int | str, server: str | None,
-                 description: str | None, price: float, currency: Currency, subcategory: SubCategory, seller: str, stars: float | int | None, html: str):
+                 description: str | None, price: float, currency: Currency, subcategory: SubCategory, seller: str,
+                 stars: float | int | None, html: str):
         self.id: int | str = id_
         if isinstance(self.id, str) and self.id.isnumeric():
             self.id = int(self.id)
@@ -715,6 +747,7 @@ class UserProfile:
     :param html: HTML код страницы пользователя.
     :type html: :obj:`str`
     """
+
     def __init__(self, id_: int, username: str, profile_photo: str, online: bool, banned: bool, html: str):
         self.id: int = id_
         """ID пользователя."""
@@ -774,8 +807,8 @@ class UserProfile:
     def get_sorted_lots(self, mode: Literal[3]) -> dict[SubCategoryTypes, dict[int | str, LotShortcut]]:
         ...
 
-    def get_sorted_lots(self, mode: Literal[1, 2, 3]) -> dict[int | str, LotShortcut] |\
-                                                         dict[SubCategory, dict[int | str, LotShortcut]] |\
+    def get_sorted_lots(self, mode: Literal[1, 2, 3]) -> dict[int | str, LotShortcut] | \
+                                                         dict[SubCategory, dict[int | str, LotShortcut]] | \
                                                          dict[SubCategoryTypes, dict[int | str, LotShortcut]]:
         """
         Возвращает список всех лотов пользователя в виде словаря.
@@ -866,6 +899,7 @@ class Review:
     :param author_id: ID автора отзыва.
     :type author_id: :obj:`int` or :obj:`None`, опционально
     """
+
     def __init__(self, stars: int | None, text: str | None, reply: str | None, anonymous: bool, html: str, hidden: bool,
                  order_id: str | None = None, author: str | None = None, author_id: int | None = None):
         self.stars: int | None = stars
@@ -907,6 +941,7 @@ class Balance:
     :param total_eur: общий евро баланс.
     :param available_eur: :obj:`float`
     """
+
     def __init__(self, total_rub: float, available_rub: float, total_usd: float, available_usd: float,
                  total_eur: float, available_eur: float):
         self.total_rub: float = total_rub

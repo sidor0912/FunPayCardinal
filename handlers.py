@@ -65,7 +65,7 @@ def save_init_chats_handler(c: Cardinal, e: InitialChatEvent):
     """
     Кэширует существующие чаты (чтобы не отправлять приветственные сообщения).
     """
-    if c.MAIN_CFG["Greetings"].getboolean("sendGreetings"):
+    if c.MAIN_CFG["Greetings"].getboolean("sendGreetings") and e.chat.id not in c.old_users:
         c.old_users[e.chat.id] = int(time.time())
         cardinal_tools.cache_old_users(c.old_users)
 
@@ -640,6 +640,11 @@ def update_lots_states(cardinal: Cardinal, event: NewOrderEvent):
         return
 
     lots = cardinal.curr_profile.get_sorted_lots(1)
+    profile_lots = cardinal.profile.get_sorted_lots(1)
+
+    for lot_id, lot in lots.items():
+        if lot_id not in profile_lots.keys():
+            cardinal.profile.add_lot(lot)
 
     deactivated = []
     restored = []
@@ -737,10 +742,10 @@ def send_order_confirmed_notification_handler(cardinal: Cardinal, event: OrderSt
     chat = cardinal.account.get_chat_by_name(event.order.buyer_username, True)
     Thread(target=cardinal.telegram.send_notification,
            args=(
-           f"""🪙 Пользователь <a href="https://funpay.com/chat/?node={chat.id}">{event.order.buyer_username}</a> """
-           f"""подтвердил выполнение заказа <code>{event.order.id}</code>.""",
-           keyboards.new_order(event.order.id, event.order.buyer_username, chat.id),
-           utils.NotificationTypes.order_confirmed),
+               f"""🪙 Пользователь <a href="https://funpay.com/chat/?node={chat.id}">{event.order.buyer_username}</a> """
+               f"""подтвердил выполнение заказа <code>{event.order.id}</code>.""",
+               keyboards.new_order(event.order.id, event.order.buyer_username, chat.id),
+               utils.NotificationTypes.order_confirmed),
            daemon=True).start()
 
 

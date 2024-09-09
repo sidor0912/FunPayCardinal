@@ -370,7 +370,6 @@ class Cardinal(object):
         if obj._order_attempt_error:
             return
         if obj._order_attempt_made:
-
             while obj._order is None and not obj._order_attempt_error:
                 time.sleep(0.1)
             return obj._order
@@ -476,12 +475,12 @@ class Cardinal(object):
                 try:
                     if isinstance(entity, str):
                         msg = self.account.send_message(chat_id, entity, chat_name, None, True, self.old_mode_enabled,
-                                                        self.old_mode_enabled and self.keep_sent_messages_unread)
+                                                        self.keep_sent_messages_unread)
                         result.append(msg)
                         logger.info(_("crd_msg_sent", chat_id))
                     elif isinstance(entity, int):
                         msg = self.account.send_image(chat_id, entity, chat_name, True, self.old_mode_enabled,
-                                                      self.old_mode_enabled and self.keep_sent_messages_unread)
+                                                      self.keep_sent_messages_unread)
                         result.append(msg)
                         logger.info(_("crd_msg_sent", chat_id))
                     elif isinstance(entity, float):

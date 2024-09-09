@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from cardinal import Cardinal
 
@@ -19,6 +20,7 @@ import logging
 PHOTO_RE = re.compile(r'\$photo=[\d]+')
 ENTITY_RE = re.compile(r"\$photo=\d+|\$new|(\$sleep=(\d+\.\d+|\d+))")
 logger = logging.getLogger("cardinal_tools")
+
 
 def count_products(path: str) -> int:
     """
@@ -118,13 +120,16 @@ def load_old_users(greetings_cooldown: float) -> dict[int, float]:
         return dict()
     with open(f"storage/cache/old_users.json", "r", encoding="utf-8") as f:
         users = f.read()
-    users = json.loads(users)
-    #todo убрать позже, конвертация для старых версий кардинала
+    try:
+        users = json.loads(users)
+    except json.decoder.JSONDecodeError:
+        return dict()
+    # todo убрать позже, конвертация для старых версий кардинала
     if type(users) == list:
         users = {user: time.time() for user in users}
     else:
         users = {int(user): time_ for user, time_ in users.items() if
-                 time.time() - time_ < greetings_cooldown*24*60}
+                 time.time() - time_ < greetings_cooldown * 24 * 60 * 60}
     cache_old_users(users)
     return users
 
@@ -154,10 +159,12 @@ def create_greeting_text(cardinal: Cardinal):
     ]
 
     length = 60
-    greetings_text = f"\n{'-'*length}\n"
+    greetings_text = f"\n{'-' * length}\n"
     for line in lines:
-        greetings_text += line + " "*(length - len(line.replace("$CYAN", "").replace("$YELLOW", "").replace("$MAGENTA", "").replace("$RESET", "")) - 1) + "$RESET*\n"
-    greetings_text += f"{'-'*length}\n"
+        greetings_text += line + " " * (length - len(
+            line.replace("$CYAN", "").replace("$YELLOW", "").replace("$MAGENTA", "").replace("$RESET",
+                                                                                             "")) - 1) + "$RESET*\n"
+    greetings_text += f"{'-' * length}\n"
     return greetings_text
 
 
@@ -204,7 +211,7 @@ def get_month_name(month_number: int) -> str:
     ]
     if month_number > len(months):
         return months[0]
-    return months[month_number-1]
+    return months[month_number - 1]
 
 
 def get_products(path: str, amount: int = 1) -> list[list[str] | int] | None:
@@ -250,7 +257,7 @@ def add_products(path: str, products: list[str], at_zero_position=False):
     """
     if not at_zero_position:
         with open(path, "a", encoding="utf-8") as f:
-            f.write("\n"+"\n".join(products))
+            f.write("\n" + "\n".join(products))
     else:
         with open(path, "r", encoding="utf-8") as f:
             text = f.read()
@@ -316,8 +323,8 @@ def format_order_text(text: str, order: FunPayAPI.types.OrderShortcut | FunPayAP
     game = subcategory_fullname = subcategory = ""
     try:
         if isinstance(order, FunPayAPI.types.OrderShortcut):
-             game, subcategory = order.subcategory_name.rsplit(", ", 1)
-             subcategory_fullname = f"{subcategory} {game}"
+            game, subcategory = order.subcategory_name.rsplit(", ", 1)
+            subcategory_fullname = f"{subcategory} {game}"
         else:
             subcategory_fullname = order.subcategory.fullname
             game = order.subcategory.category.name
@@ -332,8 +339,10 @@ def format_order_text(text: str, order: FunPayAPI.types.OrderShortcut | FunPayAP
         "$time": time_,
         "$full_time": time_full,
         "$username": order.buyer_username,
-        "$order_desc": order.description if isinstance(order, FunPayAPI.types.OrderShortcut) else order.short_description if order.short_description else "",
-        "$order_title": order.description if isinstance(order, FunPayAPI.types.OrderShortcut) else order.short_description if order.short_description else "",
+        "$order_desc": order.description if isinstance(order,
+                                                       FunPayAPI.types.OrderShortcut) else order.short_description if order.short_description else "",
+        "$order_title": order.description if isinstance(order,
+                                                        FunPayAPI.types.OrderShortcut) else order.short_description if order.short_description else "",
         "$order_id": order.id,
         "$order_link": f"https://funpay.com/orders/{order.id}/",
         "$category_fullname": subcategory_fullname,
@@ -371,6 +380,7 @@ def shut_down():
         process.terminate()
     except:
         pass
+
 
 def set_console_title(title: str) -> None:
     """

@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from cardinal import Cardinal
 
@@ -12,7 +13,6 @@ import requests
 import json
 import os
 import time
-
 
 logger = getLogger("FPC.announcements")
 localizer = Localizer()
@@ -47,10 +47,10 @@ def save_last_tag():
         f.write(LAST_TAG)
 
 
-def get_announcement() -> dict | None:
+def get_announcement(ignore_last_tag: bool = False) -> dict | None:
     """
     Получает информацию об объявлении.
-    Если тэг объявления совпадает с сохраненным тегом, возвращает None.
+    Если тэг объявления совпадает с сохраненным тегом и ignore_last_tag ложь, возвращает None.
     Если произошла ошибка при получении объявлении, возвращает None.
 
     :return: словарь с данными объявления.
@@ -66,7 +66,7 @@ def get_announcement() -> dict | None:
             return None
 
         content = json.loads(response.json().get("files").get("fpc.json").get("content"))
-        if content.get("tag") == LAST_TAG:
+        if content.get("tag") == LAST_TAG and not ignore_last_tag:
             return None
         return content
     except:
@@ -171,39 +171,45 @@ def get_keyboard(data: dict) -> K | None:
     return kb
 
 
+def announcements_loop_iteration(crd: Cardinal, ignore_last_tag: bool = False):
+    global LAST_TAG
+    if not (data := get_announcement(ignore_last_tag=ignore_last_tag)):
+        time.sleep(REQUESTS_DELAY)
+        return
+
+    elif not LAST_TAG:
+        LAST_TAG = data.get("tag")
+        save_last_tag()
+        time.sleep(REQUESTS_DELAY)
+        return
+
+    if not ignore_last_tag:
+        LAST_TAG = data.get("tag")
+        save_last_tag()
+    text = get_text(data)
+    photo = get_photo(data)
+    notification_type = get_notification_type(data)
+    keyboard = get_keyboard(data)
+    pin = get_pin(data)
+
+    if text or photo:
+        Thread(target=crd.telegram.send_notification,
+               args=(text,),
+               kwargs={"photo": photo, 'notification_type': notification_type, 'keyboard': keyboard,
+                       'pin': pin},
+               daemon=True).start()
+
+
 def announcements_loop(crd: Cardinal):
     """
     Бесконечный цикл получения объявлений.
     """
-    global LAST_TAG
     if not crd.telegram:
         return
 
     while True:
         try:
-            if not (data := get_announcement()):
-                time.sleep(REQUESTS_DELAY)
-                continue
-
-            elif not LAST_TAG:
-                LAST_TAG = data.get("tag")
-                save_last_tag()
-                time.sleep(REQUESTS_DELAY)
-                continue
-
-            LAST_TAG = data.get("tag")
-            save_last_tag()
-            text = get_text(data)
-            photo = get_photo(data)
-            notification_type = get_notification_type(data)
-            keyboard = get_keyboard(data)
-            pin = get_pin(data)
-
-            if text or photo:
-                Thread(target=crd.telegram.send_notification,
-                       args=(text,),
-                       kwargs={"photo": photo, 'notification_type': notification_type, 'keyboard': keyboard, 'pin': pin},
-                       daemon=True).start()
+            announcements_loop_iteration(crd, ignore_last_tag=False)
         except:
             pass
         time.sleep(REQUESTS_DELAY)
