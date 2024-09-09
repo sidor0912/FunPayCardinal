@@ -1487,10 +1487,16 @@ class Account:
                     if self.chat_id_private(chat_id) and author_id == interlocutor_id and not interlocutor_username:
                         interlocutor_username = author
                         ids[interlocutor_id] = interlocutor_username
-
-            if self.chat_id_private(chat_id) and (image_link := parser.find("a", {"class": "chat-img-link"})):
-                image_link = image_link.get("href")
+            by_bot = False
+            if self.chat_id_private(chat_id) and (image_tag := parser.find("a", {"class": "chat-img-link"})):
+                image_name = image_tag.find("img")
+                image_name = image_name.get('alt') if image_name else ""
+                image_link = image_tag.get("href")
                 message_text = None
+                # "Отправлено_с_помощью_бота_FunPay_Cardinal.png", "funpay_cardinal_image.png"
+                if "funpay_cardinal" in image_name.lower():
+                    by_bot = True
+
             else:
                 image_link = None
                 if author_id == 0:
@@ -1498,7 +1504,6 @@ class Account:
                 else:
                     message_text = parser.find("div", {"class": "chat-msg-text"}).text
 
-            by_bot = False
             if message_text and message_text.startswith(self.__bot_character):
                 message_text = message_text[1:]
                 by_bot = True
