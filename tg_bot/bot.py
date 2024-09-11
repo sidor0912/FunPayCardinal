@@ -788,8 +788,10 @@ class TGBot:
         last_message_author_id = -1
         last_by_bot = False
         last_badge = None
+        last_by_vertex = False
         for i in messages:
-            if i.author_id == last_message_author_id and i.by_bot == last_by_bot and i.badge == last_badge:
+            if i.author_id == last_message_author_id and i.by_bot == last_by_bot and i.badge == last_badge and \
+                    last_by_vertex == i.by_vertex:
                 author = ""
             elif i.author_id == self.cardinal.account.id:
                 author = f"<i><b>🤖 {_('you')} (<i>FPC</i>):</b></i> " if i.by_bot else f"<i><b>🫵 {_('you')}:</b></i> "
@@ -818,6 +820,7 @@ class TGBot:
             last_message_author_id = i.author_id
             last_by_bot = i.by_bot
             last_badge = i.badge
+            last_by_vertex = i.by_vertex
 
         self.bot.edit_message_text(text, c.message.chat.id, c.message.id,
                                    reply_markup=kb.reply(int(chat_id), username, False, False))
