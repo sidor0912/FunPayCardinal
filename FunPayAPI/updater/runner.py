@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from typing import TYPE_CHECKING, Generator
+
 if TYPE_CHECKING:
     from ..account import Account
 
@@ -11,7 +12,6 @@ from bs4 import BeautifulSoup
 
 from ..common import exceptions
 from .events import *
-
 
 logger = logging.getLogger("FunPayAPI.runner")
 
@@ -40,6 +40,7 @@ class Runner:
         :class:`FunPayAPI.updater.events.OrdersListChangedEvent`.
     :type disabled_order_requests: :obj:`bool`, опционально
     """
+
     def __init__(self, account: Account, disable_message_requests: bool = False,
                  disabled_order_requests: bool = False):
         # todo добавить события и исключение событий о новых покупках (не продажах!)
@@ -141,7 +142,7 @@ class Runner:
             :class:`FunPayAPI.updater.events.OrderStatusChangedEvent`
         """
         events = []
-        #сортируем в т.ч. для того, чтобы приветственное сообщение было перед данными автовыдачи
+        # сортируем в т.ч. для того, чтобы приветственное сообщение было перед данными автовыдачи
         for obj in sorted(updates["objects"], key=lambda x: x.get("type") == "chat_bookmarks", reverse=True):
             if obj.get("type") == "chat_bookmarks":
                 events.extend(self.parse_chat_updates(obj))
@@ -182,6 +183,7 @@ class Runner:
             last_msg_text = last_msg_text.text
             if last_msg_text.startswith(self.account.bot_character):
                 last_msg_text = last_msg_text[1:]
+                # todo добавить by_bot в старый режим получения сообщений?
             last_msg_time = chat.find("div", {"class": "contact-item-time"}).text
             unread = True if "unread" in chat.get("class") else False
 
@@ -192,7 +194,8 @@ class Runner:
                     # Если есть сохраненное время сообщения для данного чата
                     if self.last_messages[chat_id][1]:
                         # Если время ласт сообщения не имеет формат ЧЧ:ММ или совпадает с сохраненным - скип чата
-                        if not self.__msg_time_re.fullmatch(last_msg_time) or self.last_messages[chat_id][1] == last_msg_time:
+                        if not self.__msg_time_re.fullmatch(last_msg_time) or \
+                                self.last_messages[chat_id][1] == last_msg_time:
                             continue
                     # Если нет сохраненного времени сообщения для данного чата - скип чата
                     else:
@@ -291,7 +294,7 @@ class Runner:
                                 if not temp:
                                     temp.append(i)
                                 break
-                        elif i.text[:250] == init_msg_text or i.id<(min(self.last_messages_ids.values(), default=0)):
+                        elif i.text[:250] == init_msg_text or i.id < (min(self.last_messages_ids.values(), default=0)):
                             break
                         temp.append(i)
                     messages = list(reversed(temp))
@@ -300,7 +303,8 @@ class Runner:
                 # только сообщения, у которых ID больше чем у минимального из сохраненных.
                 # Если сохраненных ID нету совсем, то добавляем только ласт сообщение истории.
                 else:
-                    messages_temp = [m for m in messages if m.id > min(self.last_messages_ids.values(), default=10**20)]
+                    messages_temp = [m for m in messages if
+                                     m.id > min(self.last_messages_ids.values(), default=10 ** 20)]
                     messages = messages_temp if messages_temp else messages[-1:]
 
             self.last_messages_ids[cid] = messages[-1].id  # Перезаписываем ID последнего сообщение
@@ -339,7 +343,7 @@ class Runner:
         while attempts:
             attempts -= 1
             try:
-                orders_list = self.account.get_sells()#todo добавить возможность реакции на подтверждение очень старых заказов
+                orders_list = self.account.get_sells()  # todo добавить возможность реакции на подтверждение очень старых заказов
                 break
             except exceptions.RequestFailedError as e:
                 logger.error(e)

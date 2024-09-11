@@ -88,8 +88,10 @@ class Account:
             types.SubCategoryTypes.CURRENCY: {}
         }
 
-        self.__bot_character = "⁤"
+        self.__bot_character = "⁡"
         """Если сообщение начинается с этого символа, значит оно отправлено ботом."""
+        self.__old_bot_character = "⁤"
+        """Старое значение self.__bot_character, для корректной маркировки отправки ботом старых сообщений"""
 
     def method(self, request_method: Literal["post", "get"], api_method: str, headers: dict, payload: Any,
                exclude_phpsessid: bool = False, raise_not_200: bool = False) -> requests.Response:
@@ -485,14 +487,19 @@ class Account:
                 </div>
             </div>
             """
-            message_obj = types.Message(0, message_text, chat_id, chat_name, self.username, self.id, fake_html, None)
+            message_obj = types.Message(0, message_text, chat_id, chat_name, self.username, self.id, fake_html, None,
+                                        None)
         else:
             mes = json_response["objects"][0]["data"]["messages"][-1]
             parser = BeautifulSoup(mes["html"].replace("<br>", "\n"), "html.parser")
+            image_name = None
+            image_link = None
+            message_text = None
             try:
-                if image_link := parser.find("a", {"class": "chat-img-link"}):
-                    image_link = image_link.get("href")
-                    message_text = None
+                if image_tag := parser.find("a", {"class": "chat-img-link"}):
+                    image_name = image_tag.find("img")
+                    image_name = image_name.get('alt') if image_name else None
+                    image_link = image_tag.get("href")
                 else:
                     message_text = parser.find("div", {"class": "chat-msg-text"}).text. \
                         replace(self.__bot_character, "", 1)
@@ -501,7 +508,7 @@ class Account:
                 logger.debug(response.content.decode())
                 raise e
             message_obj = types.Message(int(mes["id"]), message_text, chat_id, chat_name, self.username, self.id,
-                                        mes["html"], image_link)
+                                        mes["html"], image_link, image_name)
         if self.runner and isinstance(chat_id, int):
             if add_to_ignore_list:
                 self.runner.mark_as_by_bot(chat_id, message_obj.id)
@@ -1488,14 +1495,18 @@ class Account:
                         interlocutor_username = author
                         ids[interlocutor_id] = interlocutor_username
             by_bot = False
+            by_vertex = False
+            image_name = None
             if self.chat_id_private(chat_id) and (image_tag := parser.find("a", {"class": "chat-img-link"})):
                 image_name = image_tag.find("img")
-                image_name = image_name.get('alt') if image_name else ""
+                image_name = image_name.get('alt') if image_name else None
                 image_link = image_tag.get("href")
                 message_text = None
                 # "Отправлено_с_помощью_бота_FunPay_Cardinal.png", "funpay_cardinal_image.png"
-                if "funpay_cardinal" in image_name.lower():
+                if isinstance(image_name, str) and "funpay_cardinal" in image_name.lower():
                     by_bot = True
+                elif image_name == "funpay_vertex_image.png":
+                    by_vertex = True
 
             else:
                 image_link = None
@@ -1504,13 +1515,18 @@ class Account:
                 else:
                     message_text = parser.find("div", {"class": "chat-msg-text"}).text
 
-            if message_text and message_text.startswith(self.__bot_character):
-                message_text = message_text[1:]
-                by_bot = True
+                if message_text.startswith(self.__bot_character) or \
+                        message_text.startswith(self.__old_bot_character) and author_id == self.id:
+                    message_text = message_text[1:]
+                    by_bot = True
+                # todo придумать, как отсеять юзеров со старыми версиями кардинала (подождать обнову фп?)
+                # elif message_text.startswith(self.__old_bot_character):
+                #     by_vertex = True
 
             message_obj = types.Message(i["id"], message_text, chat_id, interlocutor_username,
-                                        None, author_id, i["html"], image_link, determine_msg_type=False)
+                                        None, author_id, i["html"], image_link, image_name, determine_msg_type=False)
             message_obj.by_bot = by_bot
+            message_obj.by_vertex = by_vertex
             message_obj.type = types.MessageTypes.NON_SYSTEM if author_id != 0 else message_obj.get_message_type()
             messages.append(message_obj)
 

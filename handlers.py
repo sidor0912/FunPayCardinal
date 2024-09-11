@@ -235,7 +235,6 @@ def send_new_msg_notification_handler(c: Cardinal, e: NewMessageEvent) -> None:
             continue
         elif message_text.startswith("!автовыдача") and len(events) < 2:
             continue
-
         if i.message.author_id == last_message_author_id and i.message.by_bot == last_by_bot and i.message.badge == last_badge:
             author = ""
         elif i.message.author_id == c.account.id:
@@ -252,9 +251,15 @@ def send_new_msg_notification_handler(c: Cardinal, e: NewMessageEvent) -> None:
                 author = f"<i><b>🛍️ {i.message.author} ({i.message.badge}):</b></i> "
             elif i.message.author in c.blacklist:
                 author = f"<i><b>🚷 {i.message.author}: </b></i>"
+            elif i.message.by_bot:
+                author = f"<i><b>🐦 {i.message.author}: </b></i>"
+            elif i.message.by_vertex:
+                author = f"<i><b>🐺 {i.message.author}: </b></i>"
         else:
             author = f"<i><b>🆘 {i.message.author} {_('support')}: </b></i>"
-        msg_text = f"<code>{utils.escape(i.message.text)}</code>" if i.message.text else f"<a href=\"{i.message}\">{_('photo')}</a>"
+        msg_text = f"<code>{utils.escape(i.message.text)}</code>" if i.message.text else \
+            f"<a href=\"{i.message.image_link}\">" \
+            f"{c.show_image_name and not (i.message.author_id == c.account.id and i.message.by_bot) and i.message.image_name or _('photo')}</a>"
         text += f"{author}{msg_text}\n\n"
         last_message_author_id = i.message.author_id
         last_by_bot = i.message.by_bot

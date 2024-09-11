@@ -40,7 +40,8 @@ default_config = {
         "includeBotMessages": "0",
         "notifyOnlyMyMessages": "0",
         "notifyOnlyFPMessages": "0",
-        "notifyOnlyBotMessages": "0"
+        "notifyOnlyBotMessages": "0",
+        "showImageName": "1"
     },
 
     "Greetings": {

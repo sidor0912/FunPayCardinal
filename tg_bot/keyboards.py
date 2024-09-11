@@ -136,6 +136,7 @@ def new_message_view_settings(c: Cardinal) -> K:
         .add(B(_("mv_only_my_msg", l("notifyOnlyMyMessages")), None, f"{p}:notifyOnlyMyMessages")) \
         .add(B(_("mv_only_fp_msg", l("notifyOnlyFPMessages")), None, f"{p}:notifyOnlyFPMessages")) \
         .add(B(_("mv_only_bot_msg", l("notifyOnlyBotMessages")), None, f"{p}:notifyOnlyBotMessages")) \
+        .add(B(_("mv_show_image_name", l("showImageName")), None, f"{p}:showImageName")) \
         .add(B(_("gl_back"), None, CBT.MAIN2))
     return kb
 

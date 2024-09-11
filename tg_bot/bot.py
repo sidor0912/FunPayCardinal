@@ -72,6 +72,7 @@ class TGBot:
             "restart": _("cmd_restart"),
             "upload_chat_img": _("cmd_upload_chat_img"),
             "upload_offer_img": _("cmd_upload_offer_img"),
+            "upload_plugin": _("cmd_upload_plugin"),
             "test_lot": _("cmd_test_lot"),
             "logs": _("cmd_logs"),
             "del_logs": _("cmd_del_logs"),
@@ -804,9 +805,15 @@ class TGBot:
                     author = f"<i><b>🛍️ {i.author} ({i.badge}):</b></i> "
                 elif i.author in self.cardinal.blacklist:
                     author = f"<i><b>🚷 {i.author}: </b></i>"
+                elif i.by_bot:
+                    author = f"<i><b>🐦 {i.author}: </b></i>"
+                elif i.by_vertex:
+                    author = f"<i><b>🐺 {i.message.author}: </b></i>"
             else:
                 author = f"<i><b>🆘 {i.author} ({_('support')}): </b></i>"
-            msg_text = f"<code>{utils.escape(i.text)}</code>" if i.text else f"<a href=\"{i.image_link}\">{_('photo')}</a>"
+            msg_text = f"<code>{utils.escape(i.text)}</code>" if i.text else \
+                f"<a href=\"{i.image_link}\">" \
+                f"{self.cardinal.show_image_name and not (i.author_id == self.cardinal.account.id and i.by_bot) and i.image_name or _('photo')}</a>"
             text += f"{author}{msg_text}\n\n"
             last_message_author_id = i.author_id
             last_by_bot = i.by_bot

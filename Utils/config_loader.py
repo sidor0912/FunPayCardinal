@@ -100,6 +100,7 @@ def load_main_config(config_path: str):
             "notifyOnlyMyMessages": ["0", "1"],
             "notifyOnlyFPMessages": ["0", "1"],
             "notifyOnlyBotMessages": ["0", "1"],
+            "showImageName": ["0", "1"]
         },
 
         "Greetings": {
@@ -188,6 +189,11 @@ def load_main_config(config_path: str):
             elif section_name == "FunPay" and param_name == "keepSentMessagesUnread" and \
                     param_name not in config[section_name]:
                 config.set("FunPay", "keepSentMessagesUnread", "0")
+                with open("configs/_main.cfg", "w", encoding="utf-8") as f:
+                    config.write(f)
+            elif section_name == "NewMessageView" and param_name == "showImageName" and \
+                    param_name not in config[section_name]:
+                config.set("NewMessageView", "showImageName", "1")
                 with open("configs/_main.cfg", "w", encoding="utf-8") as f:
                     config.write(f)
 

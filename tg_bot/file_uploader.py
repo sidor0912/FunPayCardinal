@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 from typing import TYPE_CHECKING, Literal
+
 if TYPE_CHECKING:
     from cardinal import Cardinal
     from tg_bot.bot import TGBot
@@ -15,7 +16,6 @@ from tg_bot.static_keyboards import CLEAR_STATE_BTN
 from telebot import types
 import logging
 import os
-
 
 logger = logging.getLogger("TGBot")
 
@@ -95,7 +95,7 @@ def init_uploader(cardinal: Cardinal):
         Загружает файл с товарами.
         """
         tg.clear_state(m.chat.id, m.from_user.id, True)
-        if not check_file(tg, m):
+        if not check_file(tg, m, type_="txt"):
             return
         if not download_file(tg, m, m.document.file_name,
                              custom_path=f"storage/products"):
@@ -132,7 +132,7 @@ def init_uploader(cardinal: Cardinal):
         Загружает и проверяет основной конфиг.
         """
         tg.clear_state(m.chat.id, m.from_user.id, True)
-        if not check_file(tg, m):
+        if not check_file(tg, m, type_="cfg"):
             return
         if not download_file(tg, m, "temp_main.cfg"):
             return
@@ -172,7 +172,7 @@ def init_uploader(cardinal: Cardinal):
         Загружает, проверяет и устанавливает конфиг автовыдачи.
         """
         tg.clear_state(m.chat.id, m.from_user.id, True)
-        if not check_file(tg, m):
+        if not check_file(tg, m, type_="cfg"):
             return
         if not download_file(tg, m, "temp_auto_response.cfg"):
             return
@@ -213,7 +213,7 @@ def init_uploader(cardinal: Cardinal):
         Загружает, проверяет и устанавливает конфиг автовыдачи.
         """
         tg.clear_state(m.chat.id, m.from_user.id, True)
-        if not check_file(tg, m):
+        if not check_file(tg, m, type_="cfg"):
             return
         if not download_file(tg, m, "temp_auto_delivery.cfg"):
             return
@@ -315,8 +315,8 @@ def init_uploader(cardinal: Cardinal):
                                f'Подробнее в файле <code>logs/log.log</code>')
             return
         if type_ == "chat":
-            s = f"Используйте этот ID в текстах автовыдачи/автоответа с переменной "\
-                f"<code>$photo</code>\n\n"\
+            s = f"Используйте этот ID в текстах автовыдачи/автоответа с переменной " \
+                f"<code>$photo</code>\n\n" \
                 f"Например: <code>$photo={image_id}</code>"
         elif type_ == "offer":
             s = f"Используйте этот ID для добавления картинок к лотам."
@@ -328,8 +328,6 @@ def init_uploader(cardinal: Cardinal):
 
     def upload_offer_image(m: types.Message):
         upload_image(m, type_="offer")
-
-
 
     tg.cbq_handler(act_upload_products_file, lambda c: c.data == CBT.UPLOAD_PRODUCTS_FILE)
     tg.cbq_handler(act_upload_auto_response_config, lambda c: c.data == "upload_auto_response_config")

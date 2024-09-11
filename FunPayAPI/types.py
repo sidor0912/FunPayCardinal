@@ -187,7 +187,8 @@ class Message(BaseOrderInfo):
 
     def __init__(self, id_: int, text: str | None, chat_id: int | str, chat_name: str | None,
                  author: str | None, author_id: int, html: str,
-                 image_link: str | None = None, determine_msg_type: bool = True, badge_text: Optional[str] = None):
+                 image_link: str | None = None, image_name: str | None = None,
+                 determine_msg_type: bool = True, badge_text: Optional[str] = None):
         self.id: int = id_
         """ID сообщения."""
         self.text: str | None = text
@@ -206,8 +207,12 @@ class Message(BaseOrderInfo):
         """HTML-код сообщения."""
         self.image_link: str | None = image_link
         """Ссылка на изображение в сообщении (если оно есть)."""
+        self.image_name: str | None = image_name
+        """Название изображения (если оно есть)."""
         self.by_bot: bool = False
         """Отправлено ли сообщение с помощью :meth:`FunPayAPI.Account.send_message`?"""
+        self.by_vertex: bool = False
+        """Отправлено ли сообщение через FunPay Vertex"""
         self.badge: str | None = badge_text
         """Текст бэйджика тех. поддержки или автовыдачи FunPay."""
         BaseOrderInfo.__init__(self)

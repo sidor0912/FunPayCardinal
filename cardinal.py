@@ -880,6 +880,10 @@ class Cardinal(object):
         return self.MAIN_CFG["FunPay"].getboolean("keepSentMessagesUnread")
 
     @property
+    def show_image_name(self) -> bool:
+        return self.MAIN_CFG["NewMessageView"].getboolean("showImageName")
+
+    @property
     def bl_delivery_enabled(self) -> bool:
         return self.MAIN_CFG["BlockList"].getboolean("blockDelivery")
 
