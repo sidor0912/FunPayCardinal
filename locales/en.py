@@ -28,6 +28,7 @@ mm_review_reply = "⭐ Response to reviews"
 mm_new_msg_view = "✉️ Appearance of new msg. notification"
 mm_plugins = "🧩 Plugins"
 mm_configs = "📁 Configs"
+mm_authorized_users = "👥 Authorized Users"
 
 # Global switches
 gs_autoraise = "{} Auto-raise"

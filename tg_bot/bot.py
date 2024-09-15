@@ -290,7 +290,7 @@ class TGBot:
                     logger.error(_("log_tg_notification_error", chat_id))
                     logger.debug("TRACEBACK", exc_info=True)
                 time.sleep(1)
-            self.authorized_users.append(m.from_user.id)
+            self.authorized_users[m.from_user.id] = {}
             utils.save_authorized_users(self.authorized_users)
             if str(m.chat.id) not in self.notification_settings:
                 self.notification_settings[str(m.chat.id)] = self.__default_notification_settings

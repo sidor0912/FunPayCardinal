@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from cardinal import Cardinal
 
@@ -52,17 +53,26 @@ class NotificationTypes:
     """Не отключаемые критически важные уведомления."""
 
 
-def load_authorized_users() -> list[int]:
+def load_authorized_users() -> dict[int, dict[str, bool | None | str]]:
     """
     Загружает авторизированных пользователей из кэша.
 
     :return: список из id авторизированных пользователей.
     """
     if not os.path.exists("storage/cache/tg_authorized_users.json"):
-        return []
+        return dict()
     with open("storage/cache/tg_authorized_users.json", "r", encoding="utf-8") as f:
         data = f.read()
-    return json.loads(data)
+    data = json.loads(data)
+    result = {}
+    if isinstance(data, list):
+        for i in data:
+            result[i] = {}
+        save_authorized_users(result)
+    else:
+        for k, v in data.items():
+            result[int(k)] = v
+    return result
 
 
 def load_notification_settings() -> dict:
@@ -89,7 +99,7 @@ def load_answer_templates() -> list[str]:
         return json.loads(f.read())
 
 
-def save_authorized_users(users: list[int]) -> None:
+def save_authorized_users(users: dict[int, dict]) -> None:
     """
     Сохраняет ID авторизированных пользователей.
 

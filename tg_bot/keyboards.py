@@ -82,7 +82,7 @@ def settings_sections(c: Cardinal) -> K:
         .add(B(_("mm_notifications"), callback_data=f"{CBT.CATEGORY}:tg")) \
         .add(B(_("mm_autoresponse"), callback_data=f"{CBT.CATEGORY}:ar")) \
         .add(B(_("mm_autodelivery"), callback_data=f"{CBT.CATEGORY}:ad")) \
-        .add(B(_("mm_blacklist"), callback_data=f"{CBT.CATEGORY}:bl")) \
+        .add(B(_("mm_plugins"), callback_data=f"{CBT.PLUGINS_LIST}:0")) \
         .add(B(_("mm_templates"), callback_data=f"{CBT.TMPLT_LIST}:0")) \
         .add(B(_("gl_next"), callback_data=CBT.MAIN2))
     return kb
@@ -183,6 +183,44 @@ def order_confirm_reply_settings(c: Cardinal):
     return kb
 
 
+def authorized_users(c: Cardinal, offset: int):
+    """
+    Генерирует клавиатуру со списком команд (CBT.AUTHORIZED_USERS:<offset>).
+
+    :param c: объект кардинала.
+    :param offset: смещение списка пользователей.
+
+    :return: объект клавиатуры со списком пользователей.
+    """
+    kb = K()
+    users = list(c.telegram.authorized_users.keys())[offset: offset + MENU_CFG.AUTHORIZED_USERS_BTNS_AMOUNT]
+
+    for user_id in users:
+        #  CBT.AUTHORIZED_USER_SETTINGS:user_id:смещение (для кнопки назад)
+        kb.row(B(f"{user_id}", callback_data=f"{CBT.AUTHORIZED_USER_SETTINGS}:{user_id}:{offset}"))
+
+    kb = add_navigation_buttons(kb, offset, MENU_CFG.AUTHORIZED_USERS_BTNS_AMOUNT, len(users),
+                                len(c.telegram.authorized_users), CBT.AUTHORIZED_USERS)
+
+    kb.add(B(_("gl_back"), None, CBT.MAIN2))
+    return kb
+
+
+def authorized_user_settings(c: Cardinal, user_id: int, offset: int, user_link: bool):
+    """
+    Генерирует клавиатуру с настройками пользователя (CBT.AUTHORIZED_USER_SETTINGS:<offset>).
+    """
+    kb = K()
+
+    if user_link:
+        kb.add(B(f"{user_id}", url=f"tg:user?id={user_id}"))
+    for i in range(1, 7):
+        kb.add(B(f"Настроечки {i}", callback_data=CBT.EMPTY))
+    kb.add(B(_("gl_back"), None, f"{CBT.AUTHORIZED_USERS}:{offset}"))
+    # todo в коллбеки кнопок добавить offset и user_link
+    return kb
+
+
 def review_reply_settings(c: Cardinal):
     """
     Генерирует клавиатуру настроек ответа на отзыв (CBT.CATEGORY:reviewReply).
@@ -273,7 +311,7 @@ def blacklist_settings(c: Cardinal) -> K:
         B(_("bl_new_msg_notifications", l("blockNewMessageNotification")), None, f"{p}:blockNewMessageNotification")) \
         .add(B(_("bl_new_order_notifications", l("blockNewOrderNotification")), None, f"{p}:blockNewOrderNotification")) \
         .add(B(_("bl_command_notifications", l("blockCommandNotification")), None, f"{p}:blockCommandNotification")) \
-        .add(B(_("gl_back"), None, CBT.MAIN))
+        .add(B(_("gl_back"), None, CBT.MAIN2))
     return kb
 
 
@@ -639,7 +677,7 @@ def plugins_list(c: Cardinal, offset: int):
                                 len(list(c.plugins.keys())), CBT.PLUGINS_LIST)
 
     kb.add(B(_("pl_add"), None, f"{CBT.UPLOAD_PLUGIN}:{offset}")) \
-        .add(B(_("gl_back"), None, CBT.MAIN2))
+        .add(B(_("gl_back"), None, CBT.MAIN))
     return kb
 
 

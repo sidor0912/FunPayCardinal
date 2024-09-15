@@ -7,7 +7,8 @@ from FunPayAPI.common.enums import SubCategoryTypes
 if TYPE_CHECKING:
     from configparser import ConfigParser
 
-from tg_bot import auto_response_cp, config_loader_cp, auto_delivery_cp, templates_cp, plugins_cp, file_uploader
+from tg_bot import auto_response_cp, config_loader_cp, auto_delivery_cp, templates_cp, plugins_cp, file_uploader, \
+    authorized_users_cp
 from types import ModuleType
 import Utils.exceptions
 from uuid import UUID
@@ -222,7 +223,7 @@ class Cardinal(object):
                 logger.error(_("crd_acc_get_timeout_err"))
             except (FunPayAPI.exceptions.UnauthorizedError, FunPayAPI.exceptions.RequestFailedError) as e:
                 logger.error(e.short_str())
-                logger.debug(f"TRACEBACK {e}")
+                logger.debug(f"TRACEBACK {e.short_str()}")
             except:
                 logger.error(_("crd_acc_get_unexpected_err"))
                 logger.debug("TRACEBACK", exc_info=True)
@@ -595,7 +596,7 @@ class Cardinal(object):
         if self.MAIN_CFG["Telegram"].getboolean("enabled"):
             self.__init_telegram()
             for module in [auto_response_cp, auto_delivery_cp, config_loader_cp, templates_cp, plugins_cp,
-                           file_uploader]:
+                           file_uploader, authorized_users_cp]:
                 self.add_handlers_from_plugin(module)
 
         self.run_handlers(self.pre_init_handlers, (self,))
@@ -809,8 +810,10 @@ class Cardinal(object):
                     func(*args)
             except Exception as ex:
                 text = _("crd_handler_err")
-                if hasattr(ex, "short_str") and callable(getattr(ex, "short_str")):
+                try:
                     text += f" {ex.short_str()}"
+                except:
+                    pass
                 logger.error(text)
                 logger.debug("TRACEBACK", exc_info=True)
                 continue

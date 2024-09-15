@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from cardinal import Cardinal
 
@@ -14,7 +15,6 @@ import logging
 import os
 
 from locales.localizer import Localizer
-
 
 logger = logging.getLogger("TGBot")
 localizer = Localizer()
@@ -50,8 +50,8 @@ def init_config_loader_cp(cardinal: Cardinal, *args):
             bot.answer_callback_query(c.id)
             return
 
-        back_button = types.InlineKeyboardMarkup()\
-            .add(types.InlineKeyboardButton(_("gl_back"), callback_data="config_loader"))
+        back_button = types.InlineKeyboardMarkup() \
+            .add(types.InlineKeyboardButton(_("gl_back"), callback_data=CBT.CONFIG_LOADER))
 
         if not os.path.exists(path):
             bot.answer_callback_query(c.id, _("cfg_not_found_err", path), show_alert=True)
@@ -68,7 +68,7 @@ def init_config_loader_cp(cardinal: Cardinal, *args):
         logger.info(_("log_cfg_downloaded", c.from_user.username, c.from_user.id, path))
         bot.answer_callback_query(c.id)
 
-    tg.cbq_handler(open_config_loader, lambda c: c.data == "config_loader")
+    tg.cbq_handler(open_config_loader, lambda c: c.data == CBT.CONFIG_LOADER)
     tg.cbq_handler(send_config, lambda c: c.data.startswith(f"{CBT.DOWNLOAD_CFG}:"))
 
 

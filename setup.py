@@ -1,6 +1,5 @@
 from pip._internal.cli.main import main
 
-
 common_packages = [
     "psutil>=5.9.4",
     "beautifulsoup4>=4.11.1",
@@ -8,7 +7,7 @@ common_packages = [
     "requests==2.28.1",
     "pytelegrambotapi==4.15.2",
     "pillow>=9.3.0",
-    "aiohttp==3.8.3",
+    "aiohttp==3.9.0",
     "requests_toolbelt==0.10.1"
 ]
 
