@@ -3,6 +3,8 @@
 """
 
 from __future__ import annotations
+
+import math
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -208,8 +210,10 @@ def add_navigation_buttons(keyboard_obj: K, curr_offset: int,
     else:
         forward, forward_cb, last_cb = False, CBT.EMPTY, CBT.EMPTY
 
+    center_text = f"{(curr_offset // max_elements_on_page) + 1}/{(elements_amount // max_elements_on_page) + 1}"
     if back or forward:
         keyboard_obj.row(B("◀️◀️", callback_data=first_cb), B("◀️", callback_data=back_cb),
+                         B(center_text, callback_data=CBT.EMPTY),
                          B("▶️", callback_data=forward_cb), B("▶️▶️", callback_data=last_cb))
     return keyboard_obj
 
