@@ -8,7 +8,8 @@ common_packages = [
     "pytelegrambotapi==4.15.2",
     "pillow>=9.3.0",
     "aiohttp==3.9.0",
-    "requests_toolbelt==0.10.1"
+    "requests_toolbelt==0.10.1",
+    "lxml>=5.3.0"
 ]
 
 

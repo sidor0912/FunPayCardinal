@@ -1014,7 +1014,7 @@ class TGBot:
 
     def switch_lang(self, c: CallbackQuery):
         lang = c.data.split(":")[1]
-        localizer.current_language = lang
+        Localizer(lang)
         self.cardinal.MAIN_CFG["Other"]["language"] = lang
         self.cardinal.save_config(self.cardinal.MAIN_CFG, "configs/_main.cfg")
         if localizer.current_language == "en":
@@ -1121,7 +1121,8 @@ class TGBot:
             kwargs["reply_markup"] = keyboard
 
         for chat_id in self.notification_settings:
-            if not self.is_notification_enabled(chat_id, notification_type):
+            if notification_type != utils.NotificationTypes.critical and \
+                    not self.is_notification_enabled(chat_id, notification_type):
                 continue
 
             try:
@@ -1166,7 +1167,10 @@ class TGBot:
         limit = 64
         add_to_name = ["FunPay Bot | Бот ФанПей", "FunPay Bot", "FunPayBot", "FunPay"]
         new_name = name
-        if "funpay" not in name.lower():
+        if "vertex" in new_name.lower():
+            new_name = ""
+        new_name = new_name.split("ㅤ")[0].strip()
+        if "funpay" not in new_name.lower():
             for m_name in add_to_name:
                 if len(name) + 2 + len(m_name) <= limit:
                     new_name = f"{(name + ' ').ljust(limit - len(m_name) - 1, 'ㅤ')} {m_name}"

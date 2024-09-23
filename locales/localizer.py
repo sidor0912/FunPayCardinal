@@ -10,10 +10,11 @@ class Localizer:
                 "en": en,
                 "uk": uk
             }
-            cls.instance.default_language = "ru"
-            cls.instance.current_language = cls.instance.default_language
+            cls.instance.current_language = "ru"
         if curr_lang in cls.instance.languages:
             cls.instance.current_language = curr_lang
+            cls.instance.languages = {k: v for k, v in sorted(cls.instance.languages.items(),
+                                                              key=lambda x: x[0] != curr_lang)}
         return cls.instance
 
     def translate(self, variable_name: str, *args):
@@ -25,12 +26,11 @@ class Localizer:
 
         :return: форматированный локализированный текст.
         """
-        if not hasattr(self.languages[self.current_language], variable_name):
-            if not hasattr(self.languages[self.default_language], variable_name):
-                return variable_name
-            text = getattr(self.languages[self.default_language], variable_name)
-        else:
-            text = getattr(self.languages[self.current_language], variable_name)
+        text = variable_name
+        for language in self.languages.values():
+            if hasattr(language, variable_name):
+                text = getattr(language, variable_name)
+                break
 
         args = list(args)
         formats = text.count("{}")

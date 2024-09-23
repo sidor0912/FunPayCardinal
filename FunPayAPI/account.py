@@ -147,7 +147,7 @@ class Account:
         response = self.method("get", "https://funpay.com", {}, {}, update_phpsessid, raise_not_200=True)
 
         html_response = response.content.decode()
-        parser = BeautifulSoup(html_response, "html.parser")
+        parser = BeautifulSoup(html_response, "lxml")
 
         username = parser.find("div", {"class": "user-link-name"})
         if not username:
@@ -195,7 +195,7 @@ class Account:
         meth = f"lots/{subcategory_id}/" if subcategory_type is enums.SubCategoryTypes.COMMON else f"chips/{subcategory_id}/"
         response = self.method("get", meth, {"accept": "*/*"}, {}, raise_not_200=True)
         html_response = response.content.decode()
-        parser = BeautifulSoup(html_response, "html.parser")
+        parser = BeautifulSoup(html_response, "lxml")
 
         username = parser.find("div", {"class": "user-link-name"})
         if not username:
@@ -247,7 +247,7 @@ class Account:
             raise exceptions.AccountNotInitiatedError()
         response = self.method("get", f"lots/offer?id={lot_id}", {"accept": "*/*"}, {}, raise_not_200=True)
         html_response = response.content.decode()
-        parser = BeautifulSoup(html_response, "html.parser")
+        parser = BeautifulSoup(html_response, "lxml")
 
         username = parser.find("div", {"class": "user-link-name"})
         if not username:
@@ -491,7 +491,7 @@ class Account:
                                         None)
         else:
             mes = json_response["objects"][0]["data"]["messages"][-1]
-            parser = BeautifulSoup(mes["html"].replace("<br>", "\n"), "html.parser")
+            parser = BeautifulSoup(mes["html"].replace("<br>", "\n"), "lxml")
             image_name = None
             image_link = None
             message_text = None
@@ -817,7 +817,7 @@ class Account:
 
         response = self.method("get", f"users/{user_id}/", {"accept": "*/*"}, {}, raise_not_200=True)
         html_response = response.content.decode()
-        parser = BeautifulSoup(html_response, "html.parser")
+        parser = BeautifulSoup(html_response, "lxml")
 
         username = parser.find("div", {"class": "user-link-name"})
         if not username:
@@ -883,7 +883,7 @@ class Account:
 
         response = self.method("get", f"chat/?node={chat_id}", {"accept": "*/*"}, {}, raise_not_200=True)
         html_response = response.content.decode()
-        parser = BeautifulSoup(html_response, "html.parser")
+        parser = BeautifulSoup(html_response, "lxml")
         if (name := parser.find("div", {"class": "chat-header"}).find("div", {"class": "media-user-name"}).find(
                 "a").text) == "Чат":
             raise Exception("chat not found")  # todo
@@ -929,7 +929,7 @@ class Account:
         }
         response = self.method("get", f"orders/{order_id}/", headers, {}, raise_not_200=True)
         html_response = response.content.decode()
-        parser = BeautifulSoup(html_response, "html.parser")
+        parser = BeautifulSoup(html_response, "lxml")
         username = parser.find("div", {"class": "user-link-name"})
         if not username:
             raise exceptions.UnauthorizedError(response)
@@ -1078,7 +1078,7 @@ class Account:
         response = self.method("post" if start_from else "get", link, {}, filters, raise_not_200=True)
         html_response = response.content.decode()
 
-        parser = BeautifulSoup(html_response, "html.parser")
+        parser = BeautifulSoup(html_response, "lxml")
         check_user = parser.find("div", {"class": "content-account content-account-login"})
         if check_user:
             raise exceptions.UnauthorizedError(response)
@@ -1194,7 +1194,7 @@ class Account:
         if not msgs:
             return []
 
-        parser = BeautifulSoup(msgs, "html.parser")
+        parser = BeautifulSoup(msgs, "lxml")
         chats = parser.find_all("a", {"class": "contact-item"})
         chats_objs = []
 
@@ -1288,7 +1288,7 @@ class Account:
         response = self.method("get", f"lots/offerEdit?offer={lot_id}", headers, {}, raise_not_200=True)
 
         html_response = response.content.decode()
-        bs = BeautifulSoup(html_response, "html.parser")
+        bs = BeautifulSoup(html_response, "lxml")
         error_message = bs.find("p", class_="lead")
         if error_message:
             raise exceptions.LotParsingError(response, error_message.text, lot_id)
@@ -1428,7 +1428,7 @@ class Account:
 
         :param html: HTML страница.
         """
-        parser = BeautifulSoup(html, "html.parser")
+        parser = BeautifulSoup(html, "lxml")
         games_table = parser.find_all("div", {"class": "promo-game-list"})
         if not games_table:
             return
@@ -1480,7 +1480,7 @@ class Account:
             if i["id"] < from_id:
                 continue
             author_id = i["author"]
-            parser = BeautifulSoup(i["html"].replace("<br>", "\n"), "html.parser")
+            parser = BeautifulSoup(i["html"].replace("<br>", "\n"), "lxml")
 
             # Если ник или бейдж написавшего неизвестен, но есть блок с данными об авторе сообщения
             if None in [ids.get(author_id), badges.get(author_id)] and (
@@ -1534,7 +1534,7 @@ class Account:
             i.author = ids.get(i.author_id)
             i.chat_name = interlocutor_username
             i.badge = badges.get(i.author_id) if badges.get(i.author_id) != 0 else None
-            parser = BeautifulSoup(i.html, "html.parser")
+            parser = BeautifulSoup(i.html, "lxml")
             default_label = parser.find("div", {"class": "media-user-name"})
             default_label = default_label.find("span", {
                 "class": "chat-msg-author-label label label-default"}) if default_label else None

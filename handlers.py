@@ -515,8 +515,8 @@ def send_new_order_notification_handler(c: Cardinal, e: NewOrderEvent, *args):
             delivery_info = _("ntfc_new_order_user_blocked")
         else:
             delivery_info = _("ntfc_new_order_will_be_delivered")
-    text = _("ntfc_new_order", utils.escape(e.order.description), e.order.buyer_username,
-             f"{e.order.price} {e.order.currency}", e.order.id, delivery_info)
+    text = _("ntfc_new_order", f"{utils.escape(e.order.description)}, {utils.escape(e.order.subcategory_name)}",
+             e.order.buyer_username, f"{e.order.price} {e.order.currency}", e.order.id, delivery_info)
 
     chat_id = c.account.get_chat_by_name(e.order.buyer_username, True).id
     keyboard = keyboards.new_order(e.order.id, e.order.buyer_username, chat_id)
