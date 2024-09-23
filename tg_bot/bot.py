@@ -1172,8 +1172,8 @@ class TGBot:
         new_name = new_name.split("ㅤ")[0].strip()
         if "funpay" not in new_name.lower():
             for m_name in add_to_name:
-                if len(name) + 2 + len(m_name) <= limit:
-                    new_name = f"{(name + ' ').ljust(limit - len(m_name) - 1, 'ㅤ')} {m_name}"
+                if len(new_name) + 2 + len(m_name) <= limit:
+                    new_name = f"{(new_name + ' ').ljust(limit - len(m_name) - 1, 'ㅤ')} {m_name}"
                     break
             if new_name != name:
                 self.bot.set_my_name(new_name)
