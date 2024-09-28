@@ -7,6 +7,7 @@ from configparser import ConfigParser
 import time
 import telebot
 from colorama import Fore, Style
+from Utils.cardinal_tools import validate_proxy
 
 default_config = {
     "FunPay": {
@@ -164,8 +165,9 @@ def first_setup():
         break
 
     while True:
-        print(f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}Придумай пароль (его потребует Telegram-бот) "
-              f" {Fore.RED}ᴖ̮ ̮ᴖ{Style.RESET_ALL}")
+        print(
+            f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}Придумай пароль (его потребует Telegram-бот). Пароль должен содержать более 8 символов, заглавные, строчные буквы и хотя бы одну цифру "
+            f" {Fore.RED}ᴖ̮ ̮ᴖ{Style.RESET_ALL}")
         password = input(f"{Fore.MAGENTA}{Style.BRIGHT}└───> {Style.RESET_ALL}").strip()
         if len(password) < 8 or password.lower() == password or password.upper() == password or not any(
                 [i.isdigit() for i in password]):
@@ -180,18 +182,13 @@ def first_setup():
 
     while True:
         print(f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}"
-              f"Если хочешь использовать IPv4 прокси – укажи их в формате login:password@ip:port. Если ты не знаешь, "
+              f"Если хочешь использовать IPv4 прокси – укажи их в формате login:password@ip:port или ip:port. Если ты не знаешь, "
               f"что это такое или они тебе не нужны - просто нажми Enter. "
               f"{Fore.RED}(* ^ ω ^){Style.RESET_ALL}")
         proxy = input(f"{Fore.MAGENTA}{Style.BRIGHT}└───> {Style.RESET_ALL}").strip()
         if proxy:
             try:
-                login_password, ip_port = proxy.split("@")
-                login, password = login_password.split(":")
-                ip, port = ip_port.split(":")
-                if not all([0 <= int(i) < 256 for i in ip.split(".")]) or ip.count(".") != 3 \
-                        or not ip.replace(".", "").isdigit() or not 0 <= int(port) <= 65535:
-                    raise Exception()
+                login, password, ip, port = validate_proxy(proxy)
                 config.set("Proxy", "enable", "1")
                 config.set("Proxy", "check", "1")
                 config.set("Proxy", "login", login)

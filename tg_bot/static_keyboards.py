@@ -23,6 +23,7 @@ def SETTINGS_SECTIONS_2() -> K:
         .add(B(_("mm_blacklist"), callback_data=f"{CBT.CATEGORY}:bl")) \
         .add(B(_("mm_configs"), callback_data=CBT.CONFIG_LOADER)) \
         .add(B(_("mm_authorized_users"), callback_data=f"{CBT.AUTHORIZED_USERS}:0")) \
+        .add(B(_("mm_proxy"), callback_data=f"{CBT.PROXY}:0")) \
         .add(B(_("gl_back"), callback_data=CBT.MAIN))
 
 

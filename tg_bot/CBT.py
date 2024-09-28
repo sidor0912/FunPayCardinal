@@ -654,3 +654,37 @@ Callback для открытия авторизованных пользоват
 user_id: int - ID Telegram
 offset: int - смещение списка пользователей.
 """
+
+PROXY = "69"
+"""
+Callback для открытия настроек прокси.
+Использование: CBT.PROXY:offset
+
+offset: int - смещение списка прокси.
+"""
+
+ADD_PROXY = "70"
+"""
+Callback для добавления прокси.
+Использование: CBT.ADD_PROXY:offset
+
+offset: int - смещение списка прокси.
+"""
+
+CHOOSE_PROXY = "71"
+"""
+Callback для выбора прокси.
+Использование: CBT.CHOOSE_PROXY:offset:proxy_id
+
+offset: int - смещение списка прокси.
+proxy_id: int - ID proxy
+"""
+
+DELETE_PROXY = "72"
+"""
+Callback для удаления прокси.
+Использование: CBT.DELETE_PROXY:offset:proxy_id
+
+offset: int - смещение списка прокси.
+proxy_id: int - ID proxy
+"""

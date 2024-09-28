@@ -30,7 +30,7 @@ def init_authorized_users_cp(crd: Cardinal, *args):
         Открывает список пользователей, авторизованных в ПУ.
         """
         offset = int(c.data.split(":")[1])
-        bot.edit_message_text("Настроечки", c.message.chat.id, c.message.id,
+        bot.edit_message_text("Настроечки", c.message.chat.id, c.message.id,  # todo
                               reply_markup=kb.authorized_users(crd, offset))
 
     def open_authorized_user_settings(c: CallbackQuery):
@@ -40,16 +40,16 @@ def init_authorized_users_cp(crd: Cardinal, *args):
         __, user_id, offset = c.data.split(":")
         user_id = int(user_id)
         offset = int(offset)
-        try:
+        try:  # todo
             bot.edit_message_text(f"Настроечки <a href='tg:user?id={user_id}'>{user_id}</a>", c.message.chat.id,
                                   c.message.id,
                                   reply_markup=kb.authorized_user_settings(crd, user_id, offset, True))
         except telebot.apihelper.ApiTelegramException:
-            logger.warning(
+            logger.warning(  # todo
                 f"Не удалось изменить сообщение с информацией о пользователе: {user_id}. Попробую без ссылки.")
             logger.debug("TRACEBACK", exc_info=True)
             bot.edit_message_text(f"Настроечки <a href='tg:user?id={user_id}'>{user_id}</a>", c.message.chat.id,
-                                  c.message.id,
+                                  c.message.id,  # todo
                                   reply_markup=kb.authorized_user_settings(crd, user_id, offset, False))
 
     tg.cbq_handler(open_authorized_users_list, lambda c: c.data.startswith(f"{CBT.AUTHORIZED_USERS}:"))

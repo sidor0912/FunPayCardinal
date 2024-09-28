@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from configparser import ConfigParser
 
 from tg_bot import auto_response_cp, config_loader_cp, auto_delivery_cp, templates_cp, plugins_cp, file_uploader, \
-    authorized_users_cp
+    authorized_users_cp, proxy_cp, default_cp
 from types import ModuleType
 import Utils.exceptions
 from uuid import UUID
@@ -36,25 +36,6 @@ from threading import Thread
 logger = logging.getLogger("FPC")
 localizer = Localizer()
 _ = localizer.translate
-
-
-def check_proxy(proxy: dict) -> bool:
-    """
-    Проверяет работоспособность прокси.
-
-    :param proxy: словарь с данными прокси.
-
-    :return: True, если прокси работает, иначе - False.
-    """
-    logger.info(_("crd_checking_proxy"))
-    try:
-        response = requests.get("https://api.ipify.org/", proxies=proxy, timeout=10.0)
-    except:
-        logger.error(_("crd_proxy_err"))
-        logger.debug("TRACEBACK", exc_info=True)
-        return False
-    logger.info(_("crd_proxy_success", response.content.decode()))
-    return True
 
 
 def get_cardinal() -> None | Cardinal:
@@ -118,20 +99,27 @@ class Cardinal(object):
         self.AD_CFG = auto_delivery_config
         self.AR_CFG = auto_response_config
         self.RAW_AR_CFG = raw_auto_response_config
-
         # Прокси
         self.proxy = {}
+        self.proxy_dict = cardinal_tools.load_proxy_dict()  # прокси {0: "login:password@ip:port", 1: "ip:port"...}
         if self.MAIN_CFG["Proxy"].getboolean("enable"):
             if self.MAIN_CFG["Proxy"]["ip"] and self.MAIN_CFG["Proxy"]["port"].isnumeric():
                 logger.info(_("crd_proxy_detected"))
 
                 ip, port = self.MAIN_CFG["Proxy"]["ip"], self.MAIN_CFG["Proxy"]["port"]
                 login, password = self.MAIN_CFG["Proxy"]["login"], self.MAIN_CFG["Proxy"]["password"]
+                proxy_str = f"{f'{login}:{password}@' if login and password else ''}{ip}:{port}"
                 self.proxy = {
-                    "http": f"http://{f'{login}:{password}@' if login and password else ''}{ip}:{port}",
-                    "https": f"http://{f'{login}:{password}@' if login and password else ''}{ip}:{port}"
+                    "http": f"http://{proxy_str}",
+                    "https": f"http://{proxy_str}"
                 }
-                if self.MAIN_CFG["Proxy"].getboolean("check") and not check_proxy(self.proxy):
+
+                if proxy_str not in self.proxy_dict.values():
+                    max_id = max(self.proxy_dict.keys(), default=-1)
+                    self.proxy_dict[max_id + 1] = proxy_str
+                    cardinal_tools.cache_proxy_dict(self.proxy_dict)
+
+                if self.MAIN_CFG["Proxy"].getboolean("check") and not cardinal_tools.check_proxy(self.proxy):
                     sys.exit()
 
         self.account = FunPayAPI.Account(self.MAIN_CFG["FunPay"]["golden_key"],
@@ -596,7 +584,7 @@ class Cardinal(object):
         if self.MAIN_CFG["Telegram"].getboolean("enabled"):
             self.__init_telegram()
             for module in [auto_response_cp, auto_delivery_cp, config_loader_cp, templates_cp, plugins_cp,
-                           file_uploader, authorized_users_cp]:
+                           file_uploader, authorized_users_cp, proxy_cp, default_cp]:
                 self.add_handlers_from_plugin(module)
 
         self.run_handlers(self.pre_init_handlers, (self,))

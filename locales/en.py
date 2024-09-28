@@ -29,6 +29,7 @@ mm_new_msg_view = "✉️ Appearance of new msg. notification"
 mm_plugins = "🧩 Plugins"
 mm_configs = "📁 Configs"
 mm_authorized_users = "👥 Authorized Users"
+mm_proxy = "🌐 Proxy"
 
 # Global switches
 gs_autoraise = "{} Auto-raise"
@@ -144,6 +145,9 @@ cfg_upload_main = "⤴️ Upload main config"
 cfg_upload_ar = "⤴️ Upload autoresponse config"
 cfg_upload_ad = "⤴️ Upload auto-delivery config"
 
+# Proxy
+prx_proxy_add = "➕ Add proxy"
+
 # Announcements
 an_an = "{} Announcements"
 an_ad = "{} Advertisement"
@@ -245,6 +249,13 @@ act_unban = "Enter the username you want to remove from the blacklist."
 not_blacklisted = "❌ <code>{}</code> is not blacklisted."
 user_unbanned = "✅ <code>{}</code> is no longer blacklisted."
 blacklist_empty = "❌ Blacklist is empty."
+
+act_proxy = "Enter the proxy in the format <u>login:password@ip:port</u> or <u>ip:port</u>."
+proxy_already_exists = "❌ The proxy <code>{}</code> already exists."
+proxy_added = "✅ Proxy <u>{}</u> added successfully."
+proxy_format = "❌ Proxies must be in the format <u>login:password@ip:port</u> or <u>ip:port</u>."
+proxy_adding_error = "❌ There was an error while adding the proxy."
+proxy_undeletable = "❌ This proxy cannot be deleted as it is currently in use."
 
 act_edit_watermark = "Enter a new watermark text. For example:\n{}\n<code>𝑭𝒖𝒏𝑷𝒂𝒚 𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍</code>\n" \
                      "<code>FunPay Cardinal</code>\n<code>[FunPay / Cardinal]</code>\n<code>𝑭𝑷𝑪</code>\n" \
@@ -412,6 +423,7 @@ desc_tmplt = "Here you can add and delete answer templates."
 desc_pl = "Here you can get information about the plugins, as well as configure them.\n\n" \
           "⚠️ <b><u>After activating / deactivating / adding / removing a plugin, you must restart the bot!</u></b>" \
           " (/restart)"
+desc_proxy = "Here you can set up the proxy."
 
 # - Commands desc
 cmd_menu = "open settings"

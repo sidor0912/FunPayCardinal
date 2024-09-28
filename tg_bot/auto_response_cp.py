@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from cardinal import Cardinal
 
@@ -15,7 +16,6 @@ import datetime
 import logging
 
 from locales.localizer import Localizer
-
 
 logger = logging.getLogger("TGBot")
 localizer = Localizer()
@@ -73,7 +73,7 @@ def init_auto_response_cp(cardinal: Cardinal, *args):
         Добавляет новую команду в конфиг.
         """
         tg.clear_state(m.chat.id, m.from_user.id, True)
-        raw_command = m.text.strip().lower()
+        raw_command = m.text.strip().lower().replace("\n", "")
         commands = [i.strip() for i in raw_command.split("|") if i.strip()]
         error_keyboard = K().row(B(_("gl_back"), callback_data=f"{CBT.CATEGORY}:ar"),
                                  B(_("ar_add_another"), callback_data=CBT.ADD_CMD))
@@ -205,7 +205,8 @@ def init_auto_response_cp(cardinal: Cardinal, *args):
             cardinal.AR_CFG.set(cmd, "notificationText", notification_text)
         cardinal.save_config(cardinal.RAW_AR_CFG, "configs/auto_response.cfg")
 
-        logger.info(_("log_ar_notification_text_changed", m.from_user.username, m.from_user.id, command, notification_text))
+        logger.info(
+            _("log_ar_notification_text_changed", m.from_user.username, m.from_user.id, command, notification_text))
         keyboard = K().row(B(_("gl_back"), callback_data=f"{CBT.EDIT_CMD}:{command_index}:{offset}"),
                            B(_("gl_edit"), callback_data=f"{CBT.EDIT_CMD_NOTIFICATION_TEXT}:{command_index}:{offset}"))
         bot.reply_to(m, _("ar_notification_text_changed", utils.escape(command), utils.escape(notification_text)),

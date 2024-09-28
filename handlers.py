@@ -165,6 +165,7 @@ def send_response_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChang
         obj, mtext = e.chat, str(e.chat)
         chat_id, chat_name, username = obj.id, obj.name, obj.name
 
+    mtext = mtext.replace("\n", "")
     if any([c.bl_response_enabled and username in c.blacklist, (command := mtext.strip().lower()) not in c.AR_CFG]):
         return
 

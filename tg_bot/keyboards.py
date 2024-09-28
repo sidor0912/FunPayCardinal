@@ -185,7 +185,7 @@ def order_confirm_reply_settings(c: Cardinal):
 
 def authorized_users(c: Cardinal, offset: int):
     """
-    Генерирует клавиатуру со списком команд (CBT.AUTHORIZED_USERS:<offset>).
+    Генерирует клавиатуру со списком авторизованных пользователей (CBT.AUTHORIZED_USERS:<offset>).
 
     :param c: объект кардинала.
     :param offset: смещение списка пользователей.
@@ -218,6 +218,38 @@ def authorized_user_settings(c: Cardinal, user_id: int, offset: int, user_link: 
         kb.add(B(f"Настроечки {i}", callback_data=CBT.EMPTY))
     kb.add(B(_("gl_back"), None, f"{CBT.AUTHORIZED_USERS}:{offset}"))
     # todo в коллбеки кнопок добавить offset и user_link
+    return kb
+
+
+def proxy(c: Cardinal, offset: int, proxies: dict[str, bool]):
+    """
+        Генерирует клавиатуру со списком прокси (CBT.PROXY:<offset>).
+
+        :param c: объект кардинала.
+        :param offset: смещение списка прокси.
+        :param proxies: {прокси: валидность прокси}.
+
+        :return: объект клавиатуры со списком прокси.
+        """
+    kb = K()
+    ps = list(c.proxy_dict.items())[offset: offset + MENU_CFG.PROXY_BTNS_AMOUNT]
+    ip, port = c.MAIN_CFG["Proxy"]["ip"], c.MAIN_CFG["Proxy"]["port"]
+    login, password = c.MAIN_CFG["Proxy"]["login"], c.MAIN_CFG["Proxy"]["password"]
+    now_proxy = f"{f'{login}:{password}@' if login and password else ''}{ip}:{port}"
+    kb.row(B(f"", callback_data=CBT.EMPTY))
+    for i, p in ps:
+        work = proxies.get(p)
+        e = "🟢" if work else "🟡" if work is None else "🔴"
+        if p == now_proxy:
+            b1 = B(f"{e}✅ {p}", callback_data=CBT.EMPTY)
+        else:
+            b1 = B(f"{e} {p}", callback_data=f"{CBT.CHOOSE_PROXY}:{offset}:{i}")
+        kb.row(b1, B("🗑️", callback_data=f"{CBT.DELETE_PROXY}:{offset}:{i}"))
+
+    kb = add_navigation_buttons(kb, offset, MENU_CFG.PROXY_BTNS_AMOUNT, len(ps),
+                                len(c.proxy_dict.items()), CBT.PROXY)
+    kb.row(B(_("prx_proxy_add"), None, f"{CBT.ADD_PROXY}:{offset}"))
+    kb.add(B(_("gl_back"), None, CBT.MAIN2))
     return kb
 
 

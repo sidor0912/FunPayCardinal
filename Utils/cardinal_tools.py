@@ -1,6 +1,10 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+import requests
+
+from locales.localizer import Localizer
+
 if TYPE_CHECKING:
     from cardinal import Cardinal
 
@@ -20,6 +24,8 @@ import logging
 PHOTO_RE = re.compile(r'\$photo=[\d]+')
 ENTITY_RE = re.compile(r"\$photo=\d+|\$new|(\$sleep=(\d+\.\d+|\d+))")
 logger = logging.getLogger("cardinal_tools")
+localizer = Localizer()
+_ = localizer.translate
 
 
 def count_products(path: str) -> int:
@@ -69,6 +75,81 @@ def load_blacklist() -> list[str]:
         except json.decoder.JSONDecodeError:
             return []
         return blacklist
+
+
+def check_proxy(proxy: dict) -> bool:
+    """
+    Проверяет работоспособность прокси.
+
+    :param proxy: словарь с данными прокси.
+
+    :return: True, если прокси работает, иначе - False.
+    """
+    logger.info(_("crd_checking_proxy"))
+    try:
+        response = requests.get("https://api.ipify.org/", proxies=proxy, timeout=10)
+    except:
+        logger.error(_("crd_proxy_err"))
+        logger.debug("TRACEBACK", exc_info=True)
+        return False
+    logger.info(_("crd_proxy_success", response.content.decode()))
+    return True
+
+
+def validate_proxy(proxy: str):
+    """
+    Проверяет прокси на соответствие формату IPv4 и выбрасывает исключение или возвращает логин, пароль, IP и порт.
+
+    :param proxy: прокси
+    :return: логин, пароль, IP и порт
+    """
+    try:
+        if "@" in proxy:
+            login_password, ip_port = proxy.split("@")
+            login, password = login_password.split(":")
+            ip, port = ip_port.split(":")
+        else:
+            login, password = "", ""
+            ip, port = proxy.split(":")
+        if not all([0 <= int(i) < 256 for i in ip.split(".")]) or ip.count(".") != 3 \
+                or not ip.replace(".", "").isdigit() or not 0 <= int(port) <= 65535:
+            raise Exception()
+    except:
+        raise ValueError("Прокси должны иметь формат login:password@ip:port или ip:port")
+    return login, password, ip, port
+
+
+def cache_proxy_dict(proxy_dict: dict[int, str]) -> None:
+    """
+    Кэширует список прокси.
+
+    :param proxy_dict: список прокси.
+    """
+    if not os.path.exists("storage/cache"):
+        os.makedirs("storage/cache")
+
+    with open("storage/cache/proxy_dict.json", "w", encoding="utf-8") as f:
+        f.write(json.dumps(proxy_dict, indent=4))
+
+
+def load_proxy_dict() -> dict[int, str]:
+    """
+    Загружает список прокси.
+
+    :return: список прокси.
+    """
+    if not os.path.exists("storage/cache/proxy_dict.json"):
+        return {}
+
+    with open("storage/cache/proxy_dict.json", "r", encoding="utf-8") as f:
+        proxy = f.read()
+
+        try:
+            proxy = json.loads(proxy)
+            proxy = {int(k): v for k, v in proxy.items()}
+        except json.decoder.JSONDecodeError:
+            return {}
+        return proxy
 
 
 def cache_disabled_plugins(disabled_plugins: list[str]) -> None:
