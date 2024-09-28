@@ -109,7 +109,6 @@ def init_proxy_cp(crd: Cardinal, *args):
             "http": f"http://{proxy}",
             "https": f"http://{proxy}"
         }
-
         crd.MAIN_CFG["Proxy"].update({
             "ip": ip,
             "port": port,
@@ -117,7 +116,8 @@ def init_proxy_cp(crd: Cardinal, *args):
             "password": password
         })
         crd.save_config(crd.MAIN_CFG, "configs/_main.cfg")
-        crd.account.proxy = proxy
+        if crd.MAIN_CFG["Proxy"].getboolean("enable"):
+            crd.account.proxy = proxy
         open_proxy_list(c)
 
     def delete_proxy(c: CallbackQuery):
