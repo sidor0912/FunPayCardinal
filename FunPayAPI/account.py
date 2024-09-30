@@ -579,7 +579,7 @@ class Account:
         }
         payload = {
             "authorId": self.id,
-            "text": text,
+            "text": f"{text}{self.__bot_character}",
             "rating": rating,
             "csrf_token": self.csrf_token,
             "orderId": order_id

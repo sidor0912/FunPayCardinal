@@ -318,18 +318,22 @@ def process_review_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChan
         reply_text = None
         if c.MAIN_CFG["ReviewReply"].getboolean(toggle) and c.MAIN_CFG["ReviewReply"].get(text):
             try:
-                # Укорачиваем текст до 1000 символов, до 10 строк
+                # Укорачиваем текст до 999 символов (оставляем 1 на спецсимвол), до 10 строк
                 def format_text4review(text_: str):
-                    text_ = text_[:1001]
-                    if len(text_) > 1000:
+                    max_l = 999
+                    text_ = text_[:max_l + 1]
+                    if len(text_) > max_l:
                         ln = len(text_)
                         indexes = []
                         for char in (".", "!", "\n"):
                             index1 = text_.rfind(char)
                             indexes.extend([index1, text_[:index1].rfind(char)])
-                        text_ = text_[:max(indexes, key=lambda x: (x < ln - 1, x))] + "📜"
-                    while text_.count("\n") > 9 and "\n\n" in text_:
-                        text_ = text_[::-1].replace("\n\n", "\n", text_.count("\n") - 9)[::-1]
+                        text_ = text_[:max(indexes, key=lambda x: (x < ln - 1, x))] + "🐦"
+                    if text_.count("\n") > 9 and text.count("\n\n") > 1:
+                        # заменяем с конца все двойные переносы строк на одинарные, но оставляем как можно больше
+                        # переносов строк и не менее одного двойного переноса
+                        text_ = text_[::-1].replace("\n\n", "\n",
+                                                    min([text_.count("\n\n") - 1, text_.count("\n") - 9]))[::-1]
                     if text_.count("\n") > 9:
                         text_ = text_[::-1].replace("\n", " ", text_.count("\n") - 9)[::-1]
                     return text_

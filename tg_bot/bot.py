@@ -5,6 +5,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+from FunPayAPI import Account
+
 if TYPE_CHECKING:
     from cardinal import Cardinal
 
@@ -345,10 +347,13 @@ class TGBot:
             self.bot.send_message(m.chat.id, _("cookie_incorrect_format"))
             return
         self.bot.delete_message(m.chat.id, m.id)
-        self.cardinal.account.golden_key = golden_key
+        new_account = Account(golden_key, self.cardinal.MAIN_CFG["FunPay"]["user_agent"], proxy=self.cardinal.proxy)
+        new_account.get()
+        if new_account.id == self.cardinal.account.id or self.cardinal.account.id is None:
+            self.cardinal.account = new_account
+
         self.cardinal.MAIN_CFG.set("FunPay", "golden_key", golden_key)
         self.cardinal.save_config(self.cardinal.MAIN_CFG, "configs/_main.cfg")
-        self.cardinal.account.get(True)
         self.bot.send_message(m.chat.id, _("cookie_changed"))
 
     def update_profile(self, c: CallbackQuery):
