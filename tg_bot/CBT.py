@@ -29,10 +29,12 @@ category_name: str - название категории настроек.
 SWITCH = "3"
 """
 Callback для переключения определенного параметра из основного конфига.
-Использование: CBT.SWITCH:section_name:option_name
+Использование: CBT.SWITCH:section_name:option_name:offset
 
 section_name: название секции.
 option_name: название опции.
+offset: смещение (по необходимости).
+
 """
 
 # Настройки автоответчика

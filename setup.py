@@ -9,7 +9,8 @@ common_packages = [
     "pillow>=9.3.0",
     "aiohttp==3.9.0",
     "requests_toolbelt==0.10.1",
-    "lxml>=5.3.0"
+    "lxml>=5.3.0",
+    "bcrypt>=4.2.0"
 ]
 
 

@@ -917,3 +917,7 @@ class Cardinal(object):
     @property
     def only_bot_msg_enabled(self) -> bool:
         return self.MAIN_CFG["NewMessageView"].getboolean("notifyOnlyBotMessages")
+
+    @property
+    def block_tg_login(self) -> bool:
+        return self.MAIN_CFG["Telegram"].getboolean("blockLogin")

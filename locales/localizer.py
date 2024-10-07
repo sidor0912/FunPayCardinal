@@ -17,20 +17,23 @@ class Localizer:
                                                               key=lambda x: x[0] != curr_lang)}
         return cls.instance
 
-    def translate(self, variable_name: str, *args):
+    def translate(self, variable_name: str, *args, language: str | None = None):
         """
         Возвращает форматированный локализированный текст.
 
         :param variable_name: название переменной с текстом.
         :param args: аргументы для форматирования.
+        :param language: язык перевода, опционально.
 
         :return: форматированный локализированный текст.
         """
         text = variable_name
-        for language in self.languages.values():
-            if hasattr(language, variable_name):
-                text = getattr(language, variable_name)
+        for lang in self.languages.values():
+            if hasattr(lang, variable_name):
+                text = getattr(lang, variable_name)
                 break
+        if language and language in self.languages.keys() and hasattr(self.languages[language], variable_name):
+            text = getattr(self.languages[language], variable_name)
 
         args = list(args)
         formats = text.count("{}")

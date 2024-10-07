@@ -278,9 +278,11 @@ class TGBot:
         """
         Проверяет, есть ли пользователь в списке пользователей с доступом к ПУ TG.
         """
-        if m.chat.type != "private" or (m.from_user.id in self.attempts and self.attempts.get(m.from_user.id) >= 5):
+        lang = m.from_user.language_code
+        if m.chat.type != "private" or (self.attempts.get(m.from_user.id, 0) >= 5):
             return
-        if m.text == self.cardinal.MAIN_CFG["Telegram"]["secretKey"]:
+        if not self.cardinal.block_tg_login and \
+                cardinal_tools.check_password(m.text, self.cardinal.MAIN_CFG["Telegram"]["secretKeyHash"]):
             if self.authorized_users:
                 self.cardinal.account.logout()
             for chat_id in self.cardinal.telegram.notification_settings.keys():
@@ -297,23 +299,25 @@ class TGBot:
             if str(m.chat.id) not in self.notification_settings:
                 self.notification_settings[str(m.chat.id)] = self.__default_notification_settings
                 utils.save_notification_settings(self.notification_settings)
-            text = _("access_granted")
+            text = _("access_granted", language=lang)
             kb_links = None
             logger.warning(_("log_access_granted", m.from_user.username, m.from_user.id))
         else:
-            self.attempts[m.from_user.id] = self.attempts[m.from_user.id] + 1 if m.from_user.id in self.attempts else 1
-            text = _("access_denied", m.from_user.username)
-            kb_links = skb.LINKS_KB()
+            self.attempts[m.from_user.id] = self.attempts.get(m.from_user.id, 0) + 1
+            text = _("access_denied", m.from_user.username, language=lang)
+            kb_links = kb.LINKS_KB(language=lang)
             logger.warning(_("log_access_attempt", m.from_user.username, m.from_user.id))
         self.bot.send_message(m.chat.id, text, reply_markup=kb_links)
 
-    @staticmethod
-    def ignore_unauthorized_users(c: CallbackQuery):
+    def ignore_unauthorized_users(self, c: CallbackQuery):
         """
         Игнорирует callback'и от не авторизированных пользователей.
         """
         logger.warning(_("log_click_attempt", c.from_user.username, c.from_user.id, c.message.chat.username,
                          c.message.chat.id))
+        self.attempts[c.from_user.id] = self.attempts.get(c.from_user.id, 0) + 1
+        if self.attempts[c.from_user.id] <= 5:
+            self.bot.answer_callback_query(c.id, _("adv_fpc", language=c.from_user.language_code), show_alert=True)
         return
 
     # Команды
@@ -931,8 +935,12 @@ class TGBot:
             "OrderConfirm": kb.order_confirm_reply_settings,
             "ReviewReply": kb.review_reply_settings
         }
-        self.bot.edit_message_reply_markup(c.message.chat.id, c.message.id,
-                                           reply_markup=sections[section](self.cardinal))
+        if section == "Telegram":
+            self.bot.edit_message_reply_markup(c.message.chat.id, c.message.id,
+                                               reply_markup=kb.authorized_users(self.cardinal, offset=int(split[3])))
+        else:
+            self.bot.edit_message_reply_markup(c.message.chat.id, c.message.id,
+                                               reply_markup=sections[section](self.cardinal))
         logger.info(_("log_param_changed", c.from_user.username, c.from_user.id, option, section,
                       self.cardinal.MAIN_CFG[section][option]))
         self.bot.answer_callback_query(c.id)
@@ -1182,28 +1190,15 @@ class TGBot:
                     break
             if new_name != name:
                 self.bot.set_my_name(new_name)
-        time.sleep(1)
-        self.bot.set_my_short_description(
-            "🛠️ github.com/sidor0912/FunPayCardinal 💰 @sidor_donate 👨‍💻 @sidor0912 🧩 @fpc_plugins 🔄 @fpc_updates 💬 @funpay_cardinal ")
-        self.bot.set_my_description(f"""🐦 𝑭𝒖𝒏𝑷𝒂𝒚 𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍 v{self.cardinal.VERSION}🐦
-
-🤖 Автовыдача товаров
-🚀 Автоподнятие лотов
-💬 Автоответ на заготовленные команды
-🔄 Автовосстановление лотов после продажи
-📦 Автодеактивация лотов, если товары закончились
-🔝 Вечный онлайн
-📲 Уведомления в Telegram
-🕹️ Полноценная панель управления в Telegram
-🧩 Плагины
-🌟 И многое другое...
-
-🛠️ Сделано с помощью: github.com/sidor0912/FunPayCardinal
-👨‍💻 Автор: @woopertail, @sidor0912
-💰 Донат: @sidor_donate
-🔄 Обновления: @fpc_updates
-🧩 Плагины: @fpc_plugins
-💬 Чат: @funpay_cardinal""")
+        sh_text = "🛠️ github.com/sidor0912/FunPayCardinal 💰 @sidor_donate 👨‍💻 @sidor0912 🧩 @fpc_plugins 🔄 @fpc_updates 💬 @funpay_cardinal"
+        res = self.bot.get_my_short_description().short_description
+        if res != sh_text:
+            self.bot.set_my_short_description(sh_text)
+        for i in [None, *localizer.languages.keys()]:
+            res = self.bot.get_my_description(i).description
+            text = _("adv_description", self.cardinal.VERSION, language=i)
+            if res != text:
+                self.bot.set_my_description(text, language_code=i)
 
     def init(self):
         self.__register_handlers()

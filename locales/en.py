@@ -114,7 +114,7 @@ tmplt_add_another = "➕ Add another"
 gr_greetings = "{} Greet users"
 gr_ignore_sys_msgs = "{} Ignore system messages"
 gr_edit_message = "✏️ Change the text of the welcome message"
-gr_edit_cooldown = "✏️ Cooldown: {} days"
+gr_edit_cooldown = "⏱️ Cooldown: {} days"
 
 # Order confirmation response settings
 oc_watermark = "{} Message watermark"
@@ -145,8 +145,16 @@ cfg_upload_main = "⤴️ Upload main config"
 cfg_upload_ar = "⤴️ Upload autoresponse config"
 cfg_upload_ad = "⤴️ Upload auto-delivery config"
 
+# Authorized users
+tg_block_login = "{} Block logins by password"
+
 # Proxy
 prx_proxy_add = "➕ Add proxy"
+
+# Links
+lnk_github = "🛠️ Create your FunPay bot"
+lnk_updates = "🔄 Updates"
+lnk_chat = "💬 Chat"
 
 # Announcements
 an_an = "{} Announcements"
@@ -396,6 +404,28 @@ pl_author = "Dev"
 pl_new = "Send me a plugin.\n\n<b>⚠️ ATTENTION! Downloading plugins from questionable sources may lead to unfortunate consequences.\n" \
          "@fpc_plugins solves most potential issues.</b>"
 
+au_user_settings = "Settings for user {}"
+adv_fpc = "😎 FunPay Cardinal - the best bot for FunPay"
+adv_description = """🐦 FunPay Cardinal v{}🐦
+
+🤖 Automatic product delivery
+🚀 Auto-raise of lots
+💬 Auto-reply to prepared commands
+🔄 Auto-recovery of lots after sale
+📦 Auto-deactivation of lots if products are out of stock
+🔝 Permanent online presence
+📲 Notifications in Telegram
+🕹️ Full control panel in Telegram
+🧩 Plugins
+🌟 And much more...
+
+🛠️ Made with: github.com/sidor0912/FunPayCardinal
+👨‍💻 Author: @woopertail, @sidor0912
+💰 Donate: @sidor_donate
+🔄 Updates: @fpc_updates
+🧩 Plugins: @fpc_plugins
+💬 Chat: @funpay_cardinal"""
+
 # - Menus desc
 desc_main = "Select a settings category."
 desc_gs = "Here you can turn the basic <i>FPC</i> functions on and off."
@@ -423,6 +453,7 @@ desc_tmplt = "Here you can add and delete answer templates."
 desc_pl = "Here you can get information about the plugins, as well as configure them.\n\n" \
           "⚠️ <b><u>After activating / deactivating / adding / removing a plugin, you must restart the bot!</u></b>" \
           " (/restart)"
+desc_au = "Here you can configure authorization in the Telegram control panel."
 desc_proxy = "Here you can set up the proxy."
 
 # - Commands desc
@@ -588,3 +619,4 @@ crd_invalid_uuid = "Failed to load plugin {}: invalid UUID."
 crd_uuid_already_registered = "UUID {} ({}) is already registered."
 crd_handlers_registered = "The handlers from $YELLOW{}.py$RESET are registered."
 crd_handler_err = "An error occurred in the handler's execution."
+crd_tg_au_err = "Failed to update the message with user information: {}. I will try without a link."

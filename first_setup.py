@@ -7,7 +7,7 @@ from configparser import ConfigParser
 import time
 import telebot
 from colorama import Fore, Style
-from Utils.cardinal_tools import validate_proxy
+from Utils.cardinal_tools import validate_proxy, hash_password
 
 default_config = {
     "FunPay": {
@@ -24,7 +24,8 @@ default_config = {
     "Telegram": {
         "enabled": "0",
         "token": "",
-        "secretKey": "СекретныйПароль"
+        "secretKeyHash": "ХешСекретногоПароля",
+        "blockLogin": "0"
     },
 
     "BlockList": {
@@ -178,7 +179,7 @@ def first_setup():
 
     config.set("Telegram", "enabled", "1")
     config.set("Telegram", "token", token)
-    config.set("Telegram", "secretKey", password)
+    config.set("Telegram", "secretKeyHash", hash_password(password))
 
     while True:
         print(f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}"

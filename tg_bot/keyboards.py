@@ -193,6 +193,12 @@ def authorized_users(c: Cardinal, offset: int):
     :return: объект клавиатуры со списком пользователей.
     """
     kb = K()
+    p = f"{CBT.SWITCH}:Telegram"
+
+    def l(s):
+        return '🟢' if c.MAIN_CFG["Telegram"].getboolean(s) else '🔴'
+
+    kb.add(B(_("tg_block_login", l("blockLogin")), None, f"{p}:blockLogin:{offset}"))
     users = list(c.telegram.authorized_users.keys())[offset: offset + MENU_CFG.AUTHORIZED_USERS_BTNS_AMOUNT]
 
     for user_id in users:
@@ -741,3 +747,11 @@ def edit_plugin(c: Cardinal, uuid: str, offset: int, ask_to_delete: bool = False
                B(_("gl_no"), None, f"{CBT.CANCEL_DELETE_PLUGIN}:{uuid}:{offset}"))
     kb.add(B(_("gl_back"), None, f"{CBT.PLUGINS_LIST}:{offset}"))
     return kb
+
+
+def LINKS_KB(language: None | str = None) -> K:
+    return K().add(B(_("lnk_github", language=language),
+                     url="https://github.com/sidor0912/FunPayCardinal")) \
+        .add(B(_("lnk_updates", language=language), url="https://t.me/fpc_updates")) \
+        .add(B(_("mm_plugins", language=language), url="https://t.me/fpc_plugins")) \
+        .add(B(_("lnk_chat", language=language), url="https://t.me/funpay_cardinal"))

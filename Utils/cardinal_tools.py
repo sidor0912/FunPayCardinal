@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+import bcrypt
 import requests
 
 from locales.localizer import Localizer
@@ -477,3 +478,16 @@ def set_console_title(title: str) -> None:
     except:
         logger.warning("Произошла ошибка при изменении названия консоли")
         logger.debug("TRACEBACK", exc_info=True)
+
+
+# Хеширование пароля
+def hash_password(password: str) -> str:
+    # Генерация соли и хеширование пароля
+    salt = bcrypt.gensalt()
+    hashed_password = bcrypt.hashpw(password.encode(), salt)
+    return hashed_password.decode()  # Возвращаем хеш как строку
+
+
+# Проверка пароля
+def check_password(password: str, hashed_password: str) -> bool:
+    return bcrypt.checkpw(password.encode(), hashed_password.encode())  # Кодируем для проверки

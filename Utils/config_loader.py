@@ -9,6 +9,7 @@ import os
 from Utils.exceptions import (ParamNotFoundError, EmptyValueError, ValueNotValidError, SectionNotFoundError,
                               ConfigParseError, ProductsFileNotFoundError, NoProductVarError,
                               SubCommandAlreadyExists, DuplicateSectionErrorWrapper)
+from Utils.cardinal_tools import hash_password
 
 
 def check_param(param_name: str, section: SectionProxy, valid_values: list[str | None] | None = None,
@@ -82,7 +83,8 @@ def load_main_config(config_path: str):
         "Telegram": {
             "enabled": ["0", "1"],
             "token": "any+empty",
-            "secretKey": "any"
+            "secretKeyHash": "any",
+            "blockLogin": ["0", "1"]
         },
 
         "BlockList": {
@@ -194,6 +196,17 @@ def load_main_config(config_path: str):
             elif section_name == "NewMessageView" and param_name == "showImageName" and \
                     param_name not in config[section_name]:
                 config.set("NewMessageView", "showImageName", "1")
+                with open("configs/_main.cfg", "w", encoding="utf-8") as f:
+                    config.write(f)
+            elif section_name == "Telegram" and param_name == "blockLogin" and \
+                    param_name not in config[section_name]:
+                config.set("Telegram", "blockLogin", "0")
+                with open("configs/_main.cfg", "w", encoding="utf-8") as f:
+                    config.write(f)
+            elif section_name == "Telegram" and param_name == "secretKeyHash" and \
+                    param_name not in config[section_name]:
+                config.set(section_name, "secretKeyHash", hash_password(config[section_name]["secretKey"]))
+                config.remove_option(section_name, "secretKey")
                 with open("configs/_main.cfg", "w", encoding="utf-8") as f:
                     config.write(f)
 
