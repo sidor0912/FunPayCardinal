@@ -1,4 +1,9 @@
 [
   "hooks",
-  "FunPay Cardinal.spec"
+  "FunPay Cardinal.spec",
+  "plugins/del_old_users.py",
+  "storage/plugins/del_old_users_plugin_data.json",
+  "storage/plugins/del_old_users_settings.json",
+  "plugins/cookie_changer.py",
+  "locales/eng.py"
 ]

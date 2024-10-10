@@ -1047,7 +1047,8 @@ class TGBot:
         Регистрирует хэндлеры всех команд.
         """
         self.mdw_handler(self.setup_chat_notifications, update_types=['message'])
-        self.msg_handler(self.reg_admin, func=lambda msg: msg.from_user.id not in self.authorized_users)
+        self.msg_handler(self.reg_admin, func=lambda msg: msg.from_user.id not in self.authorized_users,
+                         content_types=['text', 'document', 'photo', 'sticker'])
         self.cbq_handler(self.ignore_unauthorized_users, lambda c: c.from_user.id not in self.authorized_users)
         self.cbq_handler(self.param_disabled, lambda c: c.data.startswith(CBT.PARAM_DISABLED))
         self.msg_handler(self.run_file_handlers, content_types=["photo", "document"],
@@ -1209,9 +1210,13 @@ class TGBot:
         Запускает поллинг.
         """
         self.send_notification(_("bot_started"), notification_type=utils.NotificationTypes.bot_start)
-        try:
-            logger.info(_("log_tg_started", self.bot.user.username))
-            self.bot.infinity_polling(logger_level=logging.DEBUG)
-        except:
-            logger.error(_("log_tg_update_error"))
-            logger.debug("TRACEBACK", exc_info=True)
+        k_err = 0
+        while True:
+            try:
+                logger.info(_("log_tg_started", self.bot.user.username))
+                self.bot.infinity_polling(logger_level=logging.DEBUG)
+            except:
+                k_err += 1
+                logger.error(_("log_tg_update_error", k_err))
+                logger.debug("TRACEBACK", exc_info=True)
+                time.sleep(10)
