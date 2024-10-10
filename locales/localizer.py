@@ -1,4 +1,7 @@
 from locales import ru, en, uk
+import logging
+
+logger = logging.getLogger("localizer")
 
 
 class Localizer:
@@ -39,4 +42,8 @@ class Localizer:
         formats = text.count("{}")
         if len(args) < formats:
             args.extend(["{}"] * (formats - len(args)))
-        return text.format(*args)
+        try:
+            return text.format(*args)
+        except:
+            logger.debug("TRACEBACK", exc_info=True)
+            return text
