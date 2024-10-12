@@ -207,29 +207,50 @@ class Account:
 
         subcategory_obj = self.get_subcategory(subcategory_type, subcategory_id)
         result = []
+        sellers = {}
+        currency = None
         for offer in offers:
             offer_id = offer["href"].split("id=")[1]
+            promo = 'offer-promo' in offer.get('class', [])
             description = offer.find("div", {"class": "tc-desc-text"})
             description = description.text if description else None
             server = offer.find("div", {"class": "tc-server hidden-xxs"})
             if not server:
                 server = offer.find("div", {"class": "tc-server hidden-xs"})
             server = server.text if server else None
-
+            tc_price = offer.find("div", {"class": "tc-price"})
             if subcategory_type is types.SubCategoryTypes.COMMON:
-                price = float(offer.find("div", {"class": "tc-price"})["data-s"])
+                price = float(tc_price["data-s"])
             else:
-                price = float(offer.find("div", {"class": "tc-price"}).find("div").text.split()[0])
-            currency = parse_currency(str(offer.find("div", {"class": "tc-price"}).find("span", class_="unit").text))
+                price = float(tc_price.find("div").text.split()[0])
+            if currency is None:
+                currency = parse_currency(tc_price.find("span", class_="unit").text)
             seller_soup = offer.find("div", class_="tc-user")
-            seller = seller_soup.find("div", class_="media-user-name").text.strip()
-            rating_stars_soup = seller_soup.find("div", class_="rating-stars")
-            if (rating_stars_soup != None):
-                rating_stars = len(rating_stars_soup.find_all("i", class_="fas"))
+            attributes = {k.replace("data-", "", 1): int(v) if v.isdigit() else v for k, v in offer.attrs.items()
+                          if k.startswith("data-")}
+
+            auto = attributes.get("auto") == 1
+            seller_key = str(seller_soup)
+            if seller_key not in sellers:
+                online = False
+                if attributes.get("online") == 1:
+                    online = True
+                seller_body = offer.find("div", class_="media-body")
+                username = seller_body.find("div", class_="media-user-name").text.strip()
+                rating_stars = seller_body.find("div", class_="rating-stars")
+                if rating_stars is not None:
+                    rating_stars = len(rating_stars.find_all("i", class_="fas"))
+                k_reviews = seller_body.find("div", class_="media-user-reviews")
+                if k_reviews:
+                    k_reviews = "".join([i for i in k_reviews.text if i.isdigit()])
+                k_reviews = int(k_reviews) if k_reviews else 0
+                user_id = int(seller_body.find("span", class_="pseudo-a")["data-href"].split("/")[-2])
+                seller = types.SellerShortcut(user_id, username, online, rating_stars, k_reviews, seller_key)
+                sellers[seller_key] = seller
             else:
-                rating_stars = None
+                seller = sellers[seller_key]
             lot_obj = types.LotShortcut(offer_id, server, description, price, currency, subcategory_obj, seller,
-                                        rating_stars, str(offer))
+                                        auto, promo, attributes, str(offer))
             result.append(lot_obj)
         return result
 
@@ -846,6 +867,7 @@ class Account:
                 continue
 
             offers = i.parent.find_all("a", {"class": "tc-item"})
+            currency = None
             for j in offers:
                 offer_id = j["href"].split("id=")[1]
                 description = j.find("div", {"class": "tc-desc-text"})
@@ -854,14 +876,16 @@ class Account:
                 if not server:
                     server = j.find("div", {"class": "tc-server hidden-xs"})
                 server = server.text if server else None
-
+                auto = j.find("i", class_="auto-dlv-icon") is not None
+                tc_price = j.find("div", {"class": "tc-price"})
                 if subcategory_obj.type is types.SubCategoryTypes.COMMON:
-                    price = float(j.find("div", {"class": "tc-price"})["data-s"])
+                    price = float(tc_price["data-s"])
                 else:
-                    price = float(j.find("div", {"class": "tc-price"}).find("div").text.split(" ")[0])
-                currency = parse_currency(str(j.find("div", {"class": "tc-price"}).find("span", class_="unit").text))
-                lot_obj = types.LotShortcut(offer_id, server, description, price, currency, subcategory_obj, username,
-                                            None, str(j))
+                    price = float(tc_price.find("div").text.rsplit(maxsplit=1)[0].replace(" ", ""))
+                if currency is None:
+                    currency = parse_currency(tc_price.find("span", class_="unit").text)
+                lot_obj = types.LotShortcut(offer_id, server, description, price, currency, subcategory_obj, None, auto,
+                                            None, None, str(j))
                 user_obj.add_lot(lot_obj)
         return user_obj
 
@@ -956,7 +980,7 @@ class Account:
                 full_description = div.find("div").text
             elif h.text == "Сумма":
                 sum_ = float(div.find("span").text.replace(" ", ""))
-                currency = parse_currency(str(div.find("strong").text))
+                currency = parse_currency(div.find("strong").text)
             elif h.text in ("Категория", "Валюта"):
                 subcategory_link = div.find("a").get("href")
                 subcategory_split = subcategory_link.split("/")
@@ -999,7 +1023,6 @@ class Account:
         else:
             review = types.Review(stars, text, reply, False, str(review_obj), hidden, order_id, buyer_username,
                                   buyer_id)
-
         order = types.Order(order_id, status, subcategory, short_description, full_description, sum_, currency,
                             buyer_id, buyer_username, seller_id, seller_username, chat_id, html_response, review,
                             order_secrets)
@@ -1112,9 +1135,9 @@ class Account:
 
             description = div.find("div", {"class": "order-desc"}).find("div").text
             tc_price = div.find("div", {"class": "tc-price"}).text
-            tc_price = tc_price.replace(" ", "")
-            price = float(tc_price[:-1])
-            currency = parse_currency(tc_price)
+            price, currency = tc_price.rsplit(maxsplit=1)
+            price = float(price.replace(" ", ""))
+            currency = parse_currency(currency)
 
             buyer_div = div.find("div", {"class": "media-user-name"}).find("span")
             buyer_username = buyer_div.text

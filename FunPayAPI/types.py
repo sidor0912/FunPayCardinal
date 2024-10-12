@@ -656,14 +656,16 @@ class LotFields:
 
 
 class SellerShortcut:
-    def __init__(self, id_: int, username: str, profile_photo: str, online: bool, stars: None | int, reviews: int,
+    """
+    Класс, описывающий объект пользователя из таблицы предложений.
+    """
+
+    def __init__(self, id_: int, username: str, online: bool, stars: None | int, reviews: int,
                  html: str):
         self.id: int = id_
         """ID пользователя."""
         self.username: str = username
         """Никнейм пользователя."""
-        self.profile_photo: str = profile_photo
-        """Ссылка на фото профиля."""
         self.online: bool = online
         """Онлайн ли пользователь."""
         self.stars: int | None = stars
@@ -672,6 +674,10 @@ class SellerShortcut:
         """Количество отзывов."""
         self.html: str = html
         """HTML код страницы пользователя."""
+
+    @property
+    def link(self):
+        return f"https://funpay.com/users/{self.id}/"
 
 
 class LotShortcut:
@@ -701,8 +707,9 @@ class LotShortcut:
     """
 
     def __init__(self, id_: int | str, server: str | None,
-                 description: str | None, price: float, currency: Currency, subcategory: SubCategory, seller: str,
-                 stars: float | int | None, html: str):
+                 description: str | None, price: float, currency: Currency, subcategory: SubCategory,
+                 seller: SellerShortcut | None, auto: bool, promo: bool | None, attributes: dict[str, int | str] | None,
+                 html: str):
         self.id: int | str = id_
         if isinstance(self.id, str) and self.id.isnumeric():
             self.id = int(self.id)
@@ -717,10 +724,14 @@ class LotShortcut:
         """Цена лота."""
         self.currency: Currency = currency
         """Валюта лота."""
-        self.seller: str = seller
-        """Никнейм продавца."""
-        self.stars: float | int | None = stars
-        """Количество звезд продавца."""
+        self.seller: SellerShortcut | None = seller
+        """Объект продавца (только для лотов из талицы)."""
+        self.auto: bool = auto
+        """Включена ли автовыдача FunPay у лота?"""
+        self.promo: bool | None = promo
+        """В закрепе ли лот? (только для лотов из таблицы)"""
+        self.attributes: dict[str, int | str] | None = attributes
+        """Атрибуты лота (только для лотов из таблицы)"""
         self.subcategory: SubCategory = subcategory
         """Подкатегория лота."""
         self.html: str = html

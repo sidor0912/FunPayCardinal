@@ -36,7 +36,7 @@ def init_authorized_users_cp(crd: Cardinal, *args):
     def open_authorized_user_settings(c: CallbackQuery):
         """
         Отркрывает настройки конкретного пользователя
-        """''
+        """
         __, user_id, offset = c.data.split(":")
         user_id = int(user_id)
         offset = int(offset)

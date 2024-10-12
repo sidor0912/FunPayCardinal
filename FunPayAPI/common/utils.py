@@ -61,15 +61,10 @@ def parse_wait_time(response: str) -> int:
 
 
 def parse_currency(s: str) -> Currency:
-    if any([i in s.lower() for i in ("rub", "₽")]):
-        return Currency.RUB
-    if any([i in s.lower() for i in ("eur", "€")]):
-        return Currency.EUR
-    if any([i in s.lower() for i in ("usd", "$")]):
-        return Currency.USD
-    if "¤" in s:
-        return Currency.RUB
-    return Currency.UNKNOWN
+    return {"₽": Currency.RUB,
+            "€": Currency.EUR,
+            "$": Currency.USD,
+            "¤": Currency.RUB}.get(s, Currency.UNKNOWN)
 
 
 class RegularExpressions(object):
