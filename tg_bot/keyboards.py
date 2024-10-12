@@ -701,13 +701,14 @@ def plugins_list(c: Cardinal, offset: int):
     :return: объект клавиатуры со списком плагинов.
     """
     kb = K()
-    plugins = list(c.plugins.keys())[offset: offset + MENU_CFG.PLUGINS_BTNS_AMOUNT]
+    plugins = list(sorted(c.plugins.keys(), key=lambda x: c.plugins[x].name.lower()))[
+              offset: offset + MENU_CFG.PLUGINS_BTNS_AMOUNT]
     if not plugins and offset != 0:
         offset = 0
         plugins = list(c.plugins.keys())[offset: offset + MENU_CFG.PLUGINS_BTNS_AMOUNT]
 
     for uuid in plugins:
-        #  CBT.EDIT_CMD:номер команды:смещение (для кнопки назад)
+        #  CBT.EDIT_PLUGIN:uuid плагина:смещение (для кнопки назад)
         kb.add(B(f"{c.plugins[uuid].name} {bool_to_text(c.plugins[uuid].enabled)}",
                  None, f"{CBT.EDIT_PLUGIN}:{uuid}:{offset}"))
 

@@ -30,14 +30,14 @@ def init_plugins_cp(cardinal: Cardinal, *args):
 
     def check_plugin_exists(uuid: str, message_obj: Message) -> bool:
         """
-        Проверяет, существует ли команда с переданным индексом.
-        Если команда не существует - отправляет сообщение с кнопкой обновления списка команд.
+        Проверяет, существует ли плагин с переданным UUID.
+        Если команда не существует - отправляет сообщение с кнопкой обновления списка плагинов.
 
         :param uuid: UUID плагина.
 
         :param message_obj: экземпляр Telegram-сообщения.
 
-        :return: True, если команда существует, False, если нет.
+        :return: True, если плагин существует, False, если нет.
         """
         if uuid not in cardinal.plugins:
             update_button = K().add(B(_("gl_refresh"), callback_data=f"{CBT.PLUGINS_LIST}:0"))
@@ -48,7 +48,7 @@ def init_plugins_cp(cardinal: Cardinal, *args):
 
     def open_plugins_list(c: CallbackQuery):
         """
-        Открывает список существующих шаблонов ответов.
+        Открывает список плагинов.
         """
         offset = int(c.data.split(":")[1])
         bot.edit_message_text(_("desc_pl"), c.message.chat.id, c.message.id,
