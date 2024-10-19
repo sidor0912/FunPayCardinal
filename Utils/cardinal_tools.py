@@ -24,7 +24,7 @@ import logging
 
 PHOTO_RE = re.compile(r'\$photo=[\d]+')
 ENTITY_RE = re.compile(r"\$photo=\d+|\$new|(\$sleep=(\d+\.\d+|\d+))")
-logger = logging.getLogger("cardinal_tools")
+logger = logging.getLogger("FPC.cardinal_tools")
 localizer = Localizer()
 _ = localizer.translate
 
