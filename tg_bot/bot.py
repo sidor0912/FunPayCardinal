@@ -354,7 +354,8 @@ class TGBot:
         new_account = Account(golden_key, self.cardinal.MAIN_CFG["FunPay"]["user_agent"], proxy=self.cardinal.proxy)
         new_account.get()
         if new_account.id == self.cardinal.account.id or self.cardinal.account.id is None:
-            self.cardinal.account = new_account
+            self.cardinal.account.golden_key = golden_key
+            self.cardinal.account.get()
 
         self.cardinal.MAIN_CFG.set("FunPay", "golden_key", golden_key)
         self.cardinal.save_config(self.cardinal.MAIN_CFG, "configs/_main.cfg")
