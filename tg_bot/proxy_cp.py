@@ -54,7 +54,9 @@ def init_proxy_cp(crd: Cardinal, *args):
         Открывает список прокси.
         """
         offset = int(c.data.split(":")[1])
-        bot.edit_message_text(_("desc_proxy"), c.message.chat.id, c.message.id,
+        text = f'\n\nПрокси: {"вкл." if crd.MAIN_CFG["Proxy"].getboolean("enable") else "выкл."}\n' \
+               f'Проверка прокси: {"вкл." if crd.MAIN_CFG["Proxy"].getboolean("check") else "выкл."}'
+        bot.edit_message_text(f'{_("desc_proxy")}{text}', c.message.chat.id, c.message.id,
                               reply_markup=kb.proxy(crd, offset, pr_dict))
 
     def act_add_proxy(c: CallbackQuery):
