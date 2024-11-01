@@ -370,6 +370,9 @@ class Order:
     :param subcategory: подкатегория, к которой относится заказ.
     :type subcategory: :class:`FunPayAPI.types.SubCategory`
 
+    :param params: параметры лота (значения некоторых полей заказа).
+    :type params: :obj:`str` or :obj:`None`
+
     :param short_description: краткое описание (название) заказа.
     :type short_description: :obj:`str` or :obj:`None`
 
@@ -407,7 +410,8 @@ class Order:
     :type order_secrets: :obj:`list` of :obj:`str`
     """
 
-    def __init__(self, id_: str, status: OrderStatuses, subcategory: SubCategory, short_description: str | None,
+    def __init__(self, id_: str, status: OrderStatuses, subcategory: SubCategory, params: str | None,
+                 short_description: str | None,
                  full_description: str | None, sum_: float, currency: Currency,
                  buyer_id: int, buyer_username: str,
                  seller_id: int, seller_username: str, chat_id: str | int,
@@ -418,6 +422,8 @@ class Order:
         """Статус заказа."""
         self.subcategory: SubCategory = subcategory
         """Подкатегория, к которой относится заказ."""
+        self.params: str | None = params
+        """Параметры лота (значения некоторых полей заказа)"""
         self.short_description: str | None = short_description
         """Краткое описание (название) заказа. То же самое, что и Order.title."""
         self.title: str | None = short_description

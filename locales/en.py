@@ -502,6 +502,8 @@ v_sleep = "<code>$sleep=[TIME]</code> - delay. Replace <code>[TIME]</code> " \
 v_order_id = "<code>$order_id</code> - order ID (without #)"
 v_order_link = "<code>$order_link</code> - link to the order"
 v_order_title = "<code>$order_title</code> - order title."
+v_order_params = "<code>$order_params</code> - order parameters."
+v_order_ddesc = "<code>$order_ddesc</code> - order name and/or parameters."
 v_game = "<code>$game</code> - name of the game."
 v_category = "<code>$category</code> - name of the subcategory."
 v_category_fullname = "<code>$category_fullname</code> - full name of the subcategory (name of the subcategory + name of the game)."

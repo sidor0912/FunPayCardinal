@@ -503,6 +503,8 @@ v_sleep = "<code>$sleep=[TIME]</code> - затримка. Замініть <code
 v_order_id = "<code>$order_id</code> - ID замовлення (без #)"
 v_order_link = "<code>$order_link</code> - посилання на замовлення"
 v_order_title = "<code>$order_title</code> - назва замовлення."
+v_order_params = "<code>$order_params</code> - параметри замовлення."
+v_order_ddesc = "<code>$order_ddesc</code> - назва замовлення та/або параметри."
 v_game = "<code>$game</code> - назва гри."
 v_category = "<code>$category</code> - назва підкатегорії."
 v_category_fullname = "<code>$category_fullname</code> - повна назва підкатегорії (назва підкатегорії + назва гри)."

@@ -414,6 +414,9 @@ def format_order_text(text: str, order: FunPayAPI.types.OrderShortcut | FunPayAP
     except:
         logger.warning("Произошла ошибка при парсинге игры из заказа")
         logger.debug("TRACEBACK", exc_info=True)
+    description = order.description if isinstance(order,
+                                                  FunPayAPI.types.OrderShortcut) else order.short_description if order.short_description else ""
+    params = order.params if isinstance(order, FunPayAPI.types.Order) and order.params else ""
     variables = {
         "$full_date_text": str_full_date,
         "$date_text": str_date,
@@ -421,10 +424,10 @@ def format_order_text(text: str, order: FunPayAPI.types.OrderShortcut | FunPayAP
         "$time": time_,
         "$full_time": time_full,
         "$username": order.buyer_username,
-        "$order_desc": order.description if isinstance(order,
-                                                       FunPayAPI.types.OrderShortcut) else order.short_description if order.short_description else "",
-        "$order_title": order.description if isinstance(order,
-                                                        FunPayAPI.types.OrderShortcut) else order.short_description if order.short_description else "",
+        "$order_desc": description,
+        "$order_title": description,
+        "$order_params": params,
+        "$order_ddesc": f"{description}, {params}" if description and params else f"{description}{params}",
         "$order_id": order.id,
         "$order_link": f"https://funpay.com/orders/{order.id}/",
         "$category_fullname": subcategory_fullname,

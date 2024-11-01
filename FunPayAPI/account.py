@@ -971,12 +971,19 @@ class Account:
         currency = FunPayAPI.common.enums.Currency.UNKNOWN
         subcategory = None
         order_secrets = []
+        stop_params = False
+        params = None
         for div in parser.find_all("div", {"class": "param-item"}):
             if not (h := div.find("h5")):
                 continue
+            if not stop_params and div.find_previous("hr"):
+                stop_params = True
+
             if h.text == "Краткое описание":
+                stop_params = True
                 short_description = div.find("div").text
             elif h.text == "Подробное описание":
+                stop_params = True
                 full_description = div.find("div").text
             elif h.text == "Сумма":
                 sum_ = float(div.find("span").text.replace(" ", ""))
@@ -991,6 +998,14 @@ class Account:
             elif h.text in ("Оплаченный товар", "Оплаченные товары"):
                 secret_placeholders = div.find_all("span", class_="secret-placeholder")
                 order_secrets = [i.text for i in secret_placeholders]
+            elif not stop_params and h.text != "Игра":
+                div2 = div.find("div")
+                if div2:
+                    res = div2.text.strip()
+                    res = f"{res} {h.text.lower()}" if res.isdigit() else res
+                    params = f'{params}, {res}' if params else res
+        if not stop_params:
+            params = None
 
         chat = parser.find("div", {"class": "chat-header"})
         chat_link = chat.find("div", {"class": "media-user-name"}).find("a")
@@ -1023,7 +1038,7 @@ class Account:
         else:
             review = types.Review(stars, text, reply, False, str(review_obj), hidden, order_id, buyer_username,
                                   buyer_id)
-        order = types.Order(order_id, status, subcategory, short_description, full_description, sum_, currency,
+        order = types.Order(order_id, status, subcategory, params, short_description, full_description, sum_, currency,
                             buyer_id, buyer_username, seller_id, seller_username, chat_id, html_response, review,
                             order_secrets)
         return order
