@@ -10,7 +10,6 @@ from FunPayAPI import Account
 if TYPE_CHECKING:
     from cardinal import Cardinal
 
-import re
 import os
 import sys
 import time
@@ -66,27 +65,27 @@ class TGBot:
         self.authorized_users = utils.load_authorized_users()  # авторизированные пользователи.
 
         self.commands = {
-            "menu": _("cmd_menu"),
-            "profile": _("cmd_profile"),
-            "ban": _("cmd_ban"),
-            "unban": _("cmd_unban"),
-            "black_list": _("cmd_black_list"),
-            "restart": _("cmd_restart"),
-            "upload_chat_img": _("cmd_upload_chat_img"),
-            "upload_offer_img": _("cmd_upload_offer_img"),
-            "upload_plugin": _("cmd_upload_plugin"),
-            "test_lot": _("cmd_test_lot"),
-            "logs": _("cmd_logs"),
-            "del_logs": _("cmd_del_logs"),
-            "about": _("cmd_about"),
-            "check_updates": _("cmd_check_updates"),
-            "update": _("cmd_update"),
-            "sys": _("cmd_sys"),
-            "get_backup": _("cmd_get_backup"),
-            "create_backup": _("cmd_create_backup"),
-            "change_cookie": _("cmd_change_cookie"),
-            "power_off": _("cmd_power_off"),
-            "watermark": _("cmd_watermark"),
+            "menu": "cmd_menu",
+            "profile": "cmd_profile",
+            "restart": "cmd_restart",
+            "check_updates": "cmd_check_updates",
+            "update": "cmd_update",
+            "golden_key": "cmd_golden_key",
+            "ban": "cmd_ban",
+            "unban": "cmd_unban",
+            "black_list": "cmd_black_list",
+            "upload_chat_img": "cmd_upload_chat_img",
+            "upload_offer_img": "cmd_upload_offer_img",
+            "upload_plugin": "cmd_upload_plugin",
+            "test_lot": "cmd_test_lot",
+            "logs": "cmd_logs",
+            "about": "cmd_about",
+            "sys": "cmd_sys",
+            "get_backup": "cmd_get_backup",
+            "create_backup": "cmd_create_backup",
+            "del_logs": "cmd_del_logs",
+            "power_off": "cmd_power_off",
+            "watermark": "cmd_watermark",
         }
         self.__default_notification_settings = {
             utils.NotificationTypes.ad: 1,
@@ -279,7 +278,7 @@ class TGBot:
         Проверяет, есть ли пользователь в списке пользователей с доступом к ПУ TG.
         """
         lang = m.from_user.language_code
-        if m.chat.type != "private" or (self.attempts.get(m.from_user.id, 0) >= 5):
+        if m.chat.type != "private" or (self.attempts.get(m.from_user.id, 0) >= 5) or m.text is None:
             return
         if not self.cardinal.block_tg_login and \
                 cardinal_tools.check_password(m.text, self.cardinal.MAIN_CFG["Telegram"]["secretKeyHash"]):
@@ -352,14 +351,35 @@ class TGBot:
             return
         self.bot.delete_message(m.chat.id, m.id)
         new_account = Account(golden_key, self.cardinal.MAIN_CFG["FunPay"]["user_agent"], proxy=self.cardinal.proxy)
-        new_account.get()
+        try:
+            new_account.get()
+        except:
+            logger.warning("Произошла ошибка")
+            logger.debug("TRACEBACK", exc_info=True)
+            self.bot.send_message(m.chat.id, _("cookie_error"))
+            return
+
+        one_acc = False
         if new_account.id == self.cardinal.account.id or self.cardinal.account.id is None:
+            one_acc = True
             self.cardinal.account.golden_key = golden_key
-            self.cardinal.account.get()
+            try:
+                self.cardinal.account.get()
+            except:
+                logger.warning("Произошла ошибка")
+                logger.debug("TRACEBACK", exc_info=True)
+                self.bot.send_message(m.chat.id, _("cookie_error"))
+                return
+            accs = f" (<a href='https://funpay.com/users/{new_account.id}/'>{new_account.username}</a>)"
+        else:
+            accs = f" (<a href='https://funpay.com/users/{self.cardinal.account.id}/'>" \
+                   f"{self.cardinal.account.username}</a> ➔ <a href='https://funpay.com/users/{new_account.id}/'>" \
+                   f"{new_account.username}</a>)"
 
         self.cardinal.MAIN_CFG.set("FunPay", "golden_key", golden_key)
         self.cardinal.save_config(self.cardinal.MAIN_CFG, "configs/_main.cfg")
-        self.bot.send_message(m.chat.id, _("cookie_changed"))
+        self.bot.send_message(m.chat.id, f'{_("cookie_changed", accs)}{_("cookie_changed2") if not one_acc else ""}',
+                              disable_web_page_preview=True)
 
     def update_profile(self, c: CallbackQuery):
         new_msg = self.bot.send_message(c.message.chat.id, _("updating_profile"))
@@ -462,9 +482,6 @@ class TGBot:
     def edit_watermark(self, m: Message):
         self.clear_state(m.chat.id, m.from_user.id, True)
         watermark = m.text if m.text != "-" else ""
-        if re.fullmatch(r"\[[a-zA-Z]+]", watermark):
-            self.bot.reply_to(m, _("watermark_error"))
-            return
         preview = f"<a href=\"https://sfunpay.com/s/chat/zb/wl/zbwl4vwc8cc1wsftqnx5.jpg\">⁢</a>" if not \
             any([i.lower() in watermark.lower() for i in ("🐦", "FPC", "𝑭𝑷𝑪", "𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍", "Cardinal", "Кардинал")]) else \
             f"<a href=\"https://sfunpay.com/s/chat/kd/8i/kd8isyquw660kcueck3g.jpg\">⁢</a>"
@@ -1058,7 +1075,7 @@ class TGBot:
 
         self.msg_handler(self.send_settings_menu, commands=["menu", "start"])
         self.msg_handler(self.send_profile, commands=["profile"])
-        self.msg_handler(self.act_change_cookie, commands=["change_cookie"])
+        self.msg_handler(self.act_change_cookie, commands=["change_cookie", "golden_key"])
         self.msg_handler(self.change_cookie, func=lambda m: self.check_state(m.chat.id, m.from_user.id,
                                                                              CBT.CHANGE_GOLDEN_KEY))
         self.cbq_handler(self.update_profile, lambda c: c.data == CBT.UPDATE_PROFILE)
@@ -1171,8 +1188,9 @@ class TGBot:
         """
         Устанавливает меню команд.
         """
-        commands = [BotCommand(f"/{i}", self.commands[i]) for i in self.commands]
-        self.bot.set_my_commands(commands)
+        for lang in (None, *localizer.languages.keys()):
+            commands = [BotCommand(f"/{i}", _(self.commands[i], language=lang)) for i in self.commands]
+            self.bot.set_my_commands(commands, language_code=lang)
 
     def edit_bot(self):
         """
