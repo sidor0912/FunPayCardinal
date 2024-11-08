@@ -104,7 +104,8 @@ def get_notification_type(data: dict) -> NotificationTypes:
     """
     types = {
         0: NotificationTypes.ad,
-        1: NotificationTypes.announcement
+        1: NotificationTypes.announcement,
+        2: NotificationTypes.important_announcement
     }
     return types[data.get("type")] if data.get("type") in types else NotificationTypes.critical
 

@@ -77,7 +77,8 @@ def load_main_config(config_path: str):
             "autoRestore": ["0", "1"],
             "autoDisable": ["0", "1"],
             "oldMsgGetMode": ["0", "1"],
-            "keepSentMessagesUnread": ["0", "1"]
+            "keepSentMessagesUnread": ["0", "1"],
+            "locale": ["ru", "en", "uk"]
         },
 
         "Telegram": {
@@ -207,6 +208,11 @@ def load_main_config(config_path: str):
                     param_name not in config[section_name]:
                 config.set(section_name, "secretKeyHash", hash_password(config[section_name]["secretKey"]))
                 config.remove_option(section_name, "secretKey")
+                with open("configs/_main.cfg", "w", encoding="utf-8") as f:
+                    config.write(f)
+            elif section_name == "FunPay" and param_name == "locale" and \
+                    param_name not in config[section_name]:
+                config.set(section_name, "locale", "ru")
                 with open("configs/_main.cfg", "w", encoding="utf-8") as f:
                     config.write(f)
 

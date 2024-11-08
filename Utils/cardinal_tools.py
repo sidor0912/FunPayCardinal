@@ -290,7 +290,7 @@ def get_month_name(month_number: int) -> str:
         "Апреля", "Мая", "Июня",
         "Июля", "Августа", "Сентября",
         "Октября", "Ноября", "Декабря"
-    ]
+    ]  # todo локализация
     if month_number > len(months):
         return months[0]
     return months[month_number - 1]
@@ -347,6 +347,10 @@ def add_products(path: str, products: list[str], at_zero_position=False):
             f.write("\n".join(products) + "\n" + text)
 
 
+def safe_text(text: str):
+    return "⁣".join(text)
+
+
 def format_msg_text(text: str, obj: FunPayAPI.types.Message | FunPayAPI.types.ChatShortcut) -> str:
     """
     Форматирует текст, подставляя значения переменных, доступных для MessageEvent.
@@ -375,10 +379,10 @@ def format_msg_text(text: str, obj: FunPayAPI.types.Message | FunPayAPI.types.Ch
         "$date": date,
         "$time": time_,
         "$full_time": time_full,
-        "$username": username,
+        "$username": safe_text(username),
         "$message_text": str(obj),
         "$chat_id": chat_id,
-        "$chat_name": chat_name
+        "$chat_name": safe_text(chat_name)
     }
 
     for var in variables:
@@ -423,7 +427,7 @@ def format_order_text(text: str, order: FunPayAPI.types.OrderShortcut | FunPayAP
         "$date": date,
         "$time": time_,
         "$full_time": time_full,
-        "$username": order.buyer_username,
+        "$username": safe_text(order.buyer_username),
         "$order_desc": description,
         "$order_title": description,
         "$order_params": params,

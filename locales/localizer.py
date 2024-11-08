@@ -1,3 +1,5 @@
+from typing import Literal
+
 from locales import ru, en, uk
 import logging
 
@@ -47,3 +49,16 @@ class Localizer:
         except:
             logger.debug("TRACEBACK", exc_info=True)
             return text
+
+    def add_translation(self, uuid: str, variable_name: str, value: str, language: Literal["uk", "ru", "en"]):
+        """Позволяет добавить перевод фраз из плагина."""
+        setattr(self.languages[language], f"{uuid}_{variable_name}", value)
+
+    def plugin_translate(self, uuid: str, variable_name: str, *args, language: str | None = None):
+        """Позволяет получить перевод фраз из плагина."""
+        s = f"{uuid}_{variable_name}"
+        result = self.translate(s, *args, language=language)
+        if result != s:
+            return result
+        else:
+            return self.translate(variable_name, *args, language=language)

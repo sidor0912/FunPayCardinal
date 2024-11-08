@@ -201,6 +201,10 @@ class Cardinal(object):
         while True:
             try:
                 self.account.get()
+                if self.account.locale and self.account.locale != self.MAIN_CFG["FunPay"]["locale"]:
+                    self.MAIN_CFG["FunPay"]["locale"] = self.account.locale
+                    self.save_config(self.MAIN_CFG, "configs/_main.cfg")
+
                 self.balance = self.get_balance()
                 greeting_text = cardinal_tools.create_greeting_text(self)
                 cardinal_tools.set_console_title(f"FunPay Cardinal - {self.account.username} ({self.account.id})")
@@ -657,7 +661,7 @@ class Cardinal(object):
         if not self.runner:
             return
         self.runner.make_msg_requests = False if self.old_mode_enabled else True
-        self.runner.last_messages_ids = {}
+        self.runner.last_messages_ids = {k: v[0] for k, v in self.runner.runner_last_messages.items()}
 
     @staticmethod
     def save_config(config: configparser.ConfigParser, file_path: str) -> None:

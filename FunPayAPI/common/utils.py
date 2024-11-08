@@ -19,7 +19,31 @@ MONTHS = {
     "сентября": 9,
     "октября": 10,
     "ноября": 11,
-    "декабря": 12
+    "декабря": 12,
+    "січня": 1,
+    "лютого": 2,
+    "березня": 3,
+    "квітня": 4,
+    "травня": 5,
+    "червня": 6,
+    "липня": 7,
+    "серпня": 8,
+    "вересня": 9,
+    "жовтня": 10,
+    "листопада": 11,
+    "грудня": 12,
+    "January": 1,
+    "February": 2,
+    "March": 3,
+    "April": 4,
+    "May": 5,
+    "June": 6,
+    "July": 7,
+    "August": 8,
+    "September": 9,
+    "October": 10,
+    "November": 11,
+    "December": 12
 }
 
 
@@ -40,22 +64,13 @@ def parse_wait_time(response: str) -> int:
 
     :return: Примерное время ожидание до следующего поднятия лотов (в секундах).
     """
-    if response == "Подождите секунду.":
-        return 2
-    elif response == "Подождите минуту.":
-        return 60
-    elif response == "Подождите час.":
-        return 3600
-    elif "сек" in response:
-        response = response.split()
-        return int(response[1])
-    elif "мин" in response:
-        response = response.split()
-        # ["Подождите", "n", "минут."]
-        return (int(response[1]) - 1) * 60
-    elif "час" in response:
-        response = response.split()
-        return (int(response[1])) * 3600 - 60 * 30
+    x = "".join([i for i in response if i.isdigit()])
+    if "секунд" in response or "second" in response:
+        return int(x) if x else 2
+    elif "минут" in response or "хвилин" in response or "minute" in response:
+        return (int(x) - 1 if x else 1) * 60
+    elif "час" in response or "годин" in response or "hour" in response:
+        return int((int(x) - 0.5 if x else 1) * 3600)
     else:
         return 10
 
@@ -80,7 +95,8 @@ class RegularExpressions(object):
         return getattr(cls, "instance")
 
     def __init__(self):
-        self.ORDER_PURCHASED = re.compile(r"Покупатель [a-zA-Z0-9]+ оплатил заказ #[A-Z0-9]{8}\.")
+        self.ORDER_PURCHASED = \
+            re.compile(r"(Покупатель|The buyer) [a-zA-Z0-9]+ (оплатил заказ|has paid for order) #[A-Z0-9]{8}\.")
         """
         Скомпилированное регулярное выражение, описывающее сообщение об оплате заказа.
         Лучше всего использовать вместе с MessageTypesRes.ORDER_PURCHASED2
@@ -93,68 +109,88 @@ class RegularExpressions(object):
         Лучше всего использовать вместе с MessageTypesRes.ORDER_PURCHASED
         """
 
-        self.ORDER_CONFIRMED = re.compile(r"Покупатель [a-zA-Z0-9]+ подтвердил успешное выполнение "
-                                          r"заказа #[A-Z0-9]{8} и отправил деньги продавцу [a-zA-Z0-9]+\.")
+        self.ORDER_CONFIRMED = re.compile(
+            r"(Покупатель|The buyer)  [a-zA-Z0-9]+ (подтвердил успешное выполнение заказа|has confirmed that order) #[A-Z0-9]{8} (и отправил деньги продавцу|has been fulfilled successfully and that the seller) [a-zA-Z0-9]+( has been paid)?\.")
         """
         Скомпилированное регулярное выражение, описывающее сообщение о подтверждении выполнения заказа.
         """
 
-        self.NEW_FEEDBACK = re.compile(r"Покупатель [a-zA-Z0-9]+ написал отзыв к заказу #[A-Z0-9]{8}\.")
+        self.NEW_FEEDBACK = re.compile(
+            r"(Покупатель|The buyer) [a-zA-Z0-9]+ (написал отзыв к заказу|has given feedback to the order) #[A-Z0-9]{8}\."
+        )
         """
         Скомпилированное регулярное выражение, описывающее сообщение о новом отзыве.
         """
 
-        self.FEEDBACK_CHANGED = re.compile(r"Покупатель [a-zA-Z0-9]+ изменил отзыв к заказу #[A-Z0-9]{8}\.")
+        self.FEEDBACK_CHANGED = re.compile(
+            r"(Покупатель|The buyer) [a-zA-Z0-9]+ (изменил отзыв к заказу|has edited their feedback to the order) #[A-Z0-9]{8}\."
+        )
+
         """
         Скомпилированное регулярное выражение, описывающее сообщение об изменении отзыва.
         """
 
-        self.FEEDBACK_DELETED = re.compile(r"Покупатель [a-zA-Z0-9]+ удалил отзыв к заказу #[A-Z0-9]{8}\.")
+        self.FEEDBACK_DELETED = re.compile(
+            r"(Покупатель|The buyer) [a-zA-Z0-9]+ (удалил отзыв к заказу|has deleted their feedback to the order) #[A-Z0-9]{8}\.")
         """
         Скомпилированное регулярное выражение, описывающее сообщение об удалении отзыва.
         """
 
-        self.NEW_FEEDBACK_ANSWER = re.compile(r"Продавец [a-zA-Z0-9]+ ответил на отзыв к заказу #[A-Z0-9]{8}\.")
+        self.NEW_FEEDBACK_ANSWER = re.compile(
+            r"(Продавец|The seller) [a-zA-Z0-9]+ (ответил на отзыв к заказу|has replied to their feedback to the order) #[A-Z0-9]{8}\."
+        )
+
         """
         Скомпилированное регулярное выражение, описывающее сообщение о новом ответе на отзыв.
         """
 
-        self.FEEDBACK_ANSWER_CHANGED = re.compile(r"Продавец [a-zA-Z0-9]+ изменил ответ на отзыв к "
-                                                  r"заказу #[A-Z0-9]{8}\.")
+        self.FEEDBACK_ANSWER_CHANGED = re.compile(
+            r"(Продавец|The seller) [a-zA-Z0-9]+ (изменил ответ на отзыв к заказу|has edited a reply to their feedback to the order) #[A-Z0-9]{8}\."
+        )
         """
         Скомпилированное регулярное выражение, описывающее сообщение об изменении ответа на отзыв.
         """
 
-        self.FEEDBACK_ANSWER_DELETED = re.compile(r"Продавец [a-zA-Z0-9]+ удалил ответ на отзыв к заказу "
-                                                  r"#[A-Z0-9]{8}\.")
+        self.FEEDBACK_ANSWER_DELETED = re.compile(
+            r"(Продавец|The seller) [a-zA-Z0-9]+ (удалил ответ на отзыв к заказу|has deleted a reply to their feedback to the order) #[A-Z0-9]{8}\."
+        )
         """
         Скомпилированное регулярное выражение, описывающее сообщение об удалении ответа на отзыв.
         """
 
-        self.ORDER_REOPENED = re.compile(r"Заказ #[A-Z0-9]{8} открыт повторно\.")
+        self.ORDER_REOPENED = re.compile(
+            r"(Заказ|Order) #[A-Z0-9]{8} (открыт повторно|has been reopened)\."
+        )
+
         """
         Скомпилированное регулярное выражение, описывающее сообщение о повтором открытии заказа.
         """
 
-        self.REFUND = re.compile(r"Продавец [a-zA-Z0-9]+ вернул деньги покупателю [a-zA-Z0-9]+ "
-                                 r"по заказу #[A-Z0-9]{8}\.")
+        self.REFUND = re.compile(
+            r"(Продавец|The seller) [a-zA-Z0-9]+ (вернул деньги покупателю|has refunded the buyer) [a-zA-Z0-9]+ (по заказу|on order) #[A-Z0-9]{8}\."
+        )
+
         """
         Скомпилированное регулярное выражение, описывающее сообщение о возврате денежных средств.
         """
 
         self.REFUND_BY_ADMIN = re.compile(
-            r"Администратор [a-zA-Z0-9]+ вернул деньги покупателю [a-zA-Z0-9]+ по заказу #[A-Z0-9]{8}\.")
+            r"(Администратор|The administrator) [a-zA-Z0-9]+ (вернул деньги покупателю|has refunded the buyer) [a-zA-Z0-9]+ (по заказу|on order) #[A-Z0-9]{8}\."
+        )
         """
         Скомпилированное регулярное выражение, описывающее сообщение о возврате денежных средств администратором.
         """
 
-        self.PARTIAL_REFUND = re.compile(r"Часть средств по заказу #[A-Z0-9]{8} возвращена покупателю\.")
+        self.PARTIAL_REFUND = re.compile(
+            r"(Часть средств по заказу|A part of the funds pertaining to the order) #[A-Z0-9]{8} (возвращена покупателю|has been refunded)\."
+        )
+
         """
         Скомпилированное регулярное выражение, описывающее сообщение частичном о возврате денежных средств.
         """
 
-        self.ORDER_CONFIRMED_BY_ADMIN = re.compile(r"Администратор [a-zA-Z0-9]+ подтвердил успешное выполнение "
-                                                   r"заказа #[A-Z0-9]{8} и отправил деньги продавцу [a-zA-Z0-9]+\.")
+        self.ORDER_CONFIRMED_BY_ADMIN = re.compile(
+            r"(Администратор|The administrator) [a-zA-Z0-9]+ (подтвердил успешное выполнение заказа|has confirmed that order) #[A-Z0-9]{8} (и отправил деньги продавцу|has been fulfilled successfully and that the seller) [a-zA-Z0-9]+( has been paid)?\.")
         """
         Скомпилированное регулярное выражение, описывающее сообщение о подтверждении выполнения заказа администратором.
         """
@@ -164,28 +200,18 @@ class RegularExpressions(object):
         Скомпилированное регулярное выражение, описывающее ID заказа.
         """
 
-        self.ORDER_DATE = re.compile(r"\d{1,2} [а-я]+, \d{1,2}:\d{1,2}")
+        self.DISCORD = re.compile(
+            r"(You can switch to|Вы можете перейти в) Discord\. (However, note that friending someone is considered a violation rules|Внимание: общение за пределами сервера FunPay считается нарушением правил)\.")
         """
-        Скомпилированное регулярное выражение, описывающее дату заказа в формате <ДД месяца, ЧЧ:ММ>.
+        Скомпилированное регулярное выражение о предложении перехода в Discord.
         """
-
-        self.FULL_ORDER_DATE = re.compile(r"\d{1,2} [а-я]+ \d{4}, \d{1,2}:\d{1,2}")
+        self.DEAR_VENDORS = re.compile(
+            r"(Уважаемые продавцы|Dear vendors), (не доверяйте сообщениям в чате|do not rely on chat messages)! (Перед выполнением заказа всегда проверяйте наличие оплаты в разделе «Мои продажи»|Before you process an order, you should always check whether you've been paid in «My sales» section)\.")
         """
-        Скомпилированное регулярное выражение, описывающее дату заказа в формате <ДД месяца ГГГГ, ЧЧ:ММ>.
-        """
-
-        self.DISCORD = "Вы можете перейти в Discord. " \
-                       "Внимание: общение за пределами сервера FunPay считается нарушением правил."
-        """
-        Точный текст сообщения о предложении перехода в Discord.
-        """
-        self.DEAR_VENDORS = "Уважаемые продавцы, не доверяйте сообщениям в чате! " \
-                            "Перед выполнением заказа всегда проверяйте наличие оплаты в разделе «Мои продажи»."
-        """
-        Точный текст первого сообщения FunPay.
+        Скомпилированное регулярное выражение первого сообщения FunPay.
         """
 
-        self.PRODUCTS_AMOUNT = re.compile(r",\s(\d{1,3}(?:\s?\d{3})*)\sшт\.")
+        self.PRODUCTS_AMOUNT = re.compile(r",\s(\d{1,3}(?:\s?\d{3})*)\s(шт|pcs)\.")
         """
         Скомпилированное регулярное выражение, описывающее запись кол-ва товаров в заказе.
         """

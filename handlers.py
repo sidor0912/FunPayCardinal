@@ -57,8 +57,6 @@ ORDER_HTML_TEMPLATE = """<a href="https://funpay.com/orders/DELITEST/" class="tc
    <div class="tc-price text-nowrap tc-seller-sum" bis_skin_checked="1">999999.0 <span class="unit">₽</span></div>
 </a>"""
 
-AMOUNT_EXPRESSION = re.compile(r'\d+ шт\.')
-
 
 # INIT MESSAGE
 def save_init_chats_handler(c: Cardinal, e: InitialChatEvent):
@@ -244,7 +242,7 @@ def send_new_msg_notification_handler(c: Cardinal, e: NewMessageEvent) -> None:
                 author = f"<i><b>📦 {_('you')} ({i.message.badge}):</b></i> "
         elif i.message.author_id == 0:
             author = f"<i><b>🔵 {i.message.author}: </b></i>"
-        elif i.message.badge and i.message.badge != "автоответ":
+        elif i.message.badge and i.message.badge not in ("автоответ", "автовідповідь", "auto-reply"):
             author = f"<i><b>🆘 {i.message.author} ({i.message.badge}): </b></i>"
         elif i.message.author == i.message.chat_name:
             author = f"<i><b>👤 {i.message.author}: </b></i>"
@@ -539,8 +537,7 @@ def deliver_goods(c: Cardinal, e: NewOrderEvent, *args):
     try:
         if file_name := cfg_obj.get("productsFileName"):
             if c.multidelivery_enabled and not cfg_obj.getboolean("disableMultiDelivery"):
-                amount_re = AMOUNT_EXPRESSION.findall(e.order.description)
-                amount = int(amount_re[0].split(" ")[0]) if amount_re else 1
+                amount = e.order.amount if e.order.amount else 1
             products, goods_left = cardinal_tools.get_products(f"storage/products/{file_name}", amount)
             delivery_text = delivery_text.replace("$product", "\n".join(products).replace("\\n", "\n"))
     except Exception as exc:

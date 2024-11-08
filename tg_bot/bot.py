@@ -3,9 +3,12 @@
 """
 
 from __future__ import annotations
+
+import re
 from typing import TYPE_CHECKING
 
 from FunPayAPI import Account
+from tg_bot.utils import NotificationTypes
 
 if TYPE_CHECKING:
     from cardinal import Cardinal
@@ -265,11 +268,15 @@ class TGBot:
         """
         Устанавливает настройки уведомлений по умолчанию в новом чате.
         """
-        if m.reply_to_message and m.reply_to_message.forum_topic_created:
+        if str(m.chat.id) in self.notification_settings and m.from_user.id in self.authorized_users and \
+                self.is_notification_enabled(m.chat.id, NotificationTypes.critical):
             return
-        if str(m.chat.id) in self.notification_settings:
+        elif str(m.chat.id) in self.notification_settings and m.from_user.id in self.authorized_users and not \
+                self.is_notification_enabled(m.chat.id, NotificationTypes.critical):
+            self.notification_settings[str(m.chat.id)][NotificationTypes.critical] = 1
+            utils.save_notification_settings(self.notification_settings)
             return
-        if m.chat.type != "private" or m.chat.id in self.authorized_users:
+        elif str(m.chat.id) not in self.notification_settings:
             self.notification_settings[str(m.chat.id)] = self.__default_notification_settings
             utils.save_notification_settings(self.notification_settings)
 
@@ -282,21 +289,14 @@ class TGBot:
             return
         if not self.cardinal.block_tg_login and \
                 cardinal_tools.check_password(m.text, self.cardinal.MAIN_CFG["Telegram"]["secretKeyHash"]):
-            if self.authorized_users:
-                self.cardinal.account.logout()
-            for chat_id in self.cardinal.telegram.notification_settings.keys():
-                try:
-                    self.cardinal.telegram.bot.send_message(chat_id=chat_id,
-                                                            text=_("access_granted_notification", m.from_user.username,
-                                                                   m.from_user.id))
-                except:
-                    logger.error(_("log_tg_notification_error", chat_id))
-                    logger.debug("TRACEBACK", exc_info=True)
-                time.sleep(1)
+            self.send_notification(text=_("access_granted_notification", m.from_user.username, m.from_user.id),
+                                   notification_type=NotificationTypes.critical, pin=True)
             self.authorized_users[m.from_user.id] = {}
             utils.save_authorized_users(self.authorized_users)
-            if str(m.chat.id) not in self.notification_settings:
+            if str(m.chat.id) not in self.notification_settings or not self.is_notification_enabled(m.chat.id,
+                                                                                                    NotificationTypes.critical):
                 self.notification_settings[str(m.chat.id)] = self.__default_notification_settings
+                self.notification_settings[str(m.chat.id)][NotificationTypes.critical] = 1
                 utils.save_notification_settings(self.notification_settings)
             text = _("access_granted", language=lang)
             kb_links = None
@@ -482,6 +482,9 @@ class TGBot:
     def edit_watermark(self, m: Message):
         self.clear_state(m.chat.id, m.from_user.id, True)
         watermark = m.text if m.text != "-" else ""
+        if re.fullmatch(r"\[[a-zA-Z]+]", watermark):
+            self.bot.reply_to(m, _("watermark_error"))
+            return
         preview = f"<a href=\"https://sfunpay.com/s/chat/zb/wl/zbwl4vwc8cc1wsftqnx5.jpg\">⁢</a>" if not \
             any([i.lower() in watermark.lower() for i in ("🐦", "FPC", "𝑭𝑷𝑪", "𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍", "Cardinal", "Кардинал")]) else \
             f"<a href=\"https://sfunpay.com/s/chat/kd/8i/kd8isyquw660kcueck3g.jpg\">⁢</a>"
@@ -504,7 +507,8 @@ class TGBot:
             self.bot.send_message(m.chat.id, _("logfile_sending"))
             try:
                 with open("logs/log.log", "r", encoding="utf-8") as f:
-                    self.bot.send_document(m.chat.id, f)
+                    self.bot.send_document(m.chat.id, f,
+                                           caption=f'{_("gs_old_msg_mode").replace("{} ", "") if self.cardinal.old_mode_enabled else ""}')
                     f.seek(0)
                     file_content = f.read()
                     if "TRACEBACK" in file_content:
@@ -827,7 +831,7 @@ class TGBot:
                     author = f"<i><b>📦 {_('you')} ({i.badge}):</b></i> "
             elif i.author_id == 0:
                 author = f"<i><b>🔵 {i.author}: </b></i>"
-            elif i.badge and i.badge != "автоответ":
+            elif i.badge and i.badge not in ("автоответ", "автовідповідь", "auto-reply"):
                 author = f"<i><b>🆘 {i.author} ({i.badge}): </b></i>"
             elif i.author == i.chat_name:
                 author = f"<i><b>👤 {i.author}: </b></i>"
@@ -1154,7 +1158,7 @@ class TGBot:
             kwargs["reply_markup"] = keyboard
 
         for chat_id in self.notification_settings:
-            if notification_type != utils.NotificationTypes.critical and \
+            if notification_type != utils.NotificationTypes.important_announcement and \
                     not self.is_notification_enabled(chat_id, notification_type):
                 continue
 

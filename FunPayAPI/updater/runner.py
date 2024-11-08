@@ -61,11 +61,8 @@ class Runner:
         self.saved_orders: dict[str, types.OrderShortcut] = {}
         """Сохраненные состояния заказов ({ID заказа: экземпляр types.OrderShortcut})."""
 
-        self.last_messages: dict[int, list[str, str | None]] = {}
-        """ID последний сообщений ({ID чата: (текст сообщения (до 250 символов), время сообщения)})."""
-
-        self.init_messages: dict[int, str] = {}
-        """Текста инит. чатов (для generate_new_message_events)."""
+        self.runner_last_messages: dict[int, list[int, int, str | None]] = {}
+        """ID последний сообщений {ID чата: [ID последего сообщения чата, ID последнего прочитанного сообщения чата, текст последнего сообщения или None, если это изображение]}."""
 
         self.by_bot_ids: dict[int, list[int]] = {}
         """ID сообщений, отправленных с помощью self.account.send_message ({ID чата: [ID сообщения, ...]})."""
@@ -78,15 +75,6 @@ class Runner:
         self.account.runner = self
 
         self.__msg_time_re = re.compile(r"\d{2}:\d{2}")
-
-        try:
-            self.last_messages_ids = {2: account.get_chat_history(chat_id="flood")[-1].id}
-            logger.info(f"ID сообщения из общего чата успешно получено: {self.last_messages_ids}")
-        except:
-            logger.warning(f"ID сообщения из общего чата не получено: {self.last_messages_ids}")
-            logger.debug("TRACEBACK", exc_info=True)
-        """Сохраняем сообщение из общего чата, чтобы несколько одновременно полученных сообщений от человека,
-         которого не было в сохранненных чатах, отображались корректно после перезапуска"""
 
     def get_updates(self) -> dict:
         """
@@ -184,31 +172,27 @@ class Runner:
             if last_msg_text.startswith(self.account.bot_character):
                 last_msg_text = last_msg_text[1:]
                 # todo добавить by_bot в старый режим получения сообщений?
-            last_msg_time = chat.find("div", {"class": "contact-item-time"}).text
-            unread = True if "unread" in chat.get("class") else False
 
-            # Если не читаем чаты или если сообщение прочитано
-            if not self.make_msg_requests or not unread:
-                # Если текст последнего сообщения совпадает с сохраненным
-                if chat_id in self.last_messages and self.last_messages[chat_id][0] == last_msg_text:
-                    # Если есть сохраненное время сообщения для данного чата
-                    if self.last_messages[chat_id][1]:
-                        # Если время ласт сообщения не имеет формат ЧЧ:ММ или совпадает с сохраненным - скип чата
-                        if not self.__msg_time_re.fullmatch(last_msg_time) or \
-                                self.last_messages[chat_id][1] == last_msg_time:
-                            continue
-                    # Если нет сохраненного времени сообщения для данного чата - скип чата
-                    else:
-                        continue
+            node_msg_id = int(chat.get('data-node-msg'))
+            user_msg_id = int(chat.get('data-user-msg'))
+            prev_node_msg_id, prev_user_msg_id, prev_text = self.runner_last_messages.get(chat_id) or [0, 0, None]
+            last_msg_text_or_none = None if last_msg_text in ("Изображение", "Зображення", "Image") else last_msg_text
+            if node_msg_id <= prev_node_msg_id:
+                continue
+            elif not prev_node_msg_id and not prev_user_msg_id and prev_text == last_msg_text_or_none and \
+                    not self.__first_request:
+                # значит сообщение отправлено ботом и оставлено непрочитанным - просто обновляем инфу
+                self.runner_last_messages[chat_id] = [node_msg_id, user_msg_id, last_msg_text_or_none]
+                continue
+            unread = True if "unread" in chat.get("class") else False
 
             chat_with = chat.find("div", {"class": "media-user-name"}).text
             chat_obj = types.ChatShortcut(chat_id, chat_with, last_msg_text, unread, str(chat))
             self.account.add_chats([chat_obj])
-            self.last_messages[chat_id] = [last_msg_text, last_msg_time]
-
+            self.runner_last_messages[chat_id] = [node_msg_id, user_msg_id, last_msg_text_or_none]
             if self.__first_request:
                 events.append(InitialChatEvent(self.__last_msg_event_tag, chat_obj))
-                self.init_messages[chat_id] = last_msg_text
+                self.last_messages_ids[chat_id] = node_msg_id
                 continue
             else:
                 lcmc_events.append(LastChatMessageChangedEvent(self.__last_msg_event_tag, chat_obj))
@@ -283,29 +267,9 @@ class Runner:
 
             # Если нет сохраненного ID последнего сообщения
             if not self.last_messages_ids.get(cid):
-                # Если данный чат был доступен при первом запросе и есть сохраненное последнее сообщение,
-                # то ищем новые сообщения относительно последнего сохраненного текста или минимального сохраненного id
-                if init_msg_text := self.init_messages.get(cid):
-                    del self.init_messages[cid]
-                    temp = []
-                    for i in reversed(messages):
-                        if i.image_link:
-                            if init_msg_text == "Изображение":
-                                if not temp:
-                                    temp.append(i)
-                                break
-                        elif i.text[:250] == init_msg_text or i.id < (min(self.last_messages_ids.values(), default=0)):
-                            break
-                        temp.append(i)
-                    messages = list(reversed(temp))
-
-                # Если данного чата не было при первом запросе, в результат добавляем
-                # только сообщения, у которых ID больше чем у минимального из сохраненных.
-                # Если сохраненных ID нету совсем, то добавляем только ласт сообщение истории.
-                else:
-                    messages_temp = [m for m in messages if
-                                     m.id > min(self.last_messages_ids.values(), default=10 ** 20)]
-                    messages = messages_temp if messages_temp else messages[-1:]
+                messages_temp = [m for m in messages if
+                                 m.id > max(self.last_messages_ids.values(), default=10 ** 20)]
+                messages = messages_temp if messages_temp else messages[-1:]
 
             self.last_messages_ids[cid] = messages[-1].id  # Перезаписываем ID последнего сообщение
             self.by_bot_ids[cid] = [i for i in self.by_bot_ids[cid] if i > self.last_messages_ids[cid]]  # чистим память
@@ -371,22 +335,20 @@ class Runner:
         self.saved_orders = saved_orders
         return events
 
-    def update_last_message(self, chat_id: int, message_text: str | None, message_time: str | None = None):
+    def update_last_message(self, chat_id: int, message_id: int, message_text: str | None):
         """
-        Обновляет сохраненный текст последнего сообщения чата.
+        Обновляет сохраненный ID последнего сообщения чата.
 
         :param chat_id: ID чата.
         :type chat_id: :obj:`int`
 
-        :param message_text: текст сообщения (если `None`, заменяется за "Изображение").
-        :type message_text: :obj:`str` or :obj:`None`
+        :param message_id: ID сообщения.
+        :type message_id: :obj:`int`
 
-        :param message_time: время отправки сообщения в формате ЧЧ:ММ. Используется исключительно Runner'ом.
-        :type message_time: :obj:`str` or :obj:`None`, опционально
+        :param message_text: текст сообщения или None, если это изображение.
+        :type message_text: :obj:`str` or :obj:`None`
         """
-        if message_text is None:
-            message_text = "Изображение"
-        self.last_messages[chat_id] = [message_text[:250], message_time]
+        self.runner_last_messages[chat_id] = [message_id, message_id, message_text]
 
     def mark_as_by_bot(self, chat_id: int, message_id: int):
         """

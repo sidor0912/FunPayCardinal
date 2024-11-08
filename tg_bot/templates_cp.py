@@ -4,6 +4,9 @@
 """
 from __future__ import annotations
 from typing import TYPE_CHECKING
+
+from Utils.cardinal_tools import safe_text
+
 if TYPE_CHECKING:
     from cardinal import Cardinal
 
@@ -14,7 +17,6 @@ from telebot.types import InlineKeyboardMarkup as K, InlineKeyboardButton as B, 
 import logging
 
 from locales.localizer import Localizer
-
 
 logger = logging.getLogger("TGBot")
 localizer = Localizer()
@@ -140,7 +142,7 @@ def init_templates_cp(cardinal: Cardinal, *args):
             bot.answer_callback_query(c.id)
             return
 
-        text = tg.answer_templates[template_index].replace("$username", username)
+        text = tg.answer_templates[template_index].replace("$username", safe_text(username))
         result = cardinal.send_message(node_id, text, username)
         if result:
             bot.send_message(c.message.chat.id, _("tmplt_msg_sent", node_id, username, utils.escape(text)),
