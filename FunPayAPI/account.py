@@ -1064,10 +1064,10 @@ class Account:
         if not username:
             raise exceptions.UnauthorizedError(response)
 
-        if (span := parser.find("span", {"class": "text-warning"})) and span.text == (
+        if (span := parser.find("span", {"class": "text-warning"})) and span.text in (
                 "Возврат", "Повернення", "Refund"):
             status = types.OrderStatuses.REFUNDED
-        elif (span := parser.find("span", {"class": "text-success"})) and span.text == ("Закрыт", "Закрито", "Closed"):
+        elif (span := parser.find("span", {"class": "text-success"})) and span.text in ("Закрыт", "Закрито", "Closed"):
             status = types.OrderStatuses.CLOSED
         else:
             status = types.OrderStatuses.PAID
@@ -1086,13 +1086,13 @@ class Account:
             if not stop_params and div.find_previous("hr"):
                 stop_params = True
 
-            if h.text == ("Краткое описание", "Короткий опис", "Short description"):
+            if h.text in ("Краткое описание", "Короткий опис", "Short description"):
                 stop_params = True
                 short_description = div.find("div").text
-            elif h.text == ("Подробное описание", "Докладний опис", "Detailed description"):
+            elif h.text in ("Подробное описание", "Докладний опис", "Detailed description"):
                 stop_params = True
                 full_description = div.find("div").text
-            elif h.text == ("Сумма", "Сума", "Total"):
+            elif h.text in ("Сумма", "Сума", "Total"):
                 sum_ = float(div.find("span").text.replace(" ", ""))
                 currency = parse_currency(div.find("strong").text)
             elif h.text in ("Категория", "Категорія", "Category",
@@ -1274,7 +1274,7 @@ class Account:
             if any(today in order_date_text for today in ("сегодня", "сьогодні", "today")):  # сегодня, ЧЧ:ММ
                 h, m = order_date_text.split(", ")[1].split(":")
                 order_date = datetime(now.year, now.month, now.day, int(h), int(m))
-            elif any(today in order_date_text for today in ("вчера", "вчора", "yesterday")):  # вчера, ЧЧ:ММ
+            elif any(yesterday in order_date_text for yesterday in ("вчера", "вчора", "yesterday")):  # вчера, ЧЧ:ММ
                 h, m = order_date_text.split(", ")[1].split(":")
                 temp = now - timedelta(days=1)
                 order_date = datetime(temp.year, temp.month, temp.day, int(h), int(m))
