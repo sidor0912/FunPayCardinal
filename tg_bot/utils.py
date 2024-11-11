@@ -242,7 +242,7 @@ def generate_profile_text(cardinal: Cardinal) -> str:
 
     :return: сгенерированный текст с информацией об аккаунте.
     """
-    account = cardinal.account
+    account = cardinal.account  # locale
     balance = cardinal.balance
     return f"""Статистика аккаунта <b><i>{account.username}</i></b>
 
@@ -265,7 +265,7 @@ def generate_lot_info_text(lot_obj: configparser.SectionProxy) -> str:
     :return: сгенерированный текст с информацией о лоте.
     """
     if lot_obj.get("productsFileName") is None:
-        file_path = "<b><u>не привязан.</u></b>"
+        file_path = "<b><u>не привязан.</u></b>"  # locale
         products_amount = "<code>∞</code>"
     else:
         file_path = f"<code>storage/products/{lot_obj.get('productsFileName')}</code>"
@@ -274,7 +274,7 @@ def generate_lot_info_text(lot_obj: configparser.SectionProxy) -> str:
                 pass
         products_amount = Utils.cardinal_tools.count_products(f"storage/products/{lot_obj.get('productsFileName')}")
         products_amount = f"<code>{products_amount}</code>"
-
+    # locale
     message = f"""<b>{escape(lot_obj.name)}</b>\n
 <b><i>Текст выдачи:</i></b> <code>{escape(lot_obj["response"])}</code>\n
 <b><i>Кол-во товаров: </i></b> {products_amount}\n

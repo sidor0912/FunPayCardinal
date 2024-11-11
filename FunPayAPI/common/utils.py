@@ -110,7 +110,7 @@ class RegularExpressions(object):
         """
 
         self.ORDER_CONFIRMED = re.compile(
-            r"(Покупатель|The buyer)  [a-zA-Z0-9]+ (подтвердил успешное выполнение заказа|has confirmed that order) #[A-Z0-9]{8} (и отправил деньги продавцу|has been fulfilled successfully and that the seller) [a-zA-Z0-9]+( has been paid)?\.")
+            r"(Покупатель|The buyer) [a-zA-Z0-9]+ (подтвердил успешное выполнение заказа|has confirmed that order) #[A-Z0-9]{8} (и отправил деньги продавцу|has been fulfilled successfully and that the seller) [a-zA-Z0-9]+( has been paid)?\.")
         """
         Скомпилированное регулярное выражение, описывающее сообщение о подтверждении выполнения заказа.
         """

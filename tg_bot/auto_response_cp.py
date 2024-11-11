@@ -121,6 +121,7 @@ def init_auto_response_cp(cardinal: Cardinal, *args):
         command_obj = cardinal.RAW_AR_CFG[command]
         notification_text = command_obj.get("notificationText")
         notification_text = notification_text if notification_text else "Пользователь $username ввел команду $message_text."
+        # locale
 
         message = f"""<b>[{utils.escape(command)}]</b>\n
 <b><i>{_('ar_response_text')}:</i></b> <code>{utils.escape(command_obj["response"])}</code>\n

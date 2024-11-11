@@ -307,7 +307,7 @@ class Runner:
         while attempts:
             attempts -= 1
             try:
-                orders_list = self.account.get_sells()  # todo добавить возможность реакции на подтверждение очень старых заказов
+                orders_list = self.account.get_sales()  # todo добавить возможность реакции на подтверждение очень старых заказов
                 break
             except exceptions.RequestFailedError as e:
                 logger.error(e)

@@ -14,6 +14,18 @@ def REFRESH_BTN() -> K:
     return K().add(B(_("gl_refresh"), callback_data=CBT.UPDATE_PROFILE))
 
 
+def SETTINGS_SECTIONS() -> K:
+    return K() \
+        .add(B(_("mm_language"), callback_data=f"{CBT.CATEGORY}:lang")) \
+        .add(B(_("mm_global"), callback_data=f"{CBT.CATEGORY}:main")) \
+        .add(B(_("mm_notifications"), callback_data=f"{CBT.CATEGORY}:tg")) \
+        .add(B(_("mm_autoresponse"), callback_data=f"{CBT.CATEGORY}:ar")) \
+        .add(B(_("mm_autodelivery"), callback_data=f"{CBT.CATEGORY}:ad")) \
+        .add(B(_("mm_plugins"), callback_data=f"{CBT.PLUGINS_LIST}:0")) \
+        .add(B(_("mm_templates"), callback_data=f"{CBT.TMPLT_LIST}:0")) \
+        .add(B(_("gl_next"), callback_data=CBT.MAIN2))
+
+
 def SETTINGS_SECTIONS_2() -> K:
     return K() \
         .add(B(_("mm_greetings"), callback_data=f"{CBT.CATEGORY}:gr")) \

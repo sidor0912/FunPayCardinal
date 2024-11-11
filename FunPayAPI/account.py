@@ -71,6 +71,20 @@ class Account:
         """Активные покупки."""
         self.__locale: Literal["ru", "en", "uk"] | None = locale
         """Текущий язык аккаунта."""
+        self.__default_locale: Literal["ru", "en", "uk"] | None = locale
+        """Язык аккаунта по умолчанию."""
+        self.__profile_parse_locale: Literal["ru", "en", "uk"] | None = locale
+        """Язык по умолчанию для Account.get_user()"""
+        self.__chat_parse_locale: Literal["ru", "en", "uk"] | None = locale
+        """Язык по умолчанию для Account.get_chat()"""
+        # self.__sales_parse_locale: Literal["ru", "en", "uk"] | None = locale #todo
+        """Язык по умолчанию для Account.get_sales()"""
+        self.__order_parse_locale: Literal["ru", "en", "uk"] | None = locale
+        """Язык по умолчанию для Account.get_order()"""
+        self.__lots_parse_locale: Literal["ru", "en", "uk"] | None = locale
+        """Язык по умолчанию для Account.get_subcategory_public_lots()"""
+        self.__subcategories_parse_locale: Literal["ru", "en", "uk"] | None = locale
+        """Язык по для получения названий разделов."""
         self.__set_locale: Literal["ru", "en", "uk"] | None = None
         """Язык, на который будет переведем аккаунт при следующем GET-запросе."""
         self.currency: FunPayAPI.types.Currency = FunPayAPI.types.Currency.UNKNOWN
@@ -104,7 +118,8 @@ class Account:
         """Старое значение self.__bot_character, для корректной маркировки отправки ботом старых сообщений"""
 
     def method(self, request_method: Literal["post", "get"], api_method: str, headers: dict, payload: Any,
-               exclude_phpsessid: bool = False, raise_not_200: bool = False) -> requests.Response:
+               exclude_phpsessid: bool = False, raise_not_200: bool = False,
+               locale: Literal["ru", "en", "uk"] | None = None) -> requests.Response:
         """
         Отправляет запрос к FunPay. Добавляет в заголовки запроса user_agent и куки.
 
@@ -130,14 +145,16 @@ class Account:
         :rtype: :class:`requests.Response`
         """
 
-        def normalize_url(api_method: str) -> str:
+        def normalize_url(api_method: str, locale: Literal["ru", "en", "uk"] | None = None) -> str:
             api_method = "https://funpay.com/" if api_method == "https://funpay.com" else api_method
             url = api_method if api_method.startswith("https://funpay.com/") else "https://funpay.com/" + api_method
             locales = ("en", "uk")
             for loc in locales:
                 url = url.replace(f"https://funpay.com/{loc}/", "https://funpay.com/", 1)
-            if self.locale in locales:
-                return url.replace(f"https://funpay.com/", f"https://funpay.com/{self.locale}/", 1)
+            if not locale:
+                locale = self.locale
+            if locale in locales:
+                return url.replace(f"https://funpay.com/", f"https://funpay.com/{locale}/", 1)
             return url
 
         def update_locale(redirect_url: str):
@@ -149,11 +166,13 @@ class Account:
                 self.locale = "ru"
 
         headers["cookie"] = f"golden_key={self.golden_key}; cookie_prefs=1"
-        headers["cookie"] += f"; locale={self.locale}" if self.locale else ""
         headers["cookie"] += f"; PHPSESSID={self.phpsessid}" if self.phpsessid and not exclude_phpsessid else ""
         if self.user_agent:
             headers["user-agent"] = self.user_agent
-        link = normalize_url(api_method)
+        if request_method == "post" and locale:
+            link = normalize_url(api_method, locale)
+        else:
+            link = normalize_url(api_method)
         if request_method == "get" and self.__set_locale and self.__set_locale != self.locale:
             link += f'{"&" if "?" in link else "?"}setlocale={self.__set_locale}'
 
@@ -186,8 +205,11 @@ class Account:
         :return: объект аккаунта с обновленными данными.
         :rtype: :class:`FunPayAPI.account.Account`
         """
+        if not self.is_initiated:
+            self.locale = self.__subcategories_parse_locale
         response = self.method("get", "https://funpay.com/", {}, {}, update_phpsessid, raise_not_200=True)
-
+        if not self.is_initiated:
+            self.locale = self.__default_locale
         html_response = response.content.decode()
         parser = BeautifulSoup(html_response, "lxml")
         username = parser.find("div", {"class": "user-link-name"})
@@ -198,6 +220,7 @@ class Account:
         self.app_data = json.loads(parser.find("body").get("data-app-data"))
         self.id = self.app_data["userId"]
         self.csrf_token = self.app_data["csrf-token"]
+        self.locale = self.app_data.get("locale")
         self._logout_link = parser.find("a", class_="menu-item-logout").get("href")
         active_sales = parser.find("span", {"class": "badge badge-trade"})
         self.active_sales = int(active_sales.text) if active_sales else 0
@@ -216,8 +239,8 @@ class Account:
         self.__initiated = True
         return self
 
-    def get_subcategory_public_lots(self, subcategory_type: enums.SubCategoryTypes, subcategory_id: int) -> list[
-        types.LotShortcut]:
+    def get_subcategory_public_lots(self, subcategory_type: enums.SubCategoryTypes, subcategory_id: int,
+                                    locale: Literal["ru", "en", "uk"] | None = None) -> list[types.LotShortcut]:
         """
         Получает список всех опубликованных лотов переданной подкатегории.
 
@@ -234,7 +257,11 @@ class Account:
             raise exceptions.AccountNotInitiatedError()
 
         meth = f"lots/{subcategory_id}/" if subcategory_type is enums.SubCategoryTypes.COMMON else f"chips/{subcategory_id}/"
+        if not locale:
+            locale = self.__lots_parse_locale
+        self.locale = locale
         response = self.method("get", meth, {"accept": "*/*"}, {}, raise_not_200=True)
+        self.locale = self.__default_locale
         html_response = response.content.decode()
         parser = BeautifulSoup(html_response, "lxml")
 
@@ -304,7 +331,7 @@ class Account:
             result.append(lot_obj)
         return result
 
-    def get_lot_page(self, lot_id: int):
+    def get_lot_page(self, lot_id: int, locale: Literal["ru", "en", "uk"] | None = None):
         """
         Возвращает страницу лота.
 
@@ -319,7 +346,11 @@ class Account:
         headers = {
             "accept": "*/*"
         }
+        if locale:
+            self.locale = locale
         response = self.method("get", f"lots/offer?id={lot_id}", headers, {}, raise_not_200=True)
+        if locale:
+            self.locale = self.__default_locale
         html_response = response.content.decode()
         parser = BeautifulSoup(html_response, "lxml")
         username = parser.find("div", {"class": "user-link-name"})
@@ -353,7 +384,7 @@ class Account:
         return types.LotPage(lot_id, self.get_subcategory(enums.SubCategoryTypes.COMMON, subcategory_id),
                              short_description, detailed_description, image_urls, seller_id, seller_username)
 
-    def get_balance(self, lot_id: int = 29264129) -> types.Balance:
+    def get_balance(self, lot_id: int) -> types.Balance:
         """
         Получает информацию о балансе пользователя.
 
@@ -910,7 +941,7 @@ class Account:
 
         response = self.method("post", "lots/raise", headers, payload, raise_not_200=True)
         json_response = response.json()
-        logger.debug(f"Ответ FunPay (поднятие категорий): {json_response}.")
+        logger.debug(f"Ответ FunPay (поднятие категорий): {json_response}.")  # locale
         if not json_response.get("error") and not json_response.get("url"):
             return True
         elif json_response.get("url"):
@@ -922,7 +953,7 @@ class Account:
         else:
             raise exceptions.RaiseError(response, category, json_response.get("msg"), None)
 
-    def get_user(self, user_id: int) -> types.UserProfile:
+    def get_user(self, user_id: int, locale: Literal["ru", "en", "uk"] | None = None) -> types.UserProfile:
         """
         Парсит страницу пользователя.
 
@@ -934,8 +965,11 @@ class Account:
         """
         if not self.is_initiated:
             raise exceptions.AccountNotInitiatedError()
-
+        if not locale:
+            locale = self.__profile_parse_locale
+        self.locale = locale
         response = self.method("get", f"users/{user_id}/", {"accept": "*/*"}, {}, raise_not_200=True)
+        self.locale = self.__default_locale
         html_response = response.content.decode()
         parser = BeautifulSoup(html_response, "lxml")
 
@@ -995,7 +1029,8 @@ class Account:
                 user_obj.add_lot(lot_obj)
         return user_obj
 
-    def get_chat(self, chat_id: int, with_history: bool = True) -> types.Chat:
+    def get_chat(self, chat_id: int, with_history: bool = True,
+                 locale: Literal["ru", "en", "uk"] | None = None) -> types.Chat:
         """
         Получает информацию о личном чате.
 
@@ -1011,7 +1046,11 @@ class Account:
         if not self.is_initiated:
             raise exceptions.AccountNotInitiatedError()
 
+        if not locale:
+            locale = self.__chat_parse_locale
+        self.locale = locale
         response = self.method("get", f"chat/?node={chat_id}", {"accept": "*/*"}, {}, raise_not_200=True)
+        self.locale = self.__default_locale
         html_response = response.content.decode()
         parser = BeautifulSoup(html_response, "lxml")
         if (name := parser.find("div", {"class": "chat-header"}).find("div", {"class": "media-user-name"}).find(
@@ -1040,9 +1079,9 @@ class Account:
         :rtype: :class:`FunPayAPI.types.OrderShortcut`
         """
         # todo взаимодействие с покупками
-        return self.runner.saved_orders.get(order_id, self.get_sells(id=order_id)[1][0])
+        return self.runner.saved_orders.get(order_id, self.get_sales(id=order_id)[1][0])
 
-    def get_order(self, order_id: str) -> types.Order:
+    def get_order(self, order_id: str, locale: Literal["ru", "en", "uk"] | None = None) -> types.Order:
         """
         Получает полную информацию о заказе.
 
@@ -1057,7 +1096,11 @@ class Account:
         headers = {
             "accept": "*/*"
         }
+        if not locale:
+            locale = self.__order_parse_locale
+        self.locale = locale
         response = self.method("get", f"orders/{order_id}/", headers, {}, raise_not_200=True)
+        self.locale = self.__default_locale
         html_response = response.content.decode()
         parser = BeautifulSoup(html_response, "lxml")
         username = parser.find("div", {"class": "user-link-name"})
@@ -1153,12 +1196,15 @@ class Account:
                             order_secrets)
         return order
 
-    def get_sells(self, start_from: str | None = None, include_paid: bool = True, include_closed: bool = True,
+    def get_sales(self, start_from: str | None = None, include_paid: bool = True, include_closed: bool = True,
                   include_refunded: bool = True, exclude_ids: list[str] | None = None,
                   id: Optional[str] = None, buyer: Optional[str] = None,
                   state: Optional[Literal["closed", "paid", "refunded"]] = None, game: Optional[int] = None,
                   section: Optional[str] = None, server: Optional[int] = None,
-                  side: Optional[int] = None, **more_filters) -> tuple[str | None, list[types.OrderShortcut]]:
+                  side: Optional[int] = None, locale: Literal["ru", "en", "uk"] | None = None,
+                  sudcategories: dict[str, tuple[types.SubCategoryTypes, int]] = None, **more_filters) -> \
+            tuple[str | None, list[types.OrderShortcut], Literal["ru", "en", "uk"],
+            dict[str, types.SubCategory]]:
         """
         Получает и парсит список заказов со страницы https://funpay.com/orders/trade
 
@@ -1222,8 +1268,13 @@ class Account:
 
         if start_from:
             filters["continue"] = start_from
-
-        response = self.method("post" if start_from else "get", link, {}, filters, raise_not_200=True)
+        elif locale:
+            self.locale = locale
+        else:
+            self.locale = self.__profile_parse_locale
+        response = self.method("post" if start_from else "get", link, {}, filters, raise_not_200=True, locale=locale)
+        if not start_from:
+            self.locale = self.__default_locale
         html_response = response.content.decode()
 
         parser = BeautifulSoup(html_response, "lxml")
@@ -1235,10 +1286,24 @@ class Account:
         next_order_id = next_order_id.get("value") if next_order_id else None
 
         order_divs = parser.find_all("a", {"class": "tc-item"})
+        if not start_from:
+            sudcategories = dict()
+            app_data = json.loads(parser.find("body").get("data-app-data"))
+            locale = app_data.get("locale")
+            games_options = parser.find("select", attrs={"name": "game"}).find_all(
+                lambda x: x.name == "option" and x.get("value"))
+            for game_option in games_options:
+                game_name = game_option.text
+                sections_list = json.loads(game_option.get("data-data"))
+                for key, section_name in sections_list:
+                    section_type, section_id = key.split("-")
+                    section_type = types.SubCategoryTypes.COMMON if section_type == "lot" else types.SubCategoryTypes.CURRENCY
+                    section_id = int(section_id)
+                    sudcategories[f"{game_name}, {section_name}"] = self.get_subcategory(section_type, section_id)
         if not order_divs:
-            return None, []
+            return None, [], locale, sudcategories
 
-        sells = []
+        sales = []
         for div in order_divs:
             classname = div.get("class")
             if "warning" in classname:
@@ -1268,6 +1333,9 @@ class Account:
             buyer_username = buyer_div.text
             buyer_id = int(buyer_div.get("data-href")[:-1].split("/users/")[1])
             subcategory_name = div.find("div", {"class": "text-muted"}).text
+            subcategory = None
+            if sudcategories:
+                subcategory = sudcategories.get(subcategory_name)
 
             now = datetime.now()
             order_date_text = div.find("div", {"class": "tc-date-time"}).text
@@ -1293,10 +1361,22 @@ class Account:
             id1, id2 = sorted([buyer_id, self.id])
             chat_id = f"users-{id1}-{id2}"
             order_obj = types.OrderShortcut(order_id, description, price, currency, buyer_username, buyer_id, chat_id,
-                                            order_status, order_date, subcategory_name, str(div))
-            sells.append(order_obj)
+                                            order_status, order_date, subcategory_name, subcategory, str(div))
+            sales.append(order_obj)
 
-        return next_order_id, sells
+        return next_order_id, sales, locale, sudcategories
+
+    def get_sells(self, start_from: str | None = None, include_paid: bool = True, include_closed: bool = True,
+                  include_refunded: bool = True, exclude_ids: list[str] | None = None,
+                  id: Optional[str] = None, buyer: Optional[str] = None,
+                  state: Optional[Literal["closed", "paid", "refunded"]] = None, game: Optional[int] = None,
+                  section: Optional[str] = None, server: Optional[int] = None,
+                  side: Optional[int] = None, **more_filters) -> tuple[str | None, list[types.OrderShortcut]]:
+        """Эта функция вскоре будет удалена. Используйте Account.get_sales()."""
+        start_from, orders, loc, subcs = self.get_sales(start_from, include_paid, include_closed, include_refunded,
+                                                        exclude_ids, id, buyer, state, game, section, server,
+                                                        side, None, None, **more_filters)
+        return start_from, orders
 
     def add_chats(self, chats: list[types.ChatShortcut]):
         """
@@ -1732,10 +1812,44 @@ class Account:
                     i.is_arbitration = True
             i.badge = default_label.text if (i.badge is None and default_label is not None) else i.badge
             if i.type != types.MessageTypes.NON_SYSTEM:
-                initiator = parser.find("a")
-                if initiator and (url := initiator.get("href")) and "/users/" in url:
-                    self.initiator_username = initiator.text
-                    self.initiator_id = int(url.split("/")[-2])
+                users = parser.find_all('a', href=lambda href: href and '/users/' in href)
+                if users:
+                    i.initiator_username = users[0].text
+                    i.initiator_id = int(users[0]["href"].split("/")[-2])
+                    if i.type in (types.MessageTypes.ORDER_PURCHASED, types.MessageTypes.ORDER_CONFIRMED,
+                                  types.MessageTypes.NEW_FEEDBACK,
+                                  types.MessageTypes.FEEDBACK_CHANGED,
+                                  types.MessageTypes.FEEDBACK_DELETED):
+                        if i.initiator_id == self.id:
+                            i.i_am_seller = False
+                            i.i_am_buyer = True
+                        else:
+                            i.i_am_seller = True
+                            i.i_am_buyer = False
+                    elif i.type in (types.MessageTypes.NEW_FEEDBACK_ANSWER, types.MessageTypes.FEEDBACK_ANSWER_CHANGED,
+                                    types.MessageTypes.FEEDBACK_ANSWER_DELETED, types.MessageTypes.REFUND):
+                        if i.initiator_id == self.id:
+                            i.i_am_seller = True
+                            i.i_am_buyer = False
+                        else:
+                            i.i_am_seller = False
+                            i.i_am_buyer = True
+                    elif len(users) > 1:
+                        last_user_id = int(users[-1]["href"].split("/")[-2])
+                        if i.type == types.MessageTypes.ORDER_CONFIRMED_BY_ADMIN:
+                            if last_user_id == self.id:
+                                i.i_am_seller = True
+                                i.i_am_buyer = False
+                            else:
+                                i.i_am_seller = False
+                                i.i_am_buyer = True
+                        elif i.type == types.MessageTypes.REFUND_BY_ADMIN:
+                            if last_user_id == self.id:
+                                i.i_am_seller = False
+                                i.i_am_buyer = True
+                            else:
+                                i.i_am_seller = True
+                                i.i_am_buyer = False
 
         return messages
 
@@ -1753,5 +1867,5 @@ class Account:
 
     @locale.setter
     def locale(self, new_locale: Literal["ru", "en", "uk"]):
-        if self.locale != new_locale:
+        if self.locale != new_locale and new_locale in ("ru", "en", "uk"):
             self.__set_locale = new_locale

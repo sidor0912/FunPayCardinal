@@ -320,7 +320,7 @@ class Cardinal(object):
                 logger.info(_("crd_lots_raised", subcat.category.name))
                 raise_ok = True
                 last_time = self.raised_time.get(subcat.category.id)
-                self.raised_time[subcat.category.id] = new_time = int(time.time())
+                self.raised_time[subcat.category.id] = new_time = int(time.time())  # locale
                 time_delta = "" if not last_time else f" Последнее поднятие: {cardinal_tools.time_to_str(new_time - last_time)} назад."
                 time.sleep(0.5)
                 self.account.raise_lots(subcat.category.id)
@@ -385,10 +385,10 @@ class Cardinal(object):
         for i in range(2, -1, -1):
             try:
                 obj._order = self.account.get_order(order_id)
-                logger.info(f"Получил информацию о заказе {obj._order}")
+                logger.info(f"Получил информацию о заказе {obj._order}")  # locale
                 return obj._order
             except:
-                logger.warning(f"Произошла ошибка при получении заказа #{order_id}. Осталось {i} попыток.")
+                logger.warning(f"Произошла ошибка при получении заказа #{order_id}. Осталось {i} попыток.")  # locale
                 logger.debug("TRACEBACK", exc_info=True)
                 time.sleep(1)
         obj._order_attempt_error = True

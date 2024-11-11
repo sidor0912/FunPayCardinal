@@ -221,6 +221,8 @@ class Message(BaseOrderInfo):
         self.is_arbitration = False
         self.initiator_username = None
         self.initiator_id = None
+        self.i_am_seller = None
+        self.i_am_buyer = None
 
         BaseOrderInfo.__init__(self)
 
@@ -320,7 +322,8 @@ class OrderShortcut(BaseOrderInfo):
 
     def __init__(self, id_: str, description: str, price: float, currency: Currency,
                  buyer_username: str, buyer_id: int, chat_id: int | str, status: OrderStatuses,
-                 date: datetime.datetime, subcategory_name: str, html: str, dont_search_amount: bool = False):
+                 date: datetime.datetime, subcategory_name: str, subcategory: SubCategory | None,
+                 html: str, dont_search_amount: bool = False):
         self.id: str = id_ if not id_.startswith("#") else id_[1:]
         """ID заказа."""
         self.description: str = description
@@ -343,6 +346,8 @@ class OrderShortcut(BaseOrderInfo):
         """Дата создания заказа."""
         self.subcategory_name: str = subcategory_name
         """Название подкатегории, к которой относится заказ."""
+        self.subcategory: SubCategory | None = subcategory
+        """Подкатегория, к которой относится заказ или None, если определить не удалось."""
         self.html: str = html
         """HTML код виджета заказа."""
         BaseOrderInfo.__init__(self)

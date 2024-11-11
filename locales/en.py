@@ -16,6 +16,7 @@ gl_pcs = "pcs."
 gl_last_update = "Last update"
 
 # Main menu
+mm_language = "🗣️ Language"
 mm_global = "⚙️ Global switches"
 mm_notifications = "🔔 Notification settings"
 mm_autoresponse = "🤖 Autoresponse settings"
@@ -429,6 +430,7 @@ adv_description = """🐦 FunPay Cardinal v{}🐦
 
 # - Menus desc
 desc_main = "Select a settings category."
+desc_lang = desc_main
 desc_gs = "Here you can turn the basic <i>FPC</i> functions on and off."
 desc_ns = """Here you can configure notifications.\n
 <b><u>Settings are separate for each <i>Telegram</i> chat!</u></b>\n
@@ -504,7 +506,8 @@ v_order_id = "<code>$order_id</code> - order ID (without #)"
 v_order_link = "<code>$order_link</code> - link to the order"
 v_order_title = "<code>$order_title</code> - order title."
 v_order_params = "<code>$order_params</code> - order parameters."
-v_order_ddesc = "<code>$order_ddesc</code> - order name and/or parameters."
+v_order_desc_and_params = "<code>$order_desc_and_params</code> - order name and/or parameters."
+v_order_desc_or_params = "<code>$order_desc_or_params</code> - order name or parameters."
 v_game = "<code>$game</code> - name of the game."
 v_category = "<code>$category</code> - name of the subcategory."
 v_category_fullname = "<code>$category_fullname</code> - full name of the subcategory (name of the subcategory + name of the game)."

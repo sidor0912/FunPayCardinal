@@ -16,6 +16,7 @@ gl_pcs = "шт."
 gl_last_update = "Останнє оновлення"
 
 # - Головне меню
+mm_language = "🗣️ Мова"
 mm_global = "⚙️ Глобальні перемикачі"
 mm_notifications = "🔔 Налаштування сповіщень"
 mm_autoresponse = "🤖 Налаштування автовідповіді"
@@ -431,6 +432,7 @@ adv_description = """🐦 𝑭𝒖𝒏𝑷𝒂𝒚 𝑪𝒂𝒓𝒅𝒊𝒏𝒂�
 
 # - Описи меню
 desc_main = "Вибери категорію налаштувань."
+desc_lang = desc_main
 desc_gs = "Тут ти можеш включати та вимикати основні функції <i>FPC</i>."
 desc_ns = """Тут ти можеш налаштувати сповіщення.\n
 <b><u>Налаштування роздільні для кожного <i>Telegram</i> чату!</u></b>\n
@@ -506,7 +508,8 @@ v_order_id = "<code>$order_id</code> - ID замовлення (без #)"
 v_order_link = "<code>$order_link</code> - посилання на замовлення"
 v_order_title = "<code>$order_title</code> - назва замовлення."
 v_order_params = "<code>$order_params</code> - параметри замовлення."
-v_order_ddesc = "<code>$order_ddesc</code> - назва замовлення та/або параметри."
+v_order_desc_and_params = "<code>$order_desc_and_params</code> - назва замовлення та/або параметри."
+v_order_desc_or_params = "<code>$order_desc_or_params</code> - назва замовлення або параметри."
 v_game = "<code>$game</code> - назва гри."
 v_category = "<code>$category</code> - назва підкатегорії."
 v_category_fullname = "<code>$category_fullname</code> - повна назва підкатегорії (назва підкатегорії + назва гри)."

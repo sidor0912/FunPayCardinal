@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import datetime
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from cardinal import Cardinal
 
@@ -23,7 +24,6 @@ import string
 import logging
 import os
 import re
-
 
 logger = logging.getLogger("TGBot")
 localizer = Localizer()
@@ -130,7 +130,7 @@ def init_auto_delivery_cp(crd: Cardinal, *args):
         crd.AD_CFG.set(lot, "response", """Спасибо за покупку, $username!
 
 Вот твой товар:
-$product""")
+$product""")  # todo
         crd.save_config(crd.AD_CFG, "configs/auto_delivery.cfg")
         logger.info(_("log_ad_linked", m.from_user.username, m.from_user.id, lot))
 
@@ -178,7 +178,7 @@ $product""")
         if os.path.exists(f"storage/products/{file_name}"):
             file_index = os.listdir("storage/products").index(file_name)
             offset = file_index - 4 if file_index - 4 > 0 else 0
-            keyboard = K()\
+            keyboard = K() \
                 .row(B(_("gl_back"), callback_data=f"{CBT.CATEGORY}:ad"),
                      B(_("gf_create_another"), callback_data=CBT.CREATE_PRODUCTS_FILE),
                      B(_("gl_configure"), callback_data=f"{CBT.EDIT_PRODUCTS_FILE}:{file_index}:{offset}"))
@@ -226,7 +226,8 @@ $product""")
         split = c.data.split(":")
         lot_index, offset = int(split[1]), int(split[2])
         variables = ["v_date", "v_date_text", "v_full_date_text", "v_time", "v_full_time", "v_username",
-                     "v_product", "v_order_id", "v_order_link", "v_order_title", "v_game", "v_category", "v_category_fullname", "v_photo", "v_sleep"]
+                     "v_product", "v_order_id", "v_order_link", "v_order_title", "v_game", "v_category",
+                     "v_category_fullname", "v_photo", "v_sleep"]
         text = f"{_('v_edit_delivery_text')}\n\n{_('v_list')}:\n" + "\n".join(_(i) for i in variables)
         result = bot.send_message(c.message.chat.id, text, reply_markup=CLEAR_STATE_BTN())
         tg.set_state(c.message.chat.id, result.id, c.from_user.id, CBT.EDIT_LOT_DELIVERY_TEXT,
@@ -368,7 +369,8 @@ $product""")
 
         keyboard = K().row(B(_("gl_back"), callback_data=f"{CBT.EDIT_AD_LOT}:{lot_index}:{offset}"),
                            B(_("ea_more_test"), callback_data=f"test_auto_delivery:{lot_index}:{offset}"))
-        bot.send_message(c.message.chat.id, _("test_ad_key_created", utils.escape(lot_name), key), reply_markup=keyboard)
+        bot.send_message(c.message.chat.id, _("test_ad_key_created", utils.escape(lot_name), key),
+                         reply_markup=keyboard)
         bot.answer_callback_query(c.id)
 
     def del_lot(c: CallbackQuery):
@@ -387,7 +389,8 @@ $product""")
         crd.save_config(crd.AD_CFG, "configs/auto_delivery.cfg")
 
         logger.info(_("log_ad_deleted", c.from_user.username, c.from_user.id, lot))
-        bot.edit_message_text(_("desc_ad_list"), c.message.chat.id, c.message.id, reply_markup=kb.lots_list(crd, offset))
+        bot.edit_message_text(_("desc_ad_list"), c.message.chat.id, c.message.id,
+                              reply_markup=kb.lots_list(crd, offset))
         bot.answer_callback_query(c.id)
 
     # Меню добавления лота с FunPay
@@ -427,7 +430,7 @@ $product""")
             return
 
         crd.AD_CFG.add_section(lot.title)
-        crd.AD_CFG.set(lot.title, "response", "Спасибо за покупку, $username!\n\nВот твой товар:\n\n$product")
+        crd.AD_CFG.set(lot.title, "response", "Спасибо за покупку, $username!\n\nВот твой товар:\n\n$product")  # todo
         crd.save_config(crd.AD_CFG, "configs/auto_delivery.cfg")
 
         ad_lot_index = len(crd.AD_CFG.sections()) - 1
@@ -612,7 +615,8 @@ $product""")
     tg.cbq_handler(open_ad_lots_list, lambda c: c.data.startswith(f"{CBT.AD_LOTS_LIST}:"))
     tg.cbq_handler(open_fp_lots_list, lambda c: c.data.startswith(f"{CBT.FP_LOTS_LIST}:"))
     tg.cbq_handler(act_add_lot_manually, lambda c: c.data.startswith(f"{CBT.ADD_AD_TO_LOT_MANUALLY}:"))
-    tg.msg_handler(add_lot_manually, func=lambda m: tg.check_state(m.chat.id, m.from_user.id, CBT.ADD_AD_TO_LOT_MANUALLY))
+    tg.msg_handler(add_lot_manually,
+                   func=lambda m: tg.check_state(m.chat.id, m.from_user.id, CBT.ADD_AD_TO_LOT_MANUALLY))
 
     tg.cbq_handler(open_gf_list, lambda c: c.data.startswith(f"{CBT.PRODUCTS_FILES_LIST}:"))
 

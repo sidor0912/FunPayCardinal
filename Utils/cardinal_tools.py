@@ -116,7 +116,7 @@ def validate_proxy(proxy: str):
                 or not ip.replace(".", "").isdigit() or not 0 <= int(port) <= 65535:
             raise Exception()
     except:
-        raise ValueError("Прокси должны иметь формат login:password@ip:port или ip:port")
+        raise ValueError("Прокси должны иметь формат login:password@ip:port или ip:port")  # locale
     return login, password, ip, port
 
 
@@ -224,7 +224,7 @@ def create_greeting_text(cardinal: Cardinal):
     balance = cardinal.balance
     current_time = datetime.now()
     if current_time.hour < 4:
-        greetings = "Какая прекрасная ночь"
+        greetings = "Какая прекрасная ночь"  # locale
     elif current_time.hour < 12:
         greetings = "Доброе утро"
     elif current_time.hour < 17:
@@ -263,7 +263,7 @@ def time_to_str(time_: int):
     minutes = (time_ - days * 86400 - hours * 3600) // 60
     seconds = time_ - days * 86400 - hours * 3600 - minutes * 60
 
-    if not any([days, hours, minutes, seconds]):
+    if not any([days, hours, minutes, seconds]):  # locale
         return "0 сек"
     time_str = ""
     if days:
@@ -364,7 +364,7 @@ def format_msg_text(text: str, obj: FunPayAPI.types.Message | FunPayAPI.types.Ch
     month_name = get_month_name(date_obj.month)
     date = date_obj.strftime("%d.%m.%Y")
     str_date = f"{date_obj.day} {month_name}"
-    str_full_date = str_date + f" {date_obj.year} года"
+    str_full_date = str_date + f" {date_obj.year} года"  # locale
 
     time_ = date_obj.strftime("%H:%M")
     time_full = date_obj.strftime("%H:%M:%S")
@@ -403,12 +403,12 @@ def format_order_text(text: str, order: FunPayAPI.types.OrderShortcut | FunPayAP
     month_name = get_month_name(date_obj.month)
     date = date_obj.strftime("%d.%m.%Y")
     str_date = f"{date_obj.day} {month_name}"
-    str_full_date = str_date + f" {date_obj.year} года"
+    str_full_date = str_date + f" {date_obj.year} года"  # locale
     time_ = date_obj.strftime("%H:%M")
     time_full = date_obj.strftime("%H:%M:%S")
     game = subcategory_fullname = subcategory = ""
     try:
-        if isinstance(order, FunPayAPI.types.OrderShortcut):
+        if isinstance(order, FunPayAPI.types.OrderShortcut) and not order.subcategory:
             game, subcategory = order.subcategory_name.rsplit(", ", 1)
             subcategory_fullname = f"{subcategory} {game}"
         else:
@@ -416,7 +416,7 @@ def format_order_text(text: str, order: FunPayAPI.types.OrderShortcut | FunPayAP
             game = order.subcategory.category.name
             subcategory = order.subcategory.name
     except:
-        logger.warning("Произошла ошибка при парсинге игры из заказа")
+        logger.warning("Произошла ошибка при парсинге игры из заказа")  # locale
         logger.debug("TRACEBACK", exc_info=True)
     description = order.description if isinstance(order,
                                                   FunPayAPI.types.OrderShortcut) else order.short_description if order.short_description else ""
@@ -428,10 +428,11 @@ def format_order_text(text: str, order: FunPayAPI.types.OrderShortcut | FunPayAP
         "$time": time_,
         "$full_time": time_full,
         "$username": safe_text(order.buyer_username),
+        "$order_desc_and_params": f"{description}, {params}" if description and params else f"{description}{params}",
+        "$order_desc_or_params": description if description else params,
         "$order_desc": description,
         "$order_title": description,
         "$order_params": params,
-        "$order_ddesc": f"{description}, {params}" if description and params else f"{description}{params}",
         "$order_id": order.id,
         "$order_link": f"https://funpay.com/orders/{order.id}/",
         "$category_fullname": subcategory_fullname,

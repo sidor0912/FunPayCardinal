@@ -64,7 +64,7 @@ def power_off(instance_id: int, state: int) -> K:
     return kb
 
 
-def settings_sections(c: Cardinal) -> K:
+def language_settings(c: Cardinal) -> K:
     lang = c.MAIN_CFG["Other"]["language"]
     langs = {
         "uk": "🇺🇦", "en": "🇺🇸", "ru": "🇷🇺"
@@ -75,16 +75,10 @@ def settings_sections(c: Cardinal) -> K:
 
     for i in langs:
         cb = f"{CBT.LANG}:{i}" if lang != i else CBT.EMPTY
-        lang_buttons.append(B(langs[i], callback_data=cb))
-
-    kb.row(*lang_buttons) \
-        .add(B(_("mm_global"), callback_data=f"{CBT.CATEGORY}:main")) \
-        .add(B(_("mm_notifications"), callback_data=f"{CBT.CATEGORY}:tg")) \
-        .add(B(_("mm_autoresponse"), callback_data=f"{CBT.CATEGORY}:ar")) \
-        .add(B(_("mm_autodelivery"), callback_data=f"{CBT.CATEGORY}:ad")) \
-        .add(B(_("mm_plugins"), callback_data=f"{CBT.PLUGINS_LIST}:0")) \
-        .add(B(_("mm_templates"), callback_data=f"{CBT.TMPLT_LIST}:0")) \
-        .add(B(_("gl_next"), callback_data=CBT.MAIN2))
+        text = langs[i] if lang != i else f"⋅ {langs[i]} ⋅"
+        lang_buttons.append(B(text, callback_data=cb))
+    kb.row(*lang_buttons)
+    kb.add(B(_("gl_back"), None, CBT.MAIN))
     return kb
 
 

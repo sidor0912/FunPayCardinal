@@ -324,7 +324,7 @@ class TGBot:
         """
         Отправляет основное меню настроек (новым сообщением).
         """
-        self.bot.send_message(m.chat.id, _("desc_main"), reply_markup=kb.settings_sections(self.cardinal))
+        self.bot.send_message(m.chat.id, _("desc_main"), reply_markup=skb.SETTINGS_SECTIONS())
 
     def send_profile(self, m: Message):
         """
@@ -354,7 +354,7 @@ class TGBot:
         try:
             new_account.get()
         except:
-            logger.warning("Произошла ошибка")
+            logger.warning("Произошла ошибка")  # locale
             logger.debug("TRACEBACK", exc_info=True)
             self.bot.send_message(m.chat.id, _("cookie_error"))
             return
@@ -366,7 +366,7 @@ class TGBot:
             try:
                 self.cardinal.account.get()
             except:
-                logger.warning("Произошла ошибка")
+                logger.warning("Произошла ошибка")  # locale
                 logger.debug("TRACEBACK", exc_info=True)
                 self.bot.send_message(m.chat.id, _("cookie_error"))
                 return
@@ -514,17 +514,17 @@ class TGBot:
                     if "TRACEBACK" in file_content:
                         file_content, right = file_content.rsplit("TRACEBACK", 1)
                         file_content = "\n[".join(file_content.rsplit("\n[", 2)[-2:])
-                        right = right.split("\n[", 1)[0]
+                        right = right.split("\n[", 1)[0]  # locale
                         result = f"<b>Текст последней ошибки:</b>\n\n[{utils.escape(file_content)}TRACEBACK{utils.escape(right)}"
                         while result:
                             text, result = result[:4096], result[4096:]
                             self.bot.send_message(m.chat.id, text)
                             time.sleep(0.5)
                     else:
-                        self.bot.send_message(m.chat.id, "<b>Ошибок в последнем лог-файле не обнаружено.</b>")
+                        self.bot.send_message(m.chat.id, "<b>Ошибок в последнем лог-файле не обнаружено.</b>")  # locale
             except:
-                self.bot.send_message(m.chat.id, _("logfile_error"))
                 logger.debug("TRACEBACK", exc_info=True)
+                self.bot.send_message(m.chat.id, _("logfile_error"))
 
     def del_logs(self, m: Message):
         """
@@ -532,7 +532,7 @@ class TGBot:
         """
         logger.info(
             f"[IMPORTANT] Удаляю логи по запросу пользователя $MAGENTA@{m.from_user.username} (id: {m.from_user.id})$RESET.")
-        deleted = 0
+        deleted = 0  # locale
         for file in os.listdir("logs"):
             if not file.endswith(".log"):
                 try:
@@ -567,7 +567,7 @@ class TGBot:
     def get_backup(self, m: Message):
         logger.info(
             f"[IMPORTANT] Получаю бэкап по запросу пользователя $MAGENTA@{m.from_user.username} (id: {m.from_user.id})$RESET.")
-        if os.path.exists("backup.zip"):
+        if os.path.exists("backup.zip"):  # locale
             with open(file_path := "backup.zip", 'rb') as file:
                 modification_time = os.path.getmtime(file_path)
                 formatted_time = time.strftime('%d.%m.%Y %H:%M:%S', time.localtime(modification_time))
@@ -773,7 +773,7 @@ class TGBot:
         stars = int(c.data.split(":")[1])
         variables = ["v_date", "v_date_text", "v_full_date_text", "v_time", "v_full_time", "v_username",
                      "v_order_id", "v_order_link", "v_order_title", "v_order_params",
-                     "v_order_ddesc", "v_game", "v_category", "v_category_fullname"]
+                     "v_order_desc_and_params", "v_order_desc_or_params", "v_game", "v_category", "v_category_fullname"]
         text = f"{_('v_edit_review_reply_text', '⭐' * stars)}\n\n{_('v_list')}:\n" + "\n".join(_(i) for i in variables)
         result = self.bot.send_message(c.message.chat.id, text, reply_markup=skb.CLEAR_STATE_BTN())
         self.set_state(c.message.chat.id, result.id, c.from_user.id, CBT.EDIT_REVIEW_REPLY_TEXT, {"stars": stars})
@@ -927,7 +927,7 @@ class TGBot:
         Открывает основное меню настроек (редактирует сообщение).
         """
         self.bot.edit_message_text(_("desc_main"), c.message.chat.id, c.message.id,
-                                   reply_markup=kb.settings_sections(self.cardinal))
+                                   reply_markup=skb.SETTINGS_SECTIONS())
         self.bot.answer_callback_query(c.id)
 
     def open_cp2(self, c: CallbackQuery):
@@ -989,6 +989,7 @@ class TGBot:
         #
         section = c.data.split(":")[1]
         sections = {
+            "lang": (_("desc_lang"), kb.language_settings, [self.cardinal]),
             "main": (_("desc_gs"), kb.main_settings, [self.cardinal]),
             "tg": (_("desc_ns", c.message.chat.id), kb.notifications_settings, [self.cardinal, c.message.chat.id]),
             "bl": (_("desc_bl"), kb.blacklist_settings, [self.cardinal]),
@@ -1063,7 +1064,8 @@ class TGBot:
         elif localizer.current_language == "ru":
             self.bot.answer_callback_query(c.id, '«А я сейчас вам покажу, откуда на Беларусь готовилось нападение»',
                                            show_alert=True)
-        self.open_cp(c)
+        c.data = f"{CBT.CATEGORY}:lang"
+        self.open_settings_section(c)
 
     def __register_handlers(self):
         """

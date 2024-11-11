@@ -9,6 +9,7 @@ import telebot
 from colorama import Fore, Style
 from Utils.cardinal_tools import validate_proxy, hash_password
 
+# locale#locale#locale
 default_config = {
     "FunPay": {
         "golden_key": "",

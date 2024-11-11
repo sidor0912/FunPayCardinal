@@ -17,7 +17,7 @@ from telebot import types
 import logging
 import os
 
-logger = logging.getLogger("TGBot")
+logger = logging.getLogger("TGBot")  # locale#locale#locale
 
 
 def check_file(tg: TGBot, msg: types.Message, type_: Literal["py", "cfg", "json", "txt"] | None = None) -> bool:

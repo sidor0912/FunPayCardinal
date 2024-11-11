@@ -56,7 +56,7 @@ logo = """[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m
 [38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m'[0m[38;5;52m,[0m[38;5;0m'[0m[38;5;0m.[0m[38;5;0m"[0m[38;5;52m,[0m[38;5;0m`[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m [0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m
 [38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m[38;5;0m.[0m"""
 
-VERSION = "0.1.14.1"
+VERSION = "0.1.14.2"
 
 Utils.cardinal_tools.set_console_title("FunPay Cardinal")
 
@@ -84,7 +84,7 @@ logger = logging.getLogger("main")
 logger.debug("------------------------------------------------------------------")
 
 print(f"{Style.RESET_ALL}{logo}")
-print(f"{Fore.RED}{Style.BRIGHT}v{VERSION}{Style.RESET_ALL}\n")
+print(f"{Fore.RED}{Style.BRIGHT}v{VERSION}{Style.RESET_ALL}\n")  # locale
 print(f"{Fore.MAGENTA}{Style.BRIGHT}By {Fore.BLUE}{Style.BRIGHT}Woopertail, @sidor0912{Style.RESET_ALL}")
 print(
     f"{Fore.MAGENTA}{Style.BRIGHT} * GitHub: {Fore.BLUE}{Style.BRIGHT}github.com/sidor0912/FunPayCardinal{Style.RESET_ALL}")
@@ -114,32 +114,32 @@ for filename in os.listdir(directory):
                 file.write(data)
 
 try:
-    logger.info("$MAGENTAЗагружаю конфиг _main.cfg...")
+    logger.info("$MAGENTAЗагружаю конфиг _main.cfg...")  # locale
     MAIN_CFG = cfg_loader.load_main_config("configs/_main.cfg")
     localizer = Localizer(MAIN_CFG["Other"]["language"])
     _ = localizer.translate
 
-    logger.info("$MAGENTAЗагружаю конфиг auto_response.cfg...")
+    logger.info("$MAGENTAЗагружаю конфиг auto_response.cfg...")  # locale
     AR_CFG = cfg_loader.load_auto_response_config("configs/auto_response.cfg")
     RAW_AR_CFG = cfg_loader.load_raw_auto_response_config("configs/auto_response.cfg")
 
-    logger.info("$MAGENTAЗагружаю конфиг auto_delivery.cfg...")
+    logger.info("$MAGENTAЗагружаю конфиг auto_delivery.cfg...")  # locale
     AD_CFG = cfg_loader.load_auto_delivery_config("configs/auto_delivery.cfg")
 except excs.ConfigParseError as e:
     logger.error(e)
-    logger.error("Завершаю программу...")
+    logger.error("Завершаю программу...")  # locale
     time.sleep(5)
     sys.exit()
 except UnicodeDecodeError:
     logger.error("Произошла ошибка при расшифровке UTF-8. Убедитесь, что кодировка файла = UTF-8, "
-                 "а формат конца строк = LF.")
-    logger.error("Завершаю программу...")
+                 "а формат конца строк = LF.")  # locale
+    logger.error("Завершаю программу...")  # locale
     time.sleep(5)
     sys.exit()
 except:
-    logger.critical("Произошла непредвиденная ошибка.")
+    logger.critical("Произошла непредвиденная ошибка.")  # locale
     logger.warning("TRACEBACK", exc_info=True)
-    logger.error("Завершаю программу...")
+    logger.error("Завершаю программу...")  # locale
     time.sleep(5)
     sys.exit()
 
@@ -148,11 +148,11 @@ localizer = Localizer(MAIN_CFG["Other"]["language"])
 try:
     Cardinal(MAIN_CFG, AD_CFG, AR_CFG, RAW_AR_CFG, VERSION).init().run()
 except KeyboardInterrupt:
-    logger.info("Завершаю программу...")
+    logger.info("Завершаю программу...")  # locale
     sys.exit()
 except:
-    logger.critical("При работе Кардинала произошла необработанная ошибка.")
+    logger.critical("При работе Кардинала произошла необработанная ошибка.")  # locale
     logger.warning("TRACEBACK", exc_info=True)
-    logger.critical("Завершаю программу...")
+    logger.critical("Завершаю программу...")  # locale
     time.sleep(5)
     sys.exit()
