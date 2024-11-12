@@ -124,7 +124,7 @@ class Cardinal(object):
 
         self.account = FunPayAPI.Account(self.MAIN_CFG["FunPay"]["golden_key"],
                                          self.MAIN_CFG["FunPay"]["user_agent"],
-                                         proxy=self.proxy)
+                                         proxy=self.proxy, locale=self.MAIN_CFG["FunPay"]["locale"])
         self.runner: FunPayAPI.Runner | None = None
         self.telegram: tg_bot.bot.TGBot | None = None
 

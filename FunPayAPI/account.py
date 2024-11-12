@@ -160,10 +160,10 @@ class Account:
         def update_locale(redirect_url: str):
             for locale in ("en", "uk"):
                 if redirect_url.startswith(f"https://funpay.com/{locale}/"):
-                    self.locale = locale
+                    self.__locale = locale
                     return
             if redirect_url.startswith(f"https://funpay.com"):
-                self.locale = "ru"
+                self.__locale = "ru"
 
         headers["cookie"] = f"golden_key={self.golden_key}; cookie_prefs=1"
         headers["cookie"] += f"; PHPSESSID={self.phpsessid}" if self.phpsessid and not exclude_phpsessid else ""
@@ -173,8 +173,11 @@ class Account:
             link = normalize_url(api_method, locale)
         else:
             link = normalize_url(api_method)
-        if request_method == "get" and self.__set_locale and self.__set_locale != self.locale:
-            link += f'{"&" if "?" in link else "?"}setlocale={self.__set_locale}'
+        if request_method == "get" and self.__set_locale:
+            if self.__set_locale != self.locale:
+                link += f'{"&" if "?" in link else "?"}setlocale={self.__set_locale}'
+            else:
+                self.__set_locale = None
 
         response = getattr(requests, request_method)(link, headers=headers, data=payload,
                                                      timeout=self.requests_timeout,
