@@ -1802,17 +1802,17 @@ class Account:
             i.chat_name = interlocutor_username
             i.badge = badges.get(i.author_id) if badges.get(i.author_id) != 0 else None
             parser = BeautifulSoup(i.html, "lxml")
+            if i.badge:
+                i.is_employee = True
+                if i.badge in ("поддержка", "підтримка", "support"):
+                    i.is_support = True
+                elif i.badge in ("модерация", "модерація", "moderation"):
+                    i.is_moderation = True
+                elif i.badge in ("арбитраж", "арбітраж", "arbitration"):
+                    i.is_arbitration = True
             default_label = parser.find("div", {"class": "media-user-name"})
             default_label = default_label.find("span", {
                 "class": "chat-msg-author-label label label-default"}) if default_label else None
-            if default_label:
-                i.is_employee = True
-                if default_label.text in ("поддержка", "підтримка", "support"):
-                    i.is_support = True
-                elif default_label.text in ("модерация", "модерація", "moderation"):
-                    i.is_moderation = True
-                elif default_label.text in ("арбитраж", "арбітраж", "arbitration"):
-                    i.is_arbitration = True
             i.badge = default_label.text if (i.badge is None and default_label is not None) else i.badge
             if i.type != types.MessageTypes.NON_SYSTEM:
                 users = parser.find_all('a', href=lambda href: href and '/users/' in href)
