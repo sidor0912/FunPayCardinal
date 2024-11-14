@@ -175,12 +175,12 @@ class Runner:
 
             node_msg_id = int(chat.get('data-node-msg'))
             user_msg_id = int(chat.get('data-user-msg'))
-            prev_node_msg_id, prev_user_msg_id, prev_text = self.runner_last_messages.get(chat_id) or [0, 0, None]
+            # если сообщение отправлено непрочитанным, то [0, 0, None]
+            prev_node_msg_id, prev_user_msg_id, prev_text = self.runner_last_messages.get(chat_id) or [-1, -1, None]
             last_msg_text_or_none = None if last_msg_text in ("Изображение", "Зображення", "Image") else last_msg_text
             if node_msg_id <= prev_node_msg_id:
                 continue
-            elif not prev_node_msg_id and not prev_user_msg_id and prev_text == last_msg_text_or_none and \
-                    not self.__first_request:
+            elif not prev_node_msg_id and not prev_user_msg_id and prev_text == last_msg_text_or_none:
                 # значит сообщение отправлено ботом и оставлено непрочитанным - просто обновляем инфу
                 self.runner_last_messages[chat_id] = [node_msg_id, user_msg_id, last_msg_text_or_none]
                 continue
