@@ -90,10 +90,14 @@ def init_plugins_cp(cardinal: Cardinal, *args):
             return
 
         pl_obj = cardinal.plugins[uuid]
-        commands_text = "\n\n".join(f"/{i} - {pl_obj.commands[i]}"
-                                    f"{'' if pl_obj.commands[i].endswith('.') else '.'}" for i in pl_obj.commands)
-        text = f"""{_('pl_commands_list', pl_obj.name)}\n
-{commands_text}"""
+        commands_text_list = []
+        for i in pl_obj.commands:
+            translate = _(f"{pl_obj.commands[i]}")
+            commands_text_list.append(f"/{i} - {translate}"
+                                      f"{'' if translate.endswith('.') else '.'}")
+
+        commands_text = "\n\n".join(commands_text_list)
+        text = f"{_('pl_commands_list', pl_obj.name)}\n\n{commands_text}"
 
         keyboard = K().add(B(_("gl_back"), callback_data=f"{CBT.EDIT_PLUGIN}:{uuid}:{offset}"))
 
