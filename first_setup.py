@@ -115,6 +115,13 @@ def create_config_obj(settings) -> ConfigParser:
     return config
 
 
+def contains_russian(text: str) -> bool:
+    for char in text:
+        if 'А' <= char <= 'я' or char in 'Ёё':
+            return True
+    return False
+
+
 def first_setup():
     config = create_config_obj(default_config)
     sleep_time = 1
@@ -138,13 +145,19 @@ def first_setup():
             continue
         config.set("FunPay", "golden_key", golden_key)
         break
-
-    print(f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}"
-          f"Если хочешь, ты можешь указать свой User-agent (введи в Google \"my user agent\"). Или можешь просто нажать Enter. "
-          f"{Fore.RED}¯\(°_o)/¯{Style.RESET_ALL}")
-    user_agent = input(f"{Fore.MAGENTA}{Style.BRIGHT}└───> {Style.RESET_ALL}").strip()
-    if user_agent:
-        config.set("FunPay", "user_agent", user_agent)
+        
+    while True:
+        print(f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}"
+              f"Если хочешь, ты можешь указать свой User-agent (введи в Google \"my user agent\"). Или можешь просто нажать Enter. "
+              f"{Fore.RED}¯\(°_o)/¯{Style.RESET_ALL}")
+        user_agent = input(f"{Fore.MAGENTA}{Style.BRIGHT}└───> {Style.RESET_ALL}").strip()
+        if contains_russian(user_agent):
+            print(
+                f"\n{Fore.CYAN}{Style.BRIGHT}Ты не знаешь, что такое Google? {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
+            continue
+        if user_agent:
+            config.set("FunPay", "user_agent", user_agent)
+        break
 
     while True:
         print(
