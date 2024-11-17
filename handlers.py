@@ -231,9 +231,9 @@ def send_new_msg_notification_handler(c: Cardinal, e: NewMessageEvent) -> None:
     for i in events:
         message_text = str(e.message)
         if message_text.strip().lower() in c.AR_CFG.sections() and len(events) < 2:
-            continue
+            return
         elif message_text.startswith("!автовыдача") and len(events) < 2:
-            continue
+            return
         if i.message.author_id == last_message_author_id and i.message.by_bot == last_by_bot and i.message.badge == last_badge:
             author = ""
         elif i.message.author_id == c.account.id:
