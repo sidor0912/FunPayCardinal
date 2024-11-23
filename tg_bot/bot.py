@@ -277,7 +277,7 @@ class TGBot:
             utils.save_notification_settings(self.notification_settings)
             return
         elif str(m.chat.id) not in self.notification_settings:
-            self.notification_settings[str(m.chat.id)] = self.__default_notification_settings
+            self.notification_settings[str(m.chat.id)] = self.__default_notification_settings.copy()
             utils.save_notification_settings(self.notification_settings)
 
     def reg_admin(self, m: Message):
