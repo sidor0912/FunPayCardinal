@@ -295,7 +295,7 @@ class TGBot:
             utils.save_authorized_users(self.authorized_users)
             if str(m.chat.id) not in self.notification_settings or not self.is_notification_enabled(m.chat.id,
                                                                                                     NotificationTypes.critical):
-                self.notification_settings[str(m.chat.id)] = self.__default_notification_settings
+                self.notification_settings[str(m.chat.id)] = self.__default_notification_settings.copy()
                 self.notification_settings[str(m.chat.id)][NotificationTypes.critical] = 1
                 utils.save_notification_settings(self.notification_settings)
             text = _("access_granted", language=lang)
