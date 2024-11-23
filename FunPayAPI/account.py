@@ -1293,16 +1293,19 @@ class Account:
             sudcategories = dict()
             app_data = json.loads(parser.find("body").get("data-app-data"))
             locale = app_data.get("locale")
-            games_options = parser.find("select", attrs={"name": "game"}).find_all(
-                lambda x: x.name == "option" and x.get("value"))
-            for game_option in games_options:
-                game_name = game_option.text
-                sections_list = json.loads(game_option.get("data-data"))
-                for key, section_name in sections_list:
-                    section_type, section_id = key.split("-")
-                    section_type = types.SubCategoryTypes.COMMON if section_type == "lot" else types.SubCategoryTypes.CURRENCY
-                    section_id = int(section_id)
-                    sudcategories[f"{game_name}, {section_name}"] = self.get_subcategory(section_type, section_id)
+            games_options = parser.find("select", attrs={"name": "game"})
+            if games_options:
+                games_options = games_options.find_all(lambda x: x.name == "option" and x.get("value"))
+                for game_option in games_options:
+                    game_name = game_option.text
+                    sections_list = json.loads(game_option.get("data-data"))
+                    for key, section_name in sections_list:
+                        section_type, section_id = key.split("-")
+                        section_type = types.SubCategoryTypes.COMMON if section_type == "lot" else types.SubCategoryTypes.CURRENCY
+                        section_id = int(section_id)
+                        sudcategories[f"{game_name}, {section_name}"] = self.get_subcategory(section_type, section_id)
+            else:
+                sudcategories = None
         if not order_divs:
             return None, [], locale, sudcategories
 
