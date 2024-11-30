@@ -365,10 +365,14 @@ class Account:
             return None
 
         subcategory_id = int(parser.find("a", class_="js-back-link")['href'].split("/")[-2])
-
-        seller = parser.find("div", class_="media-user-name").find("a")
-        seller_id = int(seller["href"].split("/")[-2])
-        seller_username = seller.text
+        chat_header = parser.find("div", class_="chat-header")
+        if chat_header:
+            seller = chat_header.find("div", class_="media-user-name").find("a")
+            seller_id = int(seller["href"].split("/")[-2])
+            seller_username = seller.text
+        else:
+            seller_id = self.id
+            seller_username = self.username
 
         short_description = None
         detailed_description = None
@@ -663,7 +667,7 @@ class Account:
             message_obj = types.Message(int(mes["id"]), message_text, chat_id, chat_name, self.username, self.id,
                                         mes["html"], image_link, image_name)
         if self.runner and isinstance(chat_id, int):
-            if add_to_ignore_list:
+            if add_to_ignore_list and message_obj.id:
                 self.runner.mark_as_by_bot(chat_id, message_obj.id)
             if update_last_saved_message:
                 self.runner.update_last_message(chat_id, message_obj.id, message_obj.text)
@@ -1193,7 +1197,8 @@ class Account:
             review = None
         else:
             review = types.Review(stars, text, reply, False, str(review_obj), hidden, order_id, buyer_username,
-                                  buyer_id)
+                                  buyer_id, bool(text and text.endswith(self.bot_character)),
+                                  bool(reply and reply.endswith(self.bot_character)))
         order = types.Order(order_id, status, subcategory, params, short_description, full_description, sum_, currency,
                             buyer_id, buyer_username, seller_id, seller_username, chat_id, html_response, review,
                             order_secrets)
@@ -1437,7 +1442,21 @@ class Account:
             last_msg_text = msg.find("div", {"class": "contact-item-message"}).text
             unread = True if "unread" in msg.get("class") else False
             chat_with = msg.find("div", {"class": "media-user-name"}).text
+
+            by_bot = False
+            by_vertex = False
+            is_image = last_msg_text in ("Изображение", "Зображення", "Image")
+            if last_msg_text.startswith(self.bot_character):
+                last_msg_text = last_msg_text[1:]
+                by_bot = True
+            elif last_msg_text.startswith(self.old_bot_character):
+                last_msg_text = last_msg_text[1:]
+                by_vertex = True
             chat_obj = types.ChatShortcut(chat_id, chat_with, last_msg_text, unread, str(msg))
+            if not is_image:
+                chat_obj.last_by_bot = by_bot
+                chat_obj.last_by_vertex = by_vertex
+
             chats_objs.append(chat_obj)
         return chats_objs
 
@@ -1567,7 +1586,11 @@ class Account:
             "hidden" not in field.find_parent(class_="form-group").get("class", [])
         })
         result.update({field["name"]: "on" for field in bs.find_all("input", {"type": "checkbox"}, checked=True)})
-        return types.LotFields(lot_id, result)
+        subcategory = self.get_subcategory(enums.SubCategoryTypes.COMMON, int(result.get("node_id", 0)))
+        currency = utils.parse_currency(bs.find("span", class_="form-control-feedback").text)
+        if self.currency != currency:
+            self.currency = currency
+        return types.LotFields(lot_id, result, subcategory, currency)
 
     def save_lot(self, lot_fields: types.LotFields):
         """
@@ -1816,6 +1839,9 @@ class Account:
             default_label = parser.find("div", {"class": "media-user-name"})
             default_label = default_label.find("span", {
                 "class": "chat-msg-author-label label label-default"}) if default_label else None
+            if default_label:
+                if default_label.text in ("автовідповідь", "автоответ", "auto-reply"):
+                    i.is_autoreply = True
             i.badge = default_label.text if (i.badge is None and default_label is not None) else i.badge
             if i.type != types.MessageTypes.NON_SYSTEM:
                 users = parser.find_all('a', href=lambda href: href and '/users/' in href)
@@ -1866,6 +1892,10 @@ class Account:
     @property
     def bot_character(self) -> str:
         return self.__bot_character
+
+    @property
+    def old_bot_character(self) -> str:
+        return self.__old_bot_character
 
     @property
     def locale(self) -> Literal["ru", "en", "uk"] | None:

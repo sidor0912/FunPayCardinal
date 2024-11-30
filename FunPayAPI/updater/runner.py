@@ -62,7 +62,8 @@ class Runner:
         """Сохраненные состояния заказов ({ID заказа: экземпляр types.OrderShortcut})."""
 
         self.runner_last_messages: dict[int, list[int, int, str | None]] = {}
-        """ID последний сообщений {ID чата: [ID последего сообщения чата, ID последнего прочитанного сообщения чата, текст последнего сообщения или None, если это изображение]}."""
+        """ID последний сообщений {ID чата: [ID последего сообщения чата, ID последнего прочитанного сообщения чата, 
+        текст последнего сообщения или None, если это изображение]}."""
 
         self.by_bot_ids: dict[int, list[int]] = {}
         """ID сообщений, отправленных с помощью self.account.send_message ({ID чата: [ID сообщения, ...]})."""
@@ -169,12 +170,17 @@ class Runner:
                 continue
 
             last_msg_text = last_msg_text.text
-            if last_msg_text.startswith(self.account.bot_character):
-                last_msg_text = last_msg_text[1:]
-                # todo добавить by_bot в старый режим получения сообщений?
 
             node_msg_id = int(chat.get('data-node-msg'))
             user_msg_id = int(chat.get('data-user-msg'))
+            by_bot = False
+            by_vertex = False
+            if last_msg_text.startswith(self.account.bot_character):
+                last_msg_text = last_msg_text[1:]
+                by_bot = True
+            elif last_msg_text.startswith(self.account.old_bot_character):
+                last_msg_text = last_msg_text[1:]
+                by_vertex = True
             # если сообщение отправлено непрочитанным, то [0, 0, None]
             prev_node_msg_id, prev_user_msg_id, prev_text = self.runner_last_messages.get(chat_id) or [-1, -1, None]
             last_msg_text_or_none = None if last_msg_text in ("Изображение", "Зображення", "Image") else last_msg_text
@@ -188,11 +194,16 @@ class Runner:
 
             chat_with = chat.find("div", {"class": "media-user-name"}).text
             chat_obj = types.ChatShortcut(chat_id, chat_with, last_msg_text, unread, str(chat))
+            if last_msg_text_or_none is not None:
+                chat_obj.last_by_bot = by_bot
+                chat_obj.last_by_vertex = by_vertex
+
             self.account.add_chats([chat_obj])
             self.runner_last_messages[chat_id] = [node_msg_id, user_msg_id, last_msg_text_or_none]
             if self.__first_request:
                 events.append(InitialChatEvent(self.__last_msg_event_tag, chat_obj))
-                self.last_messages_ids[chat_id] = node_msg_id
+                if self.make_msg_requests:
+                    self.last_messages_ids[chat_id] = node_msg_id
                 continue
             else:
                 lcmc_events.append(LastChatMessageChangedEvent(self.__last_msg_event_tag, chat_obj))
@@ -268,7 +279,7 @@ class Runner:
             # Если нет сохраненного ID последнего сообщения
             if not self.last_messages_ids.get(cid):
                 messages_temp = [m for m in messages if
-                                 m.id > max(self.last_messages_ids.values(), default=10 ** 20)]
+                                 m.id > min(self.last_messages_ids.values(), default=10 ** 20)]
                 messages = messages_temp if messages_temp else messages[-1:]
 
             self.last_messages_ids[cid] = messages[-1].id  # Перезаписываем ID последнего сообщение

@@ -828,15 +828,15 @@ class TGBot:
                 author = ""
             elif i.author_id == self.cardinal.account.id:
                 author = f"<i><b>🤖 {_('you')} (<i>FPC</i>):</b></i> " if i.by_bot else f"<i><b>🫵 {_('you')}:</b></i> "
-                if i.badge:
+                if i.is_autoreply:
                     author = f"<i><b>📦 {_('you')} ({i.badge}):</b></i> "
             elif i.author_id == 0:
                 author = f"<i><b>🔵 {i.author}: </b></i>"
-            elif i.badge and i.is_employee:
+            elif i.is_employee:
                 author = f"<i><b>🆘 {i.author} ({i.badge}): </b></i>"
             elif i.author == i.chat_name:
                 author = f"<i><b>👤 {i.author}: </b></i>"
-                if i.badge:
+                if i.is_autoreply:
                     author = f"<i><b>🛍️ {i.author} ({i.badge}):</b></i> "
                 elif i.author in self.cardinal.blacklist:
                     author = f"<i><b>🚷 {i.author}: </b></i>"

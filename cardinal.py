@@ -467,12 +467,14 @@ class Cardinal(object):
             while current_attempts:
                 try:
                     if isinstance(entity, str):
-                        msg = self.account.send_message(chat_id, entity, chat_name, None, True, self.old_mode_enabled,
+                        msg = self.account.send_message(chat_id, entity, chat_name, None, not self.old_mode_enabled,
+                                                        self.old_mode_enabled,
                                                         self.keep_sent_messages_unread)
                         result.append(msg)
                         logger.info(_("crd_msg_sent", chat_id))
                     elif isinstance(entity, int):
-                        msg = self.account.send_image(chat_id, entity, chat_name, True, self.old_mode_enabled,
+                        msg = self.account.send_image(chat_id, entity, chat_name, not self.old_mode_enabled,
+                                                      self.old_mode_enabled,
                                                       self.keep_sent_messages_unread)
                         result.append(msg)
                         logger.info(_("crd_msg_sent", chat_id))
@@ -660,8 +662,12 @@ class Cardinal(object):
         self.save_config(self.MAIN_CFG, "configs/_main.cfg")
         if not self.runner:
             return
+        if not self.old_mode_enabled:
+            self.runner.last_messages_ids = {k: v[0] for k, v in self.runner.runner_last_messages.items()}
         self.runner.make_msg_requests = False if self.old_mode_enabled else True
-        self.runner.last_messages_ids = {k: v[0] for k, v in self.runner.runner_last_messages.items()}
+        if self.old_mode_enabled:
+            self.runner.last_messages_ids = {}
+            self.runner.by_bot_ids = {}
 
     @staticmethod
     def save_config(config: configparser.ConfigParser, file_path: str) -> None:

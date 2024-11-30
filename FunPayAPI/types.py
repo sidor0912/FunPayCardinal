@@ -55,6 +55,10 @@ class ChatShortcut(BaseOrderInfo):
         """Название чата (никнейм собеседника)."""
         self.last_message_text: str = last_message_text
         """Текст последнего сообщения в чате (макс. 250 символов)."""
+        self.last_by_bot: bool | None = None
+        """Отправлено ли последнее сообщение ботом?"""
+        self.last_by_vertex: bool | None = None
+        """Отпралено ли последнее сообщение через Vertex?"""
         self.unread: bool = unread
         """Флаг \"непрочитанности\" (если True - в чате есть непрочитанные сообщения)."""
         self.last_message_type: MessageTypes | None = None if not determine_msg_type else self.get_last_message_type()
@@ -212,17 +216,27 @@ class Message(BaseOrderInfo):
         self.by_bot: bool = False
         """Отправлено ли сообщение с помощью :meth:`FunPayAPI.Account.send_message`?"""
         self.by_vertex: bool = False
-        """Отправлено ли сообщение через FunPay Vertex"""
+        """Отправлено ли сообщение через FunPay Vertex?"""
         self.badge: str | None = badge_text
         """Текст бэйджика тех. поддержки или автовыдачи FunPay."""
-        self.is_employee = False
-        self.is_support = False
-        self.is_moderation = False
-        self.is_arbitration = False
-        self.initiator_username = None
-        self.initiator_id = None
-        self.i_am_seller = None
-        self.i_am_buyer = None
+        self.is_employee: bool = False
+        """Является ли пользователь сотрудником?"""
+        self.is_support: bool = False
+        """Наличие бэйджика поддержки."""
+        self.is_moderation: bool = False
+        """Наличие бэйджика модерации."""
+        self.is_arbitration: bool = False
+        """Наличие бэйджика арбитража."""
+        self.is_autoreply: bool = False
+        """Наличие бэйджика автоответа."""
+        self.initiator_username: str | None = None
+        """Ник пользователя, который выполнил действие (для системных сообщений)."""
+        self.initiator_id: int | None = None
+        """ID пользователя, который выполнил действие (для системных сообщений)."""
+        self.i_am_seller: bool | None = None
+        """Являемся ли мы продавцом по заказу (для системных сообщений)."""
+        self.i_am_buyer: bool | None = None
+        """Являемся ли мы покупателем по заказу (для системных сообщений)."""
 
         BaseOrderInfo.__init__(self)
 
@@ -313,6 +327,9 @@ class OrderShortcut(BaseOrderInfo):
     :param subcategory_name: название подкатегории, к которой относится заказ.
     :type subcategory_name: :obj:`str`
 
+    :param subcategory: подкатегория, к которой относится заказ.
+    :type subcategory: :class:`FunPayAPI.types.SubCategory` or :obj:`None`
+
     :param html: HTML код виджета заказа.
     :type html: :obj:`str`
 
@@ -347,7 +364,7 @@ class OrderShortcut(BaseOrderInfo):
         self.subcategory_name: str = subcategory_name
         """Название подкатегории, к которой относится заказ."""
         self.subcategory: SubCategory | None = subcategory
-        """Подкатегория, к которой относится заказ или None, если определить не удалось."""
+        """Подкатегория, к которой относится заказ."""
         self.html: str = html
         """HTML код виджета заказа."""
         BaseOrderInfo.__init__(self)
@@ -380,7 +397,7 @@ class Order:
     :type status: :class:`FunPayAPI.common.enums.OrderStatuses`
 
     :param subcategory: подкатегория, к которой относится заказ.
-    :type subcategory: :class:`FunPayAPI.types.SubCategory`
+    :type subcategory: :class:`FunPayAPI.types.SubCategory` or :obj:`None`
 
     :param params: параметры лота (значения некоторых полей заказа).
     :type params: :obj:`str` or :obj:`None`
@@ -422,7 +439,7 @@ class Order:
     :type order_secrets: :obj:`list` of :obj:`str`
     """
 
-    def __init__(self, id_: str, status: OrderStatuses, subcategory: SubCategory, params: str | None,
+    def __init__(self, id_: str, status: OrderStatuses, subcategory: SubCategory | None, params: str | None,
                  short_description: str | None,
                  full_description: str | None, sum_: float, currency: Currency,
                  buyer_id: int, buyer_username: str,
@@ -432,7 +449,7 @@ class Order:
         """ID заказа."""
         self.status: OrderStatuses = status
         """Статус заказа."""
-        self.subcategory: SubCategory = subcategory
+        self.subcategory: SubCategory | None = subcategory
         """Подкатегория, к которой относится заказ."""
         self.params: str | None = params
         """Параметры лота (значения некоторых полей заказа)"""
@@ -584,9 +601,16 @@ class LotFields:
 
     :param fields: словарь с полями.
     :type fields: :obj:`dict`
+
+    :param subcategory: подкатегория, к которой относится лот.
+    :type subcategory: :class:`FunPayAPI.types.SubCategory` or :obj:`None`
+
+    :param currency: валюта лота.
+    :type currency: :class:`FunPayAPI.common.enums.Currency`
     """
 
-    def __init__(self, lot_id: int, fields: dict):
+    def __init__(self, lot_id: int, fields: dict, subcategory: SubCategory | None = None,
+                 currency: Currency = Currency.UNKNOWN):
         self.lot_id: int = lot_id
         """ID лота."""
         self.__fields: dict = fields
@@ -618,6 +642,14 @@ class LotFields:
         """Активен ли лот."""
         self.deactivate_after_sale: bool = self.__fields.get("deactivate_after_sale") == "on"
         """Деактивировать ли лот после продажи."""
+        self.subcategory: SubCategory | None = subcategory
+        """Подкатегория лота"""
+        self.public_link: str = f"https://funpay.com/lots/offer?id={lot_id}"
+        """Публичная ссылка на лот."""
+        self.private_link: str = f"https://funpay.com/lots/offerEdit?offer={lot_id}"
+        """Приватная ссылка на лот (на изменение лота)."""
+        self.currency: Currency = currency
+        """Валюта лота."""
 
     @property
     def fields(self) -> dict[str, str]:
@@ -681,7 +713,7 @@ class LotPage:
     :type lot_id: :obj:`int`
 
     :param subcategory: Подкатегория, к которой относится лот.
-    :type subcategory: :obj:`types.SubCategory`
+    :type subcategory: :obj:`types.SubCategory` or :obj:`None`
 
     :param short_description: Краткое описание лота.
     :type short_description: :obj:`str` or None
@@ -699,11 +731,11 @@ class LotPage:
     :type seller_username: :obj:`str`
     """
 
-    def __init__(self, lot_id: int, subcategory: SubCategory, short_description: str | None,
+    def __init__(self, lot_id: int, subcategory: SubCategory | None, short_description: str | None,
                  full_description: str | None, image_urls: list[str], seller_id: int, seller_username: str, ) -> None:
         self.lot_id: int = lot_id
         """ID лота"""
-        self.subcategory: SubCategory = subcategory
+        self.subcategory: SubCategory | None = subcategory
         """Подкатегория"""
         self.short_description: str | None = short_description
         """Краткое описание"""
@@ -775,7 +807,7 @@ class LotShortcut:
 
     def __init__(self, id_: int | str, server: str | None,
                  description: str | None, amount: int | None, price: float, currency: Currency,
-                 subcategory: SubCategory,
+                 subcategory: SubCategory | None,
                  seller: SellerShortcut | None, auto: bool, promo: bool | None, attributes: dict[str, int | str] | None,
                  html: str):
         self.id: int | str = id_
@@ -984,10 +1016,17 @@ class Review:
 
     :param author_id: ID автора отзыва.
     :type author_id: :obj:`int` or :obj:`None`, опционально
+
+    :param by_bot: оставлен ли отзыв ботом?
+    :type by_bot: :obj:`bool`
+
+    :param reply_by_bot: оставлен ли ответ на отзыв ботом?
+    :type reply_by_bot: :obj:`bool`
     """
 
     def __init__(self, stars: int | None, text: str | None, reply: str | None, anonymous: bool, html: str, hidden: bool,
-                 order_id: str | None = None, author: str | None = None, author_id: int | None = None):
+                 order_id: str | None = None, author: str | None = None, author_id: int | None = None,
+                 by_bot: bool = False, reply_by_bot: bool = False):
         self.stars: int | None = stars
         """Кол-во звезде в отзыве."""
         self.text: str | None = text
@@ -1006,6 +1045,10 @@ class Review:
         """Автор отзыва."""
         self.author_id: int | None = author_id
         """ID автора отзыва."""
+        self.by_bot: bool = by_bot
+        """Оставлен ли отзыв ботом?"""
+        self.reply_by_bot: bool = reply_by_bot
+        """Оставлен ли ответ на отзыв ботом?"""
 
 
 class Balance:
@@ -1062,7 +1105,7 @@ class CalcResult:
     """Класс, описывающий ответ на запрос о рассчете комиссии раздела."""
 
     def __init__(self, subcategory_type: SubCategoryTypes, subcategory_id: int, methods: list[PaymentMethod],
-                 price: float, min_price_with_commission: float, min_price_currency: Currency,
+                 price: float, min_price_with_commission: float | None, min_price_currency: Currency,
                  account_currency: Currency):
         self.subcategory_type: SubCategoryTypes = subcategory_type
         """Тип подкатегории."""
@@ -1072,7 +1115,7 @@ class CalcResult:
         """Список платежных средств."""
         self.price: float = price
         """Цена без комиссии"""
-        self.min_price_with_commission: float = min_price_with_commission
+        self.min_price_with_commission: float | None = min_price_with_commission
         """Минимальная цена с комиссией из ответа FunPay, наличие не обязательно."""
         self.min_price_currency: Currency = min_price_currency
         """Валюта минимальной цены"""
@@ -1080,8 +1123,8 @@ class CalcResult:
         """Валюта аккаунта"""
 
     @property
-    def commission_coefficient(self) -> float:
-        """Отношение цены с комиссией к цене без комиссии или None, если рассчитать не удалось."""
+    def commission_coefficient(self) -> float | None:
+        """Отношение цены с комиссией к цене без комиссии."""
         if self.min_price_with_commission:
             return self.min_price_with_commission / self.price
         else:
@@ -1090,6 +1133,6 @@ class CalcResult:
             return None if not res else res.price / self.price
 
     @property
-    def commission_percent(self) -> float:
-        """Процент комиссии или None, если рассчитать не удалось."""
+    def commission_percent(self) -> float | None:
+        """Процент комиссии."""
         return (self.commission_coefficient - 1) * 100

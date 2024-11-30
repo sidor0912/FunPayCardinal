@@ -179,7 +179,12 @@ def old_send_new_msg_notification_handler(c: Cardinal, e: LastChatMessageChanged
             str(e.chat).startswith("!автовыдача")]):
         return
     user = e.chat.name
-    user = f"🚷 {user}" if user in c.blacklist else f"👤 {user}"
+    if user in c.blacklist:
+        user = f"🚷 {user}"
+    elif e.chat.last_by_bot:
+        user = f"🐦 {user}"
+    else:
+        user = f"👤 {user}"
     text = f"<i><b>{user}: </b></i><code>{utils.escape(str(e.chat))}</code>"
     kb = keyboards.reply(e.chat.id, e.chat.name, extend=True)
     Thread(target=c.telegram.send_notification, args=(text, kb, utils.NotificationTypes.new_message),
@@ -228,25 +233,27 @@ def send_new_msg_notification_handler(c: Cardinal, e: NewMessageEvent) -> None:
     last_message_author_id = -1
     last_by_bot = False
     last_badge = None
+    last_by_vertex = False
     for i in events:
         message_text = str(e.message)
         if message_text.strip().lower() in c.AR_CFG.sections() and len(events) < 2:
             return
         elif message_text.startswith("!автовыдача") and len(events) < 2:
             return
-        if i.message.author_id == last_message_author_id and i.message.by_bot == last_by_bot and i.message.badge == last_badge:
+        if i.message.author_id == last_message_author_id and i.message.by_bot == last_by_bot and \
+                i.message.badge == last_badge and i.message.by_vertex == last_by_vertex:
             author = ""
         elif i.message.author_id == c.account.id:
             author = f"<i><b>🤖 {_('you')} (<i>FPC</i>):</b></i> " if i.message.by_bot else f"<i><b>🫵 {_('you')}:</b></i> "
-            if i.message.badge:
+            if i.message.is_autoreply:
                 author = f"<i><b>📦 {_('you')} ({i.message.badge}):</b></i> "
         elif i.message.author_id == 0:
             author = f"<i><b>🔵 {i.message.author}: </b></i>"
-        elif i.message.badge and i.message.is_employee:
+        elif i.message.is_employee:
             author = f"<i><b>🆘 {i.message.author} ({i.message.badge}): </b></i>"
         elif i.message.author == i.message.chat_name:
             author = f"<i><b>👤 {i.message.author}: </b></i>"
-            if i.message.badge:
+            if i.message.is_autoreply:
                 author = f"<i><b>🛍️ {i.message.author} ({i.message.badge}):</b></i> "
             elif i.message.author in c.blacklist:
                 author = f"<i><b>🚷 {i.message.author}: </b></i>"
@@ -262,6 +269,7 @@ def send_new_msg_notification_handler(c: Cardinal, e: NewMessageEvent) -> None:
         text += f"{author}{msg_text}\n\n"
         last_message_author_id = i.message.author_id
         last_by_bot = i.message.by_bot
+        last_by_vertex = i.message.by_vertex
         last_badge = i.message.badge
     kb = keyboards.reply(chat_id, chat_name, extend=True)
     Thread(target=c.telegram.send_notification, args=(text, kb, utils.NotificationTypes.new_message),
@@ -285,7 +293,7 @@ def process_review_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChan
         if isinstance(e, LastChatMessageChangedEvent):
             return
         obj = e.message
-        message_type, its_me = obj.type, f" {c.account.username} " in str(obj)
+        message_type, its_me = obj.type, obj.i_am_buyer
         message_text, chat_id = str(obj), obj.chat_id
 
     else:

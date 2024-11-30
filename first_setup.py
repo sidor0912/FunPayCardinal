@@ -145,7 +145,7 @@ def first_setup():
             continue
         config.set("FunPay", "golden_key", golden_key)
         break
-        
+
     while True:
         print(f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}"
               f"Если хочешь, ты можешь указать свой User-agent (введи в Google \"my user agent\"). Или можешь просто нажать Enter. "
@@ -162,15 +162,15 @@ def first_setup():
     while True:
         print(
             f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}Введи API-токен Telegram-бота (получить его можно у @BotFather). "
-            f"@username бота должен содержать \"funpay\". {Fore.RED}(._.){Style.RESET_ALL}")
+            f"@username бота должен начинаться с \"funpay\". {Fore.RED}(._.){Style.RESET_ALL}")
         token = input(f"{Fore.MAGENTA}{Style.BRIGHT}└───> {Style.RESET_ALL}").strip()
         try:
             if not token or not token.split(":")[0].isdigit():
                 raise Exception("Неправильный формат токена")
             username = telebot.TeleBot(token).get_me().username
-            if "funpay" not in username.lower():
+            if not username.lower().startswith("funpay"):
                 print(
-                    f"\n{Fore.CYAN}{Style.BRIGHT}@username бота должен содержать \"funpay\"! {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
+                    f"\n{Fore.CYAN}{Style.BRIGHT}@username бота должен начинаться с \"funpay\"! {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
                 continue
         except Exception as ex:
             s = ""
