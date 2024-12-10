@@ -201,10 +201,6 @@ class Cardinal(object):
         while True:
             try:
                 self.account.get()
-                if self.account.locale and self.account.locale != self.MAIN_CFG["FunPay"]["locale"]:
-                    self.MAIN_CFG["FunPay"]["locale"] = self.account.locale
-                    self.save_config(self.MAIN_CFG, "configs/_main.cfg")
-
                 self.balance = self.get_balance()
                 greeting_text = cardinal_tools.create_greeting_text(self)
                 cardinal_tools.set_console_title(f"FunPay Cardinal - {self.account.username} ({self.account.id})")

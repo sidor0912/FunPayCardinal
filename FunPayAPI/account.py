@@ -285,9 +285,7 @@ class Account:
             promo = 'offer-promo' in offer.get('class', [])
             description = offer.find("div", {"class": "tc-desc-text"})
             description = description.text if description else None
-            server = offer.find("div", {"class": "tc-server hidden-xxs"})
-            if not server:
-                server = offer.find("div", {"class": "tc-server hidden-xs"})
+            server = offer.find("div", class_="tc-server")
             server = server.text if server else None
             tc_price = offer.find("div", {"class": "tc-price"})
             if subcategory_type is types.SubCategoryTypes.COMMON:
@@ -331,6 +329,58 @@ class Account:
 
             lot_obj = types.LotShortcut(offer_id, server, description, amount, price, currency, subcategory_obj, seller,
                                         auto, promo, attributes, str(offer))
+            result.append(lot_obj)
+        return result
+
+    def get_my_subcategory_lots(self, subcategory_id: int,
+                                locale: Literal["ru", "en", "uk"] | None = None) -> list[types.MyLotShortcut]:
+        """
+        :param subcategory_id: ID подкатегории.
+        :type subcategory_id: :obj:`int`
+
+        :return: список лотов переданной подкатегории на аккаунте.
+        :rtype: :obj:`list` of :class:`FunPayAPI.types.MyLotShortcut`
+        """
+        if not self.is_initiated:
+            raise exceptions.AccountNotInitiatedError()
+        meth = f"lots/{subcategory_id}/trade"
+        if not locale:
+            locale = self.__lots_parse_locale
+        self.locale = locale
+        response = self.method("get", meth, {"accept": "*/*"}, {}, raise_not_200=True)
+        self.locale = self.__default_locale
+        html_response = response.content.decode()
+        parser = BeautifulSoup(html_response, "lxml")
+
+        username = parser.find("div", {"class": "user-link-name"})
+        if not username:
+            raise exceptions.UnauthorizedError(response)
+        offers = parser.find_all("a", class_="tc-item")
+        if not offers:
+            return []
+
+        subcategory_obj = self.get_subcategory(enums.SubCategoryTypes.COMMON, subcategory_id)
+        result = []
+        currency = None
+        for offer in offers:
+            offer_id = offer["data-offer"]
+            description = offer.find("div", {"class": "tc-desc-text"})
+            description = description.text if description else None
+            server = offer.find("div", class_="tc-server")
+            server = server.text if server else None
+            tc_price = offer.find("div", class_="tc-price")
+            price = float(tc_price["data-s"])
+            if currency is None:
+                currency = parse_currency(tc_price.find("span", class_="unit").text)
+                if self.currency != currency:
+                    self.currency = currency
+            auto = bool(tc_price.find("i", class_="auto-dlv-icon"))
+            tc_amount = offer.find("div", class_="tc-amount")
+            amount = tc_amount.text.replace(" ", "") if tc_amount else None
+            amount = int(amount) if amount and amount.isdigit() else None
+            active = "warning" not in offer.get("class", [])
+            lot_obj = types.MyLotShortcut(offer_id, server, description, amount, price, currency, subcategory_obj,
+                                          auto, active, str(offer))
             result.append(lot_obj)
         return result
 
@@ -1013,9 +1063,7 @@ class Account:
                 offer_id = j["href"].split("id=")[1]
                 description = j.find("div", {"class": "tc-desc-text"})
                 description = description.text if description else None
-                server = j.find("div", {"class": "tc-server hidden-xxs"})
-                if not server:
-                    server = j.find("div", {"class": "tc-server hidden-xs"})
+                server = j.find("div", class_="tc-server")
                 server = server.text if server else None
                 auto = j.find("i", class_="auto-dlv-icon") is not None
                 tc_price = j.find("div", {"class": "tc-price"})

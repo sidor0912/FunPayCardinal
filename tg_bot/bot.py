@@ -20,6 +20,7 @@ import random
 import string
 import psutil
 import telebot
+from telebot.apihelper import ApiTelegramException
 import logging
 
 from telebot.types import InlineKeyboardMarkup as K, InlineKeyboardButton as B, Message, CallbackQuery, BotCommand, \
@@ -1159,7 +1160,7 @@ class TGBot:
         kwargs = {}
         if keyboard is not None:
             kwargs["reply_markup"] = keyboard
-
+        to_delete = []
         for chat_id in self.notification_settings:
             if notification_type != utils.NotificationTypes.important_announcement and \
                     not self.is_notification_enabled(chat_id, notification_type):
@@ -1176,10 +1177,19 @@ class TGBot:
 
                 if pin:
                     self.bot.pin_chat_message(msg.chat.id, msg.id)
-            except:
+            except Exception as e:
                 logger.error(_("log_tg_notification_error", chat_id))
                 logger.debug("TRACEBACK", exc_info=True)
+                if isinstance(e, ApiTelegramException) and (
+                        e.result.status_code == 403 or e.result.status_code == 400 and
+                        (e.result_json.get('description') in \
+                         ("Bad Request: group chat was upgraded to a supergroup chat", "Bad Request: chat not found"))):
+                    to_delete.append(chat_id)
                 continue
+        for chat_id in to_delete:
+            if chat_id in self.notification_settings:
+                del self.notification_settings[chat_id]
+                utils.save_notification_settings(self.notification_settings)
 
     def add_command_to_menu(self, command: str, help_text: str) -> None:
         """

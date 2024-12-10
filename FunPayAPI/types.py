@@ -689,6 +689,7 @@ class LotFields:
         :return: экземпляр класса :class:`FunPayAPI.types.LotFields` с новыми полями лота.
         :rtype: :class:`FunPayAPI.types.LotFields`
         """
+        self.__fields["offer_id"] = str(self.lot_id or 0)
         self.__fields["fields[summary][ru]"] = self.title_ru
         self.__fields["fields[summary][en]"] = self.title_en
         self.__fields["fields[desc][ru]"] = self.description_ru
@@ -836,6 +837,65 @@ class LotShortcut:
         """Атрибуты лота (только для лотов из таблицы)"""
         self.subcategory: SubCategory = subcategory
         """Подкатегория лота."""
+        self.html: str = html
+        """HTML-код виджета лота."""
+        self.public_link: str = f"https://funpay.com/chips/offer?id={self.id}" \
+            if self.subcategory.type is SubCategoryTypes.CURRENCY else f"https://funpay.com/lots/offer?id={self.id}"
+        """Публичная ссылка на лот."""
+
+
+class MyLotShortcut:
+    """
+    Данный класс представляет виджет лота со страницы https://funpay.com/lots/000/trade.
+
+    :param id_: ID лота.
+    :type id_: :obj:`int` or :obj:`str`
+
+    :param server: название сервера (если указан в лоте).
+    :type server: :obj:`str` or :obj:`None`
+
+    :param description: краткое описание (название) лота.
+    :type description: :obj:`str` or :obj:`None`
+
+    :param price: цена лота.
+    :type price: :obj:`float`
+
+    :param currency: валюта лота.
+    :type currency: :class:`FunPayAPI.common.enums.Currency`
+
+    :param subcategory: подкатегория лота.
+    :type subcategory: :class:`FunPayAPI.types.SubCategory`
+
+    :param html: HTML код виджета лота.
+    :type html: :obj:`str`
+    """
+
+    def __init__(self, id_: int | str, server: str | None,
+                 description: str | None, amount: int | None, price: float, currency: Currency,
+                 subcategory: SubCategory | None, auto: bool, active: bool,
+                 html: str):
+        self.id: int | str = id_
+        if isinstance(self.id, str) and self.id.isnumeric():
+            self.id = int(self.id)
+        """ID лота."""
+        self.server: str | None = server
+        """Название сервера (если указан)."""
+        self.description: str | None = description
+        """Краткое описание (название) лота."""
+        self.title: str | None = description
+        """Краткое описание (название) лота."""
+        self.amount: int | None = amount
+        """Количество"""
+        self.price: float = price
+        """Цена лота."""
+        self.currency: Currency = currency
+        """Валюта лота."""
+        self.auto: bool = auto
+        """Включена ли автовыдача FunPay у лота?"""
+        self.subcategory: SubCategory = subcategory
+        """Подкатегория лота."""
+        self.active: bool = active
+        """Активен ли лот?"""
         self.html: str = html
         """HTML-код виджета лота."""
         self.public_link: str = f"https://funpay.com/chips/offer?id={self.id}" \
