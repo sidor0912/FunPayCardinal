@@ -1183,16 +1183,18 @@ class CalcResult:
         """Валюта аккаунта"""
 
     @property
-    def commission_coefficient(self) -> float | None:
+    def commission_coefficient(self) -> float:
         """Отношение цены с комиссией к цене без комиссии."""
         if self.min_price_with_commission:
             return self.min_price_with_commission / self.price
         else:
             res = min(filter(lambda x: x.currency == self.account_currency,
                              self.methods), key=lambda x: x.price, default=None)
-            return None if not res else res.price / self.price
+            if not res:
+                raise Exception("Невозможно определить коэффициент комиссии.")
+            return res.price / self.price
 
     @property
-    def commission_percent(self) -> float | None:
+    def commission_percent(self) -> float:
         """Процент комиссии."""
         return (self.commission_coefficient - 1) * 100

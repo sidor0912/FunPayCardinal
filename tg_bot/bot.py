@@ -351,8 +351,8 @@ class TGBot:
             self.bot.send_message(m.chat.id, _("cookie_incorrect_format"))
             return
         self.bot.delete_message(m.chat.id, m.id)
-        new_account = Account(golden_key, self.cardinal.MAIN_CFG["FunPay"]["user_agent"], proxy=self.cardinal.proxy,
-                              locale=self.cardinal.MAIN_CFG["FunPay"]["locale"])
+        new_account = Account(golden_key, self.cardinal.account.user_agent, proxy=self.cardinal.proxy,
+                              locale=self.cardinal.account.locale)
         try:
             new_account.get()
         except:

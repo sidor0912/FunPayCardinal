@@ -85,7 +85,6 @@ class MessageTypes(Enum):
     """Администратор A вернул деньги покупателю X по заказу #Y."""
 
 
-
 class OrderStatuses(Enum):
     """
     В данном классе перечислены все состояния заказов.
@@ -129,6 +128,16 @@ class Currency(Enum):
         elif self == Currency.EUR:
             return "€"
         return "¤"
+
+    @property
+    def code(self) -> str:
+        if self == Currency.USD:
+            return "usd"
+        elif self == Currency.RUB:
+            return "rub"
+        elif self == Currency.EUR:
+            return "eur"
+        raise Exception("Неизвестная валюта.")
 
 
 class Wallet(Enum):

@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Literal, Any, Optional, IO
 
 import FunPayAPI.common.enums
-from FunPayAPI.common.utils import parse_currency
+from FunPayAPI.common.utils import parse_currency, RegularExpressions
 from .types import PaymentMethod, CalcResult
 
 if TYPE_CHECKING:
@@ -69,26 +69,28 @@ class Account:
         """Активные продажи."""
         self.active_purchases: int | None = None
         """Активные покупки."""
-        self.__locale: Literal["ru", "en", "uk"] | None = locale
+        self.__locale: Literal["ru", "en", "uk"] | None = None
         """Текущий язык аккаунта."""
         self.__default_locale: Literal["ru", "en", "uk"] | None = locale
         """Язык аккаунта по умолчанию."""
         self.__profile_parse_locale: Literal["ru", "en", "uk"] | None = locale
         """Язык по умолчанию для Account.get_user()"""
-        self.__chat_parse_locale: Literal["ru", "en", "uk"] | None = locale
+        self.__chat_parse_locale: Literal["ru", "en", "uk"] | None = None
         """Язык по умолчанию для Account.get_chat()"""
         # self.__sales_parse_locale: Literal["ru", "en", "uk"] | None = locale #todo
         """Язык по умолчанию для Account.get_sales()"""
-        self.__order_parse_locale: Literal["ru", "en", "uk"] | None = locale
+        self.__order_parse_locale: Literal["ru", "en", "uk"] | None = None
         """Язык по умолчанию для Account.get_order()"""
-        self.__lots_parse_locale: Literal["ru", "en", "uk"] | None = locale
+        self.__lots_parse_locale: Literal["ru", "en", "uk"] | None = None
         """Язык по умолчанию для Account.get_subcategory_public_lots()"""
-        self.__subcategories_parse_locale: Literal["ru", "en", "uk"] | None = locale
+        self.__subcategories_parse_locale: Literal["ru", "en", "uk"] | None = None
         """Язык по для получения названий разделов."""
         self.__set_locale: Literal["ru", "en", "uk"] | None = None
         """Язык, на который будет переведем аккаунт при следующем GET-запросе."""
         self.currency: FunPayAPI.types.Currency = FunPayAPI.types.Currency.UNKNOWN
         """Валюта аккаунта"""
+        self.total_balance: int | None = None
+        """Примерный общий баланс аккаунта в валюте аккаунта."""
         self.csrf_token: str | None = None
         """CSRF токен."""
         self.phpsessid: str | None = None
@@ -173,20 +175,15 @@ class Account:
             link = normalize_url(api_method, locale)
         else:
             link = normalize_url(api_method)
-        if request_method == "get" and self.__set_locale:
-            if self.__set_locale != self.locale:
-                link += f'{"&" if "?" in link else "?"}setlocale={self.__set_locale}'
-            else:
-                self.__set_locale = None
-
+        locale = locale or self.__set_locale
+        if request_method == "get" and locale and locale != self.locale:
+            link += f'{"&" if "?" in link else "?"}setlocale={self.__set_locale}'
         response = getattr(requests, request_method)(link, headers=headers, data=payload,
                                                      timeout=self.requests_timeout,
                                                      proxies=self.proxy or {}, allow_redirects=False)
         if 'Location' in response.headers:
             redirect_url = response.headers['Location']
             update_locale(redirect_url)
-            if self.locale == self.__set_locale:
-                self.__set_locale = None
             response = getattr(requests, request_method)(redirect_url, headers=headers, data=payload,
                                                          timeout=self.requests_timeout,
                                                          proxies=self.proxy or {})
@@ -218,16 +215,21 @@ class Account:
         username = parser.find("div", {"class": "user-link-name"})
         if not username:
             raise exceptions.UnauthorizedError(response)
-
         self.username = username.text
         self.app_data = json.loads(parser.find("body").get("data-app-data"))
+        self.__locale = self.app_data.get("locale")
         self.id = self.app_data["userId"]
         self.csrf_token = self.app_data["csrf-token"]
-        self.locale = self.app_data.get("locale")
         self._logout_link = parser.find("a", class_="menu-item-logout").get("href")
         active_sales = parser.find("span", {"class": "badge badge-trade"})
         self.active_sales = int(active_sales.text) if active_sales else 0
-
+        balance = parser.find("span", class_="badge badge-balance")
+        if balance:
+            balance, currency = balance.text.rsplit(" ", maxsplit=1)
+            self.total_balance = int(balance.replace(" ", ""))
+            self.currency = parse_currency(currency)
+        else:
+            self.total_balance = 0
         active_purchases = parser.find("span", {"class": "badge badge-orders"})
         self.active_purchases = int(active_purchases.text) if active_purchases else 0
 
@@ -262,9 +264,9 @@ class Account:
         meth = f"lots/{subcategory_id}/" if subcategory_type is enums.SubCategoryTypes.COMMON else f"chips/{subcategory_id}/"
         if not locale:
             locale = self.__lots_parse_locale
-        self.locale = locale
-        response = self.method("get", meth, {"accept": "*/*"}, {}, raise_not_200=True)
-        self.locale = self.__default_locale
+        response = self.method("get", meth, {"accept": "*/*"}, {}, raise_not_200=True, locale=locale)
+        if locale:
+            self.locale = self.__default_locale
         html_response = response.content.decode()
         parser = BeautifulSoup(html_response, "lxml")
 
@@ -346,9 +348,9 @@ class Account:
         meth = f"lots/{subcategory_id}/trade"
         if not locale:
             locale = self.__lots_parse_locale
-        self.locale = locale
-        response = self.method("get", meth, {"accept": "*/*"}, {}, raise_not_200=True)
-        self.locale = self.__default_locale
+        response = self.method("get", meth, {"accept": "*/*"}, {}, raise_not_200=True, locale=locale)
+        if locale:
+            self.locale = self.__default_locale
         html_response = response.content.decode()
         parser = BeautifulSoup(html_response, "lxml")
 
@@ -399,9 +401,7 @@ class Account:
         headers = {
             "accept": "*/*"
         }
-        if locale:
-            self.locale = locale
-        response = self.method("get", f"lots/offer?id={lot_id}", headers, {}, raise_not_200=True)
+        response = self.method("get", f"lots/offer?id={lot_id}", headers, {}, raise_not_200=True, locale=locale)
         if locale:
             self.locale = self.__default_locale
         html_response = response.content.decode()
@@ -884,12 +884,6 @@ class Account:
         if not self.is_initiated:
             raise exceptions.AccountNotInitiatedError()
 
-        currencies = {
-            enums.Currency.RUB: "rub",
-            enums.Currency.USD: "usd",
-            enums.Currency.EUR: "eur"
-        }
-
         wallets = {
             enums.Wallet.QIWI: "qiwi",
             enums.Wallet.YOUMONEY: "fps",
@@ -906,7 +900,7 @@ class Account:
         }
         payload = {
             "csrf_token": self.csrf_token,
-            "currency_id": currencies[currency],
+            "currency_id": currency.code,
             "ext_currency_id": wallets[wallet],
             "wallet": address,
             "amount_int": str(amount)
@@ -1024,9 +1018,9 @@ class Account:
             raise exceptions.AccountNotInitiatedError()
         if not locale:
             locale = self.__profile_parse_locale
-        self.locale = locale
-        response = self.method("get", f"users/{user_id}/", {"accept": "*/*"}, {}, raise_not_200=True)
-        self.locale = self.__default_locale
+        response = self.method("get", f"users/{user_id}/", {"accept": "*/*"}, {}, raise_not_200=True, locale=locale)
+        if locale:
+            self.locale = self.__default_locale
         html_response = response.content.decode()
         parser = BeautifulSoup(html_response, "lxml")
 
@@ -1103,9 +1097,9 @@ class Account:
 
         if not locale:
             locale = self.__chat_parse_locale
-        self.locale = locale
-        response = self.method("get", f"chat/?node={chat_id}", {"accept": "*/*"}, {}, raise_not_200=True)
-        self.locale = self.__default_locale
+        response = self.method("get", f"chat/?node={chat_id}", {"accept": "*/*"}, {}, raise_not_200=True, locale=locale)
+        if locale:
+            self.locale = self.__default_locale
         html_response = response.content.decode()
         parser = BeautifulSoup(html_response, "lxml")
         if (name := parser.find("div", {"class": "chat-header"}).find("div", {"class": "media-user-name"}).find(
@@ -1153,9 +1147,9 @@ class Account:
         }
         if not locale:
             locale = self.__order_parse_locale
-        self.locale = locale
-        response = self.method("get", f"orders/{order_id}/", headers, {}, raise_not_200=True)
-        self.locale = self.__default_locale
+        response = self.method("get", f"orders/{order_id}/", headers, {}, raise_not_200=True, locale=locale)
+        if locale:
+            self.locale = self.__default_locale
         html_response = response.content.decode()
         parser = BeautifulSoup(html_response, "lxml")
         username = parser.find("div", {"class": "user-link-name"})
@@ -1676,6 +1670,43 @@ class Account:
         """
         self.save_lot(types.LotFields(lot_id, {"csrf_token": self.csrf_token, "offer_id": lot_id, "deleted": "1"}))
 
+    def get_exchange_rate(self, currency: types.Currency) -> tuple[float, types.Currency]:
+        """
+        Получает курс обмена текущей валюты аккаунта на переданную, обновляет валюту аккаунта.
+        Возвращает X, где X <currency> = 1 <валюта аккаунта> и текущую валюту аккаунта.
+
+        :param currency: Валюта, на которую нужно получить курс обмена.
+        :type currency: :obj:`types.Currency`
+        
+        :return: Кортеж, содержащий коэффициент обмена и текущую валюту аккаунта.
+        :rtype: :obj:`tuple[float, types.Currency]`
+        """
+        r = self.method("post", "https://funpay.com/account/switchCurrency",
+                        {"accept": "*/*", "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+                         "x-requested-with": "XMLHttpRequest"},
+                        {"cy": currency.code, "csrf_token": self.csrf_token, "confirmed": "false"},
+                        raise_not_200=True)
+        b = json.loads(r.text)
+        if "url" in b and not b["url"]:
+            self.currency = currency
+            return 1, currency
+        else:
+            s = BeautifulSoup(b["modal"], "lxml").find("p", class_="lead").text.replace("\xa0", " ")
+            match = RegularExpressions().EXCHANGE_RATE.fullmatch(s)
+            assert match is not None
+            swipe_to = match.group(2)
+            assert swipe_to.lower() == currency.code
+            price1 = float(match.group(4))
+            currency1 = parse_currency(match.group(5))
+            price2 = float(match.group(7))
+            currency2 = parse_currency(match.group(8))
+            now_currency = ({currency1, currency2} - {currency, }).pop()
+            self.currency = now_currency
+            if now_currency == currency1:
+                return price2 / price1, now_currency
+            else:
+                return price1 / price2, now_currency
+
     def get_category(self, category_id: int) -> types.Category | None:
         """
         Возвращает объект категории (игры).
@@ -1951,5 +1982,5 @@ class Account:
 
     @locale.setter
     def locale(self, new_locale: Literal["ru", "en", "uk"]):
-        if self.locale != new_locale and new_locale in ("ru", "en", "uk"):
+        if self.__locale != new_locale and new_locale in ("ru", "en", "uk"):
             self.__set_locale = new_locale

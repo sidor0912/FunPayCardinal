@@ -124,7 +124,7 @@ class Cardinal(object):
 
         self.account = FunPayAPI.Account(self.MAIN_CFG["FunPay"]["golden_key"],
                                          self.MAIN_CFG["FunPay"]["user_agent"],
-                                         proxy=self.proxy, locale=self.MAIN_CFG["FunPay"]["locale"])
+                                         proxy=self.proxy)
         self.runner: FunPayAPI.Runner | None = None
         self.telegram: tg_bot.bot.TGBot | None = None
 
@@ -135,6 +135,7 @@ class Cardinal(object):
         self.balance: FunPayAPI.types.Balance | None = None
         self.raise_time = {}  # Временные метки поднятия категорий {id игры: след. время поднятия}
         self.raised_time = {}  # Время последнего поднятия категории {id игры: время последнего поднятия}
+        self.__exchange_rates = {}  # Курс валют {(валюта1, валюта2): (курс, время обновления)}
         self.profile: FunPayAPI.types.UserProfile | None = None  # FunPay профиль для всего кардинала (+ хэндлеров)
         self.tg_profile: FunPayAPI.types.UserProfile | None = None  # FunPay профиль (для Telegram-ПУ)
         self.last_tg_profile_update = datetime.datetime.now()  # Последнее время обновления профиля для TG-ПУ
@@ -487,6 +488,55 @@ class Cardinal(object):
                 logger.error(_("crd_msg_no_more_attempts_err", chat_id))
                 return []
         return result
+
+    def get_exchange_rate(self, base_currency: types.Currency, target_currency: types.Currency, min_interval: int = 60):
+        """
+        Получает курс обмена между двумя указанными валютами.
+        Если с последней проверки прошло меньше `min_interval` секунд, используется сохранённое значение.
+
+        :param base_currency: Исходная валюта, из которой производится обмен.
+        :type base_currency: :obj:`types.Currency`
+
+        :param target_currency: Целевая валюта, в которую производится обмен.
+        :type target_currency: :obj:`types.Currency`
+
+        :param min_interval: Минимальное время в секундах между проверками курса обмена.
+        :type min_interval: :obj:`int`
+
+        :return: Коэффициент обмена, где 1 единица `base_currency` = X единиц `target_currency`.
+        :rtype: :obj:`float`
+        """
+        assert base_currency != types.Currency.UNKNOWN and target_currency != types.Currency.UNKNOWN
+        if base_currency == target_currency:
+            return 1
+        rate, t = self.__exchange_rates.get((base_currency, target_currency), (None, 0))
+        if t and time.time() < t + min_interval:
+            return rate
+        for i in range(2, -1, -1):
+            try:
+                exchange_rate1, currency1 = self.account.get_exchange_rate(base_currency)
+                self.__exchange_rates[(currency1, base_currency)] = (exchange_rate1, time.time())
+                self.__exchange_rates[(base_currency, currency1)] = (1 / exchange_rate1, time.time())
+
+                time.sleep(1)
+
+                exchange_rate2, currency2 = self.account.get_exchange_rate(target_currency)
+                self.__exchange_rates[(currency2, target_currency)] = (exchange_rate2, time.time())
+                self.__exchange_rates[(target_currency, currency2)] = (1 / exchange_rate2, time.time())
+
+                assert currency1 == currency2
+
+                result = exchange_rate2 / exchange_rate1
+                self.__exchange_rates[(base_currency, target_currency)] = (result, time.time())
+                self.__exchange_rates[(target_currency, base_currency)] = (1 / result, time.time())
+
+                return result
+            except:
+                logger.warning("Не удалось получить курс обмена. Осталось попыток: {i}")
+                logger.debug("TRACEBACK", exc_info=True)
+                time.sleep(1)
+
+        raise Exception("Не удалось получить курс обмена: превышено количество попыток.")
 
     def update_session(self, attempts: int = 3) -> bool:
         """
