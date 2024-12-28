@@ -1808,17 +1808,21 @@ class Account:
         games_divs = games_table.find_all("div", {"class": "promo-game-item"})
         if not games_divs:
             return
-
+        game_position = 0
+        subcategory_position = 0
         for i in games_divs:
             gid = int(i.find("div", {"class": "game-title"}).get("data-id"))
             gname = i.find("a").text
             regional_games = {
-                gid: types.Category(gid, gname)
+                gid: types.Category(gid, gname, position=game_position)
             }
+            game_position += 1
             if regional_divs := i.find("div", {"role": "group"}):
                 for btn in regional_divs.find_all("button"):
                     regional_game_id = int(btn["data-id"])
-                    regional_games[regional_game_id] = types.Category(regional_game_id, f"{gname} ({btn.text})")
+                    regional_games[regional_game_id] = types.Category(regional_game_id, f"{gname} ({btn.text})",
+                                                                      position=game_position)
+                    game_position += 1
 
             subcategories_divs = i.find_all("ul", {"class": "list-inline"})
             for j in subcategories_divs:
@@ -1829,7 +1833,8 @@ class Account:
                     name, link = a.text, a["href"]
                     stype = types.SubCategoryTypes.CURRENCY if "chips" in link else types.SubCategoryTypes.COMMON
                     sid = int(link.split("/")[-2])
-                    sobj = types.SubCategory(sid, name, stype, regional_games[j_game_id])
+                    sobj = types.SubCategory(sid, name, stype, regional_games[j_game_id], subcategory_position)
+                    subcategory_position += 1
                     regional_games[j_game_id].add_subcategory(sobj)
                     self.__subcategories.append(sobj)
                     self.__sorted_subcategories[stype][sid] = sobj
@@ -1882,7 +1887,7 @@ class Account:
             else:
                 image_link = None
                 if author_id == 0:
-                    message_text = parser.find("div", {"class": "alert alert-with-icon alert-info"}).text.strip()
+                    message_text = parser.find("div", role="alert").text.strip()
                 else:
                     message_text = parser.find("div", {"class": "chat-msg-text"}).text
 

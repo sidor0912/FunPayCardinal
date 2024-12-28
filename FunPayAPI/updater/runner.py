@@ -181,7 +181,7 @@ class Runner:
             elif last_msg_text.startswith(self.account.old_bot_character):
                 last_msg_text = last_msg_text[1:]
                 by_vertex = True
-            # если сообщение отправлено непрочитанным, то [0, 0, None]
+            # если сообщение отправлено непрочитанным и вкл старый режим, то [0, 0, None] или [0, 0, "text"]
             prev_node_msg_id, prev_user_msg_id, prev_text = self.runner_last_messages.get(chat_id) or [-1, -1, None]
             last_msg_text_or_none = None if last_msg_text in ("Изображение", "Зображення", "Image") else last_msg_text
             if node_msg_id <= prev_node_msg_id:
@@ -203,7 +203,7 @@ class Runner:
             if self.__first_request:
                 events.append(InitialChatEvent(self.__last_msg_event_tag, chat_obj))
                 if self.make_msg_requests:
-                    self.last_messages_ids[chat_id] = node_msg_id
+                    self.last_messages_ids[chat_id] = user_msg_id
                 continue
             else:
                 lcmc_events.append(LastChatMessageChangedEvent(self.__last_msg_event_tag, chat_obj))

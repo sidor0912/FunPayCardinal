@@ -498,13 +498,15 @@ class Category:
     :type subcategories: :obj:`list` of :class:`FunPayAPI.types.SubCategory` or :obj:`None`, опционально
     """
 
-    def __init__(self, id_: int, name: str, subcategories: list[SubCategory] | None = None):
+    def __init__(self, id_: int, name: str, subcategories: list[SubCategory] | None = None, position: int = 100_000):
         self.id: int = id_
         """ID категории (game_id / data-id)."""
         self.name: str = name
         """Название категории (игры)."""
         self.__subcategories: list[SubCategory] = subcategories or []
         """Список подкатегорий."""
+        self.position = position
+        """Порядковый номер игры в списке игр (по алфавиту)"""
         self.__sorted_subcategories: dict[SubCategoryTypes, dict[int, SubCategory]] = {
             SubCategoryTypes.COMMON: {},
             SubCategoryTypes.CURRENCY: {}
@@ -574,7 +576,7 @@ class SubCategory:
     :type category: :class:`FunPayAPI.types.Category`
     """
 
-    def __init__(self, id_: int, name: str, type_: SubCategoryTypes, category: Category):
+    def __init__(self, id_: int, name: str, type_: SubCategoryTypes, category: Category, position: int = 100_000):
         self.id: int = id_
         """ID подкатегории."""
         self.name: str = name
@@ -583,6 +585,8 @@ class SubCategory:
         """Тип подкатегории."""
         self.category: Category = category
         """Родительская категория (игра)."""
+        self.position: int = position
+        """Порядковый номер подкатегории в общем списке игр (для сортировки)"""
         self.fullname: str = f"{self.name} {self.category.name}"
         """Полное название подкатегории."""
         self.public_link: str = f"https://funpay.com/chips/{id_}/" if type_ is SubCategoryTypes.CURRENCY else \
