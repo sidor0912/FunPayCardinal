@@ -27,7 +27,7 @@ PrivateUsers=yes
 ProtectHostname=yes
 # Prevent writes to /usr, /boot, and /etc
 ProtectSystem=full
-ReadWritePaths=/home/%i/FunPayCardinal /run/FunPayCardinal/%i
+ReadWritePaths=/home/%i/FunPayCardinal /run/FunPayCardinal
 
 [Unit]
 After=network.target
