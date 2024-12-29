@@ -10,6 +10,7 @@ RestartSec=10s
 SyslogIdentifier=FunPayCardinal-%i
 User=%i
 Environment="LANG=en_US.utf8"
+Environment="FPC_IS_RUNNIG_AS_SERVICE=1"
 
 ExecStartPre=+/usr/bin/install -m 755 -o root -g root -d /run/FunPayCardinal
 ExecStartPre=+/usr/bin/install -m 755 -o %i -g root -d /run/FunPayCardinal/%i
