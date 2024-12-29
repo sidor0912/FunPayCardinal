@@ -1,0 +1,34 @@
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/%i/FunPayCardinal
+ExecStart=/home/%i/pyvenv/bin/python /home/%i/FunPayCardinal/main.py
+Restart=always
+RestartSec=10s
+SyslogIdentifier=FunPayCardinal-%i
+User=%i
+Environment="LANG=en_US.utf8"
+
+ExecStartPre=+/usr/bin/install -m 755 -o root -g root -d /run/FunPayCardinal
+ExecStartPre=+/usr/bin/install -m 755 -o %i -g root -d /run/FunPayCardinal/%i
+
+PIDFile=/run/FunPayCardinal/%i/FunPayCardinal.pid
+
+# FunPayCardinal security hardening, all of the below entries are optional, but their existence improves security of your system
+DevicePolicy=closed
+NoNewPrivileges=yes
+PrivateDevices=yes
+PrivateMounts=yes
+PrivateTmp=yes
+PrivateUsers=yes
+ProtectHostname=yes
+# Prevent writes to /usr, /boot, and /etc
+ProtectSystem=full
+ReadWritePaths=/home/%i/FunPayCardinal /run/FunPayCardinal/%i
+
+[Unit]
+After=network.target
+Description=FunPayCardinal Bot Service (on %I)
+Documentation=https://github.com/sidor0912/FunPayCardinal/blob/main/README.md
