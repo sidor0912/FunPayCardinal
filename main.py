@@ -105,7 +105,7 @@ if sys.platform == "linux" and os.getenv('FPC_IS_RUNNIG_AS_SERVICE', '0') == '1'
     pidFile.write(pid)
     pidFile.close()
 
-    logger.info(f"$GREENPID файл создан, PID процесса: {pid}")
+    logger.info(f"$GREENPID файл создан, PID процесса: {pid}") # locale
 
 directory = 'plugins'
 for filename in os.listdir(directory):
