@@ -203,7 +203,7 @@ class Runner:
             if self.__first_request:
                 events.append(InitialChatEvent(self.__last_msg_event_tag, chat_obj))
                 if self.make_msg_requests:
-                    self.last_messages_ids[chat_id] = user_msg_id
+                    self.last_messages_ids[chat_id] = node_msg_id
                 continue
             else:
                 lcmc_events.append(LastChatMessageChangedEvent(self.__last_msg_event_tag, chat_obj))
