@@ -56,7 +56,58 @@ fi
 
 #3
 case $distro_version in
-  "22.04" | "24.04")
+  "22.04" | "22.10" | "23.04" | "23.10" | "24.04" | "24.10") # Ubuntu 22.04 (Jammy Jellyfish), 22.10 (Kinetic Kudu), 23.04 (Lunar Lobster), 23.10 (Mantic Minotaur), 24.04 (Noble Numbat), 24.10 (Oracular Oriole)
+    ;;
+  "12") # Debian 12 (Bookworm)
+    ;;
+  "11") # Debian 11 (Bullseye)
+    # TODO: Ошибка проверки ключа репозитория на некоторых машинах, хз почему, проще использовать костыль ввиде убунтовских deadsnakes
+    # #3.1
+    # if ! sudo curl -O https://people.debian.org/~paravoid/python-all/unofficial-python-all.asc ; then
+    #   echo -e "${start_process_line}\nПроизошла ошибка при загрузке ключа репозитория. (3.1/${commands})\n${end_process_line}"
+    #   exit 2
+    # fi
+
+    # #3.2
+    # if ! sudo mv unofficial-python-all.asc /etc/apt/trusted.gpg.d/ ; then
+    #   echo -e "${start_process_line}\nПроизошла ошибка при перемещении ключа репозитория. (3.2/${commands})\n${end_process_line}"
+    #   exit 2
+    # fi
+
+    # #3.3
+    # if ! echo "deb http://people.debian.org/~paravoid/python-all $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/python-all.list ; then
+    #   echo -e "${start_process_line}\nПроизошла ошибка при добавлении репозитория. (3.3/${commands})\n${end_process_line}"
+    #   exit 2
+    # fi
+
+    #3.1
+    if ! sudo apt install -y gnupg ; then
+      echo -e "${start_process_line}\nПроизошла ошибка при установке gnupg. (3.1/${commands})\n${end_process_line}"
+      exit 2
+    fi
+
+    #3.2
+    if ! sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys BA6932366A755776 ; then
+      echo -e "${start_process_line}\nПроизошла ошибка при добавлении ключа репозитория. (3.2/${commands})\n${end_process_line}"
+      exit 2
+    fi
+
+    #3.3
+    if ! sudo add-apt-repository -s "deb https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu focal main" ; then
+      echo -e "${start_process_line}\nПроизошла ошибка при добавлении репозитория. (3.3/${commands})\n${end_process_line}"
+      exit 2
+    fi
+
+    #3.4
+    sudo tee /etc/apt/preferences.d/10deadsnakes-ppa >/dev/null <<EOF
+Package: *
+Pin: release o=LP-PPA-deadsnakes
+Pin-Priority: 100
+EOF
+    if $? -ne 0 ; then
+      echo -e "${start_process_line}\nПроизошла ошибка при добавлении приоритета репозитория. (3.4/${commands})\n${end_process_line}"
+      exit 2
+    fi
     ;;
   *)
     if ! sudo add-apt-repository -y ppa:deadsnakes/ppa ; then
@@ -96,7 +147,7 @@ echo -e "$start_process_line\nУстанавливаю Python...\n$end_process_l
 
 #7
 case $distro_version in
-  "24.04")
+  "24.04" | "24.10")
     if ! sudo apt install -y python3.12 python3.12-dev python3.12-gdbm python3.12-venv ; then
       echo -e "${start_process_line}\nПроизошла ошибка при установке Python. (7/${commands})\n${end_process_line}"
       exit 2
@@ -120,7 +171,7 @@ if ! sudo useradd -m $username ; then
 fi
 
 case $distro_version in
-  "24.04")
+  "24.04" | "24.10")
     #9
     if ! sudo -u $username python3.12 -m venv /home/$username/pyvenv ; then
       echo -e "${start_process_line}\nПроизошла ошибка при создании виртуального окружения. (9/${commands})\n${end_process_line}"
