@@ -53,7 +53,7 @@ echo -e "${GREEN}Переход в директорию проекта...${NC}"
 cd FunPayCardinal
 
 echo -e "${GREEN}Установка зависимостей бота...${NC}"
-sudo python3.11 setup.py
+sudo python3.11 -m pip install --upgrade --requirement=requirements.txt
 
 echo -e "${GREEN}Сейчас необходимо выполнить первичную установку${NC}"
 sudo python3.11 main.py
