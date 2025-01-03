@@ -292,6 +292,42 @@ if ! sudo apt install -y language-pack-en ; then
   exit 2
 fi
 
+#22
+case $distro_version in
+  "11" | "12")
+    #22.1
+    if ! sudo apt install -y locales ; then
+      echo -e "${start_process_line}\nПроизошла ошибка при установке локализаций. (22.1/${commands})\n${end_process_line}"
+      exit 2
+    fi
+
+    #22.2
+    if ! sudo update-locale "LANG=en_US.UTF-8" ; then
+      echo -e "${start_process_line}\nПроизошла ошибка при обновлении файла локализаций. (22.2/${commands})\n${end_error_line}"
+      exit 2
+    fi
+
+    #22.3
+    if ! sudo locale-gen "en_US.UTF-8" ; then
+      echo -e "${start_process_line}\nПроизошла ошибка генерации файла локализаций. (22.3/${commands})\n${end_error_line}"
+      exit 2
+    fi
+
+    #22.4
+    if ! sudo dpkg-reconfigure --frontend noninteractive locales ; then
+      echo -e "${start_process_line}\nПроизошла ошибка при реконфигурации локализаций. (22.4/${commands})\n${end_error_line}"
+      exit 2
+    fi
+    ;;
+  *)
+    #22
+    if ! sudo apt install -y language-pack-en ; then
+      echo -e "${start_process_line}\nПроизошла ошибка при установке языковых пакетов. (22/${commands})\n${end_process_line}"
+      exit 2
+    fi
+    ;;
+esac
+
 
 clear
 echo -e $logo
