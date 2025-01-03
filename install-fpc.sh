@@ -187,20 +187,11 @@ case $distro_version in
 esac
 
 #10
-case $distro_version in
-  "24.04" | "24.10" | "11" | "12")
-    if ! sudo /home/$username/pyvenv/bin/python -m ensurepip --upgrade ; then
-      echo -e "${start_process_line}\nПроизошла ошибка при установке Pip. (10/${commands})\n${end_process_line}"
-      exit 2
-    fi
-    ;;
-  *)
-    if ! sudo -u $username /home/$username/pyvenv/bin/python -m ensurepip --upgrade ; then
-      echo -e "${start_process_line}\nПроизошла ошибка при установке Pip. (10/${commands})\n${end_process_line}"
-      exit 2
-    fi
-    ;;
-esac
+# Важно: eunsurepip стоить запускать от root, иначе будет ошибка на некоторых версиях ОС (например, Debian 11, Debian 12, Ubuntu 20.04, Ubuntu 24.04)
+if ! sudo /home/$username/pyvenv/bin/python -m ensurepip --upgrade ; then
+  echo -e "${start_process_line}\nПроизошла ошибка при установке Pip. (10/${commands})\n${end_process_line}"
+  exit 2
+fi
 
 #11
 if ! sudo -u $username /home/$username/pyvenv/bin/python -m pip install --upgrade pip ; then
