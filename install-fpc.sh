@@ -170,28 +170,31 @@ if ! sudo useradd -m $username ; then
   exit 2
 fi
 
+#9
 case $distro_version in
   "24.04" | "24.10")
-    #9
     if ! sudo -u $username python3.12 -m venv /home/$username/pyvenv ; then
       echo -e "${start_process_line}\nПроизошла ошибка при создании виртуального окружения. (9/${commands})\n${end_process_line}"
       exit 2
     fi
+    ;;
+  *)
+    if ! sudo -u $username python3.11 -m venv /home/$username/pyvenv ; then
+      echo -e "${start_process_line}\nПроизошла ошибка при создании виртуального окружения. (9/${commands})\n${end_process_line}"
+      exit 2
+    fi
+    ;;
+esac
 
-    #10
+#10
+case $distro_version in
+  "24.04" | "24.10" | "11" | "12")
     if ! sudo /home/$username/pyvenv/bin/python -m ensurepip --upgrade ; then
       echo -e "${start_process_line}\nПроизошла ошибка при установке Pip. (10/${commands})\n${end_process_line}"
       exit 2
     fi
     ;;
   *)
-    #9
-    if ! sudo -u $username python3.11 -m venv /home/$username/pyvenv ; then
-      echo -e "${start_process_line}\nПроизошла ошибка при создании виртуального окружения. (9/${commands})\n${end_process_line}"
-      exit 2
-    fi
-
-    #10
     if ! sudo -u $username /home/$username/pyvenv/bin/python -m ensurepip --upgrade ; then
       echo -e "${start_process_line}\nПроизошла ошибка при установке Pip. (10/${commands})\n${end_process_line}"
       exit 2
