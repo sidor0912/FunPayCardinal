@@ -34,27 +34,13 @@ while true; do
   fi
 done
 
+
 distro_version=$(lsb_release -rs)
 
-BOT_PATH="$PWD/$foldername"
 
-unit_file="[Unit]
-Description=FunPay Cardinal
-After=syslog.target
-
-[Service]
-Type=simple
-User=$(logname)
-Group=sudo
-WorkingDirectory=${BOT_PATH}/
-Environment=\"LANG=en_US.utf8\"
-ExecStart=/usr/bin/python3.11 main.py
-
-[Install]
-WantedBy=multi-user.target"
 clear
-
 echo -e "${start_process_line}\nДобавляю репозитории...\n${end_process_line}"
+
 
 # 1
 if ! sudo apt update ; then
@@ -273,7 +259,7 @@ echo -e "${RED}!СДЕЛАЙ СКРИНШОТ!${CYAN}!СДЕЛАЙ СКРИНШ�
 echo -e "\nГотово!"
 echo -e "FPC запущен как фоновый процесс!"
 echo -e "Теперь напиши своему Telegram-боту."
-echo -e "\nДля остановки FPC используй команду \e[93msudo systemctl stop FunPayCardinal@${username}\e[1;92m"
+echo -e "\n\e[1;92mДля остановки FPC используй команду \e[93msudo systemctl stop FunPayCardinal@${username}\e[1;92m"
 echo -e "Для запуска FPC используй команду \e[93msudo systemctl start FunPayCardinal@${username}\e[1;92m"
 echo -e "Для перезапуска FPC используй команду \e[93msudo systemctl restart FunPayCardinal@${username}\e[1;92m"
 echo -e "Для просмотра логов используй команду \e[93msudo systemctl status FunPayCardinal@${username} -n100\e[1;92m"
