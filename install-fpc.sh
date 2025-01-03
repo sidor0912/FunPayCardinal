@@ -110,6 +110,7 @@ EOF
     fi
     ;;
   *)
+    #3
     if ! sudo add-apt-repository -y ppa:deadsnakes/ppa ; then
       echo -e "${start_process_line}\nПроизошла ошибка при добавлении репозитория. (3/${commands})\n${end_process_line}"
       exit 2
