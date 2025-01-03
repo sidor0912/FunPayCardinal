@@ -287,12 +287,6 @@ echo -e "$start_process_line\nНастраиваю кодировку серве
 
 
 #22
-if ! sudo apt install -y language-pack-en ; then
-  echo -e "${start_process_line}\nПроизошла ошибка при установке языковых пакетов. (22/${commands})\n${end_process_line}"
-  exit 2
-fi
-
-#22
 case $distro_version in
   "11" | "12")
     #22.1
