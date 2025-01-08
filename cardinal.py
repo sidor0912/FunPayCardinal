@@ -312,14 +312,14 @@ class Cardinal(object):
             error_text = ""
             time_delta = ""
             try:
-                time.sleep(0.5)
+                time.sleep(1)
                 self.account.raise_lots(subcat.category.id)
                 logger.info(_("crd_lots_raised", subcat.category.name))
                 raise_ok = True
                 last_time = self.raised_time.get(subcat.category.id)
                 self.raised_time[subcat.category.id] = new_time = int(time.time())  # locale
                 time_delta = "" if not last_time else f" Последнее поднятие: {cardinal_tools.time_to_str(new_time - last_time)} назад."
-                time.sleep(0.5)
+                time.sleep(1)
                 self.account.raise_lots(subcat.category.id)
             except FunPayAPI.exceptions.RaiseError as e:
                 if e.error_message is not None:
@@ -330,25 +330,22 @@ class Cardinal(object):
                     next_time = int(time.time()) + e.wait_time
                 else:
                     logger.error(_("crd_raise_unexpected_err", subcat.category.name))
-                    next_time = int(time.time()) + 10
+                    time.sleep(10)
+                    next_time = int(time.time()) + 1
                 self.raise_time[subcat.category.id] = next_time
                 next_call = next_time if next_time < next_call else next_call
                 if not raise_ok:
                     continue
             except Exception as e:
-                if isinstance(e, FunPayAPI.exceptions.RequestFailedError) and e.status_code == 429:
-                    logger.warning(_("crd_raise_429_err", subcat.category.name))
-                    time.sleep(10)
-                    next_time = int(time.time()) + 1
-                elif isinstance(e, FunPayAPI.exceptions.RequestFailedError) and e.status_code == 503:
-                    logger.warning(_("crd_raise_503_err", subcat.category.name))
-                    logger.debug("TRACEBACK", exc_info=True)
-                    time.sleep(120)
-                    next_time = int(time.time()) + 1
+                t = 10
+                if isinstance(e, FunPayAPI.exceptions.RequestFailedError) and e.status_code in (503, 403, 429):
+                    logger.warning(_("crd_raise_status_code_err", e.status_code, subcat.category.name))
+                    t = 60
                 else:
                     logger.error(_("crd_raise_unexpected_err", subcat.category.name))
-                    logger.debug("TRACEBACK", exc_info=True)
-                    next_time = int(time.time()) + 10
+                logger.debug("TRACEBACK", exc_info=True)
+                time.sleep(t)
+                next_time = int(time.time()) + 1
                 next_call = next_time if next_time < next_call else next_call
                 if not raise_ok:
                     continue
