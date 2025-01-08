@@ -178,13 +178,16 @@ class Account:
         locale = locale or self.__set_locale
         if request_method == "get" and locale and locale != self.locale:
             link += f'{"&" if "?" in link else "?"}setlocale={self.__set_locale}'
-        response = getattr(requests, request_method)(link, headers=headers, data=payload,
-                                                     timeout=self.requests_timeout,
-                                                     proxies=self.proxy or {}, allow_redirects=False)
-        if 'Location' in response.headers:
-            redirect_url = response.headers['Location']
-            update_locale(redirect_url)
-            response = getattr(requests, request_method)(redirect_url, headers=headers, data=payload,
+        for i in range(10):
+            response = getattr(requests, request_method)(link, headers=headers, data=payload,
+                                                         timeout=self.requests_timeout,
+                                                         proxies=self.proxy or {}, allow_redirects=False)
+            if not (300 <= response.status_code < 400) or 'Location' not in response.headers:
+                break
+            link = response.headers['Location']
+            update_locale(link)
+        else:
+            response = getattr(requests, request_method)(link, headers=headers, data=payload,
                                                          timeout=self.requests_timeout,
                                                          proxies=self.proxy or {})
 
