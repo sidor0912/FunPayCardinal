@@ -98,6 +98,15 @@ if not os.path.exists("configs/_main.cfg"):
     first_setup()
     sys.exit()
 
+if sys.platform == "linux" and os.getenv('FPC_IS_RUNNIG_AS_SERVICE', '0') == '1':
+    import getpass
+    pid = str(os.getpid())
+    pidFile = open(f"/run/FunPayCardinal/{getpass.getuser()}/FunPayCardinal.pid", "w")
+    pidFile.write(pid)
+    pidFile.close()
+
+    logger.info(f"$GREENPID файл создан, PID процесса: {pid}") # locale
+
 directory = 'plugins'
 for filename in os.listdir(directory):
     if filename.endswith(".py"):  # Проверяем, что файл имеет расширение .py
