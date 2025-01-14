@@ -99,7 +99,7 @@
 ### :hotsprings: Linux (Ubuntu)
 
 1. Выполните команду:
-   `wget https://raw.githubusercontent.com/sidor0912/FunPayCardinal/main/linux_install.sh -nc && bash linux_install.sh`
+   `wget https://raw.githubusercontent.com/sidor0912/FunPayCardinal/main/install-fpc.sh -O install-fpc.sh && bash install-fpc.sh`
 2. Следуйте инструкциям установщика.
    Данный скрипт автоматически установит всё необходимое и запустит бота как фоновый процесс.
 
@@ -120,7 +120,7 @@
    `sudo update-locale LANG=ru_RU.utf8`
 7. Если возникает ошибка, вернитесь к шагу 4.
 8. Повторите попытку установки скрипта:  
-   `wget https://raw.githubusercontent.com/sidor0912/FunPayCardinal/main/linux_install.sh -nc && bash linux_install.sh`
+   `wget https://raw.githubusercontent.com/sidor0912/FunPayCardinal/main/install-fpc.sh -O install-fpc.sh && bash install-fpc.sh`
 9. Если снова возникает ошибка, вернитесь к шагу 4.
 
 ## :electric_plug: Установка плагинов

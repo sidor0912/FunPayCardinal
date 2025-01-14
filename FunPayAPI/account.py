@@ -508,12 +508,13 @@ class Account:
         json_response = response.json()
         if not json_response.get("chat") or not json_response["chat"].get("messages"):
             return []
-        if isinstance(chat_id, int):
+        if json_response["chat"]["node"]["silent"]:
+            interlocutor_id = None
+        else:
             interlocutors = json_response["chat"]["node"]["name"].split("-")[1:]
             interlocutors.remove(str(self.id))
             interlocutor_id = int(interlocutors[0])
-        else:
-            interlocutor_id = None
+
         return self.__parse_messages(json_response["chat"]["messages"], chat_id, interlocutor_id,
                                      interlocutor_username, from_id)
 
@@ -549,14 +550,14 @@ class Account:
             if not i.get("data"):
                 result[i.get("id")] = []
                 continue
-            if isinstance(i.get("id"), int):
+            if i["data"]["node"]["silent"]:
+                interlocutor_id = None
+                interlocutor_name = None
+            else:
                 interlocutors = i["data"]["node"]["name"].split("-")[1:]
                 interlocutors.remove(str(self.id))
                 interlocutor_id = int(interlocutors[0])
                 interlocutor_name = chats_data[i.get("id")]
-            else:
-                interlocutor_id = None
-                interlocutor_name = None
             messages = self.__parse_messages(i["data"]["messages"], i.get("id"), interlocutor_id, interlocutor_name)
             result[i.get("id")] = messages
         return result

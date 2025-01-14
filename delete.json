@@ -6,5 +6,6 @@
   "storage/plugins/del_old_users_settings.json",
   "plugins/cookie_changer.py",
   "locales/eng.py",
-  "setup.py"
+  "setup.py",
+  "linux_install.sh"
 ]
