@@ -142,6 +142,8 @@ class Cardinal(object):
         self.curr_profile: FunPayAPI.types.UserProfile | None = None  # Текущий профиль (для восст. / деакт. лотов.)
         # Тег последнего event'а, после которого обновлялся self.current_profile
         self.curr_profile_last_tag: str | None = None
+        # Тег последнего event'а, после которого в self.profile добавлялись отсутствующие ранее лоты
+        self.profile_last_tag: str | None = None
         # Тег последнего event'а, после которого обновлялось состояние лотов.
         self.last_state_change_tag: str | None = None
         self.blacklist = cardinal_tools.load_blacklist()  # ЧС.
@@ -294,9 +296,7 @@ class Cardinal(object):
         # Время следующего вызова функции (по умолчанию - бесконечность).
         next_call = float("inf")
 
-        for subcat in sorted(set(list(self.profile.get_sorted_lots(2).keys()) +
-                                 list(self.curr_profile.get_sorted_lots(2).keys()) +
-                                 list(self.tg_profile.get_sorted_lots(2).keys())), key=lambda x: x.category.name):
+        for subcat in sorted(list(self.profile.get_sorted_lots(2).keys()), key=lambda x: x.category.position):
             if subcat.type is SubCategoryTypes.CURRENCY:
                 continue
             # Если id категории текущей подкатегории уже находится в self.game_ids, но время поднятия подкатегорий

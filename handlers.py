@@ -122,7 +122,7 @@ def greetings_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChangedEv
         chat_id, chat_name, mtype, its_me, badge = obj.id, obj.name, obj.last_message_type, not obj.unread, None
     if any([time.time() - c.old_users.get(chat_id, 0) < float(
             c.MAIN_CFG["Greetings"]["greetingsCooldown"]) * 24 * 60 * 60,
-            its_me, mtype == MessageTypes.DEAR_VENDORS, badge is not None,
+            its_me, mtype in (MessageTypes.DEAR_VENDORS, MessageTypes.ORDER_CONFIRMED_BY_ADMIN), badge is not None,
             (mtype is not MessageTypes.NON_SYSTEM and c.MAIN_CFG["Greetings"].getboolean("ignoreSystemMessages"))]):
         return
 
@@ -479,6 +479,19 @@ def update_current_lots_handler(c: Cardinal, e: OrdersListChangedEvent):
         return
 
 
+def update_profile_lots_handler(c: Cardinal, e: OrdersListChangedEvent):
+    """Добавляет в c.profile лоты, которых не было раньше."""
+    if c.curr_profile_last_tag != e.runner_tag or c.profile_last_tag == e.runner_tag:
+        return
+    c.profile_last_tag = e.runner_tag
+    lots = c.curr_profile.get_sorted_lots(1)
+    profile_lots = c.profile.get_sorted_lots(1)
+
+    for lot_id, lot in lots.items():
+        if lot_id not in profile_lots.keys():
+            c.profile.add_lot(lot)
+
+
 # Новый ордер (REGISTER_TO_NEW_ORDER)
 def log_new_order_handler(c: Cardinal, e: NewOrderEvent, *args):
     """
@@ -659,11 +672,6 @@ def update_lots_states(cardinal: Cardinal, event: NewOrderEvent):
         return
 
     lots = cardinal.curr_profile.get_sorted_lots(1)
-    profile_lots = cardinal.profile.get_sorted_lots(1)
-
-    for lot_id, lot in lots.items():
-        if lot_id not in profile_lots.keys():
-            cardinal.profile.add_lot(lot)
 
     deactivated = []
     restored = []
@@ -805,7 +813,7 @@ BIND_TO_NEW_MESSAGE = [log_msg_handler,
 
 BIND_TO_POST_LOTS_RAISE = [send_categories_raised_notification_handler]
 
-BIND_TO_ORDERS_LIST_CHANGED = [update_current_lots_handler]
+BIND_TO_ORDERS_LIST_CHANGED = [update_current_lots_handler, update_profile_lots_handler]
 
 BIND_TO_NEW_ORDER = [log_new_order_handler, setup_event_attributes_handler,
                      send_new_order_notification_handler, deliver_product_handler,

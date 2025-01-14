@@ -93,7 +93,7 @@
 3. Перенести папку `FunPayCardinal-main` в нужное Вам место.
 4. Перейдите в папку `FunPayCardinal-main`.
 5. В адресной строке введите `cmd` и нажмите `Enter`. <img src="https://i.ibb.co/0mjkf9Q/explorer-Zcsm-Ife-XFl.png">
-6. В открывшейся командной строке введите `python setup.py`. Дождитесь окончания загрузки пакетов.
+6. В открывшейся командной строке введите `pip install -U -r requirements.txt`. Дождитесь окончания загрузки пакетов.
 7. Закройте командную строку и запустите файл `Start.bat`.
 
 ### :hotsprings: Linux (Ubuntu)
