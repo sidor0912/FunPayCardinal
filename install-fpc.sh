@@ -268,7 +268,7 @@ echo -e "$start_process_line\nСоздаю ссылку на файл фонов
 
 
 #21
-if ! sudo ln -s /home/$username/FunPayCardinal/FunPayCardinal@.service /etc/systemd/system/FunPayCardinal@.service ; then
+if ! sudo ln -sf /home/$username/FunPayCardinal/FunPayCardinal@.service /etc/systemd/system/FunPayCardinal@.service ; then
   echo -e "${start_process_line}\nПроизошла ошибка при создании ссылки на файл фонового процесса. (21/${commands})\n${end_process_line}"
   exit 2
 fi
