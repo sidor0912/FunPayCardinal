@@ -1,13 +1,12 @@
 /venv
 /venv2
-/__pycache__
 /.idea
-/FunPayAPI/__pycache__
 /logs
 /storage
 /configs
 /plugins
 /build
 /dist
+__pycache__
 test.py
 backup.zip
