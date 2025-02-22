@@ -118,6 +118,26 @@ class ChatShortcut(BaseOrderInfo):
         return self.last_message_text
 
 
+class BuyerViewing:
+    """
+    Данный класс представляет поле "Покупатель смотрит"
+    """
+
+    def __init__(self, buyer_id: int, link: str | None, text: str | None, tag: str | None, html: str | None = None):
+        """
+        :param buyer_id: ID покупателя.
+        :param link: Ссылка на лот, который он просматривает.
+        :param text: Текстовое описание лота.
+        :param tag: Тег события.
+        :param html: Исходный HTML-код блока просмотра (если необходимо).
+        """
+        self.buyer_id: int = buyer_id
+        self.link: str | None = link
+        self.text: str | None = text
+        self.tag: str | None = tag
+        self.html: str | None = html
+
+
 class Chat:
     """
     Данный класс представляет личный чат.
@@ -190,6 +210,7 @@ class Message(BaseOrderInfo):
     """
 
     def __init__(self, id_: int, text: str | None, chat_id: int | str, chat_name: str | None,
+                 interlocutor_id: int | None,
                  author: str | None, author_id: int, html: str,
                  image_link: str | None = None, image_name: str | None = None,
                  determine_msg_type: bool = True, badge_text: Optional[str] = None):
@@ -201,6 +222,10 @@ class Message(BaseOrderInfo):
         """ID чата."""
         self.chat_name: str | None = chat_name
         """Название чата."""
+        self.interlocutor_id: int | None = interlocutor_id
+        """ID собеседника"""
+        self.buyer_viewing: BuyerViewing | None = None
+        """Лот, который смотрит собеседник (если включена настройка)"""
         self.type: MessageTypes | None = None if not determine_msg_type else self.get_message_type()
         """Тип сообщения."""
         self.author: str | None = author

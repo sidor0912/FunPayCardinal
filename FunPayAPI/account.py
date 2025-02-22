@@ -98,6 +98,9 @@ class Account:
         self.last_update: int | None = None
         """Последнее время обновления аккаунта."""
 
+        self.interlocutor_ids: dict[int, int] = {}
+        """{id чата: id собеседника}"""
+
         self.__initiated: bool = False
 
         self.__saved_chats: dict[int, types.ChatShortcut] = {}
@@ -177,7 +180,7 @@ class Account:
             link = normalize_url(api_method)
         locale = locale or self.__set_locale
         if request_method == "get" and locale and locale != self.locale:
-            link += f'{"&" if "?" in link else "?"}setlocale={self.__set_locale}'
+            link += f'{"&" if "?" in link else "?"}setlocale={locale}'
         for i in range(10):
             response = getattr(requests, request_method)(link, headers=headers, data=payload,
                                                          timeout=self.requests_timeout,
@@ -518,10 +521,12 @@ class Account:
         return self.__parse_messages(json_response["chat"]["messages"], chat_id, interlocutor_id,
                                      interlocutor_username, from_id)
 
-    def get_chats_histories(self, chats_data: dict[int | str, str | None]) -> dict[int, list[types.Message]]:
+    def get_chats_histories(self, chats_data: dict[int | str, str | None],
+                            interlocutor_ids: list[int] | None = None) -> dict[int, list[types.Message]]:
         """
         Получает историю сообщений сразу нескольких чатов
         (до 50 сообщений на личный чат, до 25 сообщений на публичный чат).
+        Прокидывает в Account.runner информацию о том, какие лоты смотрят cобеседники (interlocutor_ids).
 
         :param chats_data: ID чатов и никнеймы собеседников (None, если никнейм неизвестен)\n
             Например: {48392847: "SLLMK", 58392098: "Amongus", 38948728: None}
@@ -535,10 +540,14 @@ class Account:
             "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
             "x-requested-with": "XMLHttpRequest"
         }
-        objects = [{"type": "chat_node", "id": i, "tag": "00000000",
-                    "data": {"node": i, "last_message": -1, "content": ""}} for i in chats_data]
+        chats = [{"type": "chat_node", "id": i, "tag": "00000000",
+                  "data": {"node": i, "last_message": -1, "content": ""}} for i in chats_data]
+        buyers = [{"type": "c-p-u",
+                   "id": str(buyer),
+                   "tag": utils.random_tag(),
+                   "data": False} for buyer in interlocutor_ids or []]
         payload = {
-            "objects": json.dumps(objects),
+            "objects": json.dumps([*chats, *buyers]),
             "request": False,
             "csrf_token": self.csrf_token
         }
@@ -547,19 +556,23 @@ class Account:
 
         result = {}
         for i in json_response["objects"]:
-            if not i.get("data"):
-                result[i.get("id")] = []
-                continue
-            if i["data"]["node"]["silent"]:
-                interlocutor_id = None
-                interlocutor_name = None
-            else:
-                interlocutors = i["data"]["node"]["name"].split("-")[1:]
-                interlocutors.remove(str(self.id))
-                interlocutor_id = int(interlocutors[0])
-                interlocutor_name = chats_data[i.get("id")]
-            messages = self.__parse_messages(i["data"]["messages"], i.get("id"), interlocutor_id, interlocutor_name)
-            result[i.get("id")] = messages
+            if i.get("type") == "c-p-u":
+                bv = self.parse_buyer_viewing(i)
+                self.runner.buyers_viewing[bv.buyer_id] = bv
+            elif i.get("type") == "chat_node":
+                if not i.get("data"):
+                    result[i.get("id")] = []
+                    continue
+                if i["data"]["node"]["silent"]:
+                    interlocutor_id = None
+                    interlocutor_name = None
+                else:
+                    interlocutors = i["data"]["node"]["name"].split("-")[1:]
+                    interlocutors.remove(str(self.id))
+                    interlocutor_id = int(interlocutors[0])
+                    interlocutor_name = chats_data[i.get("id")]
+                messages = self.__parse_messages(i["data"]["messages"], i.get("id"), interlocutor_id, interlocutor_name)
+                result[i.get("id")] = messages
         return result
 
     def upload_image(self, image: str | IO[bytes], type_: Literal["chat", "offer"] = "chat") -> int:
@@ -618,6 +631,7 @@ class Account:
         return int(document_id)
 
     def send_message(self, chat_id: int | str, text: Optional[str] = None, chat_name: Optional[str] = None,
+                     interlocutor_id: Optional[int] = None,
                      image_id: Optional[int] = None, add_to_ignore_list: bool = True,
                      update_last_saved_message: bool = False, leave_as_unread: bool = False) -> types.Message:
         """
@@ -631,6 +645,9 @@ class Account:
 
         :param chat_name: название чата (для возвращаемого объекта сообщения) (не нужно для отправки сообщения в публичный чат).
         :type chat_name: :obj:`str` or :obj:`None`, опционально
+
+        :param interlocutor_id: ID собеседника (не нужно для отправки сообщения в публичный чат).
+        :type interlocutor_id: :obj:`int` or :obj:`None`, опционально
 
         :param image_id: ID изображения. Доступно только для личных чатов.
         :type image_id: :obj:`int` or :obj:`None`, опционально
@@ -698,7 +715,8 @@ class Account:
                 </div>
             </div>
             """
-            message_obj = types.Message(0, message_text, chat_id, chat_name, self.username, self.id, fake_html, None,
+            message_obj = types.Message(0, message_text, chat_id, chat_name, interlocutor_id, self.username, self.id,
+                                        fake_html, None,
                                         None)
         else:
             mes = json_response["objects"][0]["data"]["messages"][-1]
@@ -718,7 +736,8 @@ class Account:
                 logger.debug("SEND_MESSAGE RESPONSE")
                 logger.debug(response.content.decode())
                 raise e
-            message_obj = types.Message(int(mes["id"]), message_text, chat_id, chat_name, self.username, self.id,
+            message_obj = types.Message(int(mes["id"]), message_text, chat_id, chat_name, interlocutor_id,
+                                        self.username, self.id,
                                         mes["html"], image_link, image_name)
         if self.runner and isinstance(chat_id, int):
             if add_to_ignore_list and message_obj.id:
@@ -728,6 +747,7 @@ class Account:
         return message_obj
 
     def send_image(self, chat_id: int, image: int | str | IO[bytes], chat_name: Optional[str] = None,
+                   interlocutor_id: Optional[int] = None,
                    add_to_ignore_list: bool = True, update_last_saved_message: bool = False,
                    leave_as_unread: bool = False) -> types.Message:
         """
@@ -743,6 +763,9 @@ class Account:
 
         :param chat_name: Название чата (никнейм собеседника). Нужен для возвращаемого объекта.
         :type chat_name: :obj:`str` or :obj:`None`, опционально
+
+        :param interlocutor_id: ID собеседника (не нужно для отправки сообщения в публичный чат).
+        :type interlocutor_id: :obj:`int` or :obj:`None`, опционально
 
         :param add_to_ignore_list: добавлять ли ID отправленного сообщения в игнорируемый список Runner'а?
         :type add_to_ignore_list: :obj:`bool`, опционально
@@ -761,7 +784,8 @@ class Account:
 
         if not isinstance(image, int):
             image = self.upload_image(image, type_="chat")
-        result = self.send_message(chat_id, None, chat_name, image, add_to_ignore_list, update_last_saved_message,
+        result = self.send_message(chat_id, None, chat_name, interlocutor_id,
+                                   image, add_to_ignore_list, update_last_saved_message,
                                    leave_as_unread)
         return result
 
@@ -1903,7 +1927,7 @@ class Account:
                 # elif message_text.startswith(self.__old_bot_character):
                 #     by_vertex = True
 
-            message_obj = types.Message(i["id"], message_text, chat_id, interlocutor_username,
+            message_obj = types.Message(i["id"], message_text, chat_id, interlocutor_username, interlocutor_id,
                                         None, author_id, i["html"], image_link, image_name, determine_msg_type=False)
             message_obj.by_bot = by_bot
             message_obj.by_vertex = by_vertex
@@ -1972,6 +1996,23 @@ class Account:
                                 i.i_am_buyer = False
 
         return messages
+
+    @staticmethod
+    def parse_buyer_viewing(json_responce: dict) -> types.BuyerViewing:
+        buyer_id = json_responce.get("id")
+        if not json_responce["data"]:
+            return types.BuyerViewing(buyer_id, None, None, None, None)
+
+        tag = json_responce["tag"]
+        html = json_responce["data"]["html"]
+        if html:
+            html = html["desktop"]
+            element = BeautifulSoup(html, "lxml").find("a")
+            link, text = element.get("href"), element.text
+        else:
+            html, link, text = None, None, None
+
+        return types.BuyerViewing(buyer_id, link, text, tag, html)
 
     @staticmethod
     def chat_id_private(chat_id: int | str):
