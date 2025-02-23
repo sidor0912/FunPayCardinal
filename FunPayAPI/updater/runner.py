@@ -309,7 +309,7 @@ class Runner:
             self.by_bot_ids[cid] = self.by_bot_ids.get(cid) or []
 
             # Удаляем все сообщения, у которых ID меньше сохраненного последнего сообщения
-            if self.last_messages_ids.get(cid):
+            if cid in self.last_messages_ids:
                 messages = [i for i in messages if i.id > self.last_messages_ids[cid]]
             if not messages:
                 continue
@@ -323,7 +323,7 @@ class Runner:
             stack = MessageEventsStack()
 
             # Если нет сохраненного ID последнего сообщения
-            if not self.last_messages_ids.get(cid):
+            if cid not in self.last_messages_ids:
                 messages = messages[-1:]
 
             self.last_messages_ids[cid] = messages[-1].id  # Перезаписываем ID последнего сообщение
