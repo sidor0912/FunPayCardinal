@@ -220,15 +220,10 @@ class Runner:
             if self.__first_request:
                 events.append(InitialChatEvent(self.__last_msg_event_tag, chat_obj))
                 if self.make_msg_requests:
-                    self.last_messages_ids[chat_id] = user_msg_id
-                    # для реакции на непрочитанные сообщения после перезапуска
-                    self.runner_last_messages[chat_id] = [user_msg_id, user_msg_id, last_msg_text_or_none]
+                    self.last_messages_ids[chat_id] = node_msg_id
                 continue
             else:
                 lcmc_events.append(LastChatMessageChangedEvent(self.__last_msg_event_tag, chat_obj))
-                # непрочитанные чаты, которых раньше не видели - записываем айди последнего прочитанного сообщения
-                if self.make_msg_requests and user_msg_id != node_msg_id:
-                    self.last_messages_ids.setdefault(chat_id, user_msg_id)
 
         # Если есть события изменения чатов, значит это не первый запрос и ChatsListChangedEvent будет первым событием
         if lcmc_events:
@@ -309,7 +304,7 @@ class Runner:
             self.by_bot_ids[cid] = self.by_bot_ids.get(cid) or []
 
             # Удаляем все сообщения, у которых ID меньше сохраненного последнего сообщения
-            if cid in self.last_messages_ids:
+            if self.last_messages_ids.get(cid):
                 messages = [i for i in messages if i.id > self.last_messages_ids[cid]]
             if not messages:
                 continue
@@ -323,8 +318,9 @@ class Runner:
             stack = MessageEventsStack()
 
             # Если нет сохраненного ID последнего сообщения
-            if cid not in self.last_messages_ids:
-                messages = messages[-1:]
+            if not self.last_messages_ids.get(cid):
+                messages = [m for m in messages if
+                            m.id > min(self.last_messages_ids.values(), default=10 ** 20)] or messages[-1:]
 
             self.last_messages_ids[cid] = messages[-1].id  # Перезаписываем ID последнего сообщение
             self.by_bot_ids[cid] = [i for i in self.by_bot_ids[cid] if i > self.last_messages_ids[cid]]  # чистим память
