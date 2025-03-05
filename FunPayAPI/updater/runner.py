@@ -210,7 +210,8 @@ class Runner:
             unread = True if "unread" in chat.get("class") else False
 
             chat_with = chat.find("div", {"class": "media-user-name"}).text
-            chat_obj = types.ChatShortcut(chat_id, chat_with, last_msg_text, unread, str(chat))
+            chat_obj = types.ChatShortcut(chat_id, chat_with, last_msg_text, node_msg_id,
+                                          user_msg_id, unread, str(chat))
             if last_msg_text_or_none is not None:
                 chat_obj.last_by_bot = by_bot
                 chat_obj.last_by_vertex = by_vertex
@@ -233,16 +234,25 @@ class Runner:
             events.extend(lcmc_events)
             return events
 
+        lcmc_events_without_new_mess = []
+        lcmc_events_with_new_mess = []
+        for lcmc_event in lcmc_events:
+            if lcmc_event.chat.node_msg_id <= self.last_messages_ids.get(lcmc_event.chat.id, -1):
+                lcmc_events_without_new_mess.append(lcmc_event)
+            else:
+                lcmc_events_with_new_mess.append(lcmc_event)
+        events.extend(lcmc_events_without_new_mess)
+
         if self.make_buyer_viewing_requests:
             # в приоритете те, у которых не известен айди собеседника (чтобы быстрее узнать, что они смотрят)
-            lcmc_events.sort(key=lambda i: i.chat.id not in self.account.interlocutor_ids)
+            lcmc_events_with_new_mess.sort(key=lambda i: i.chat.id not in self.account.interlocutor_ids)
             self.__interlocutor_ids = self.__interlocutor_ids | set([self.account.interlocutor_ids.get(i.chat.id)
-                                                                     for i in lcmc_events if
+                                                                     for i in lcmc_events_with_new_mess if
                                                                      i.chat.id in self.account.interlocutor_ids])
 
-        while lcmc_events or len(self.__interlocutor_ids) >= self.runner_len - 2:
-            chats_pack = lcmc_events[:self.runner_len]
-            del lcmc_events[:self.runner_len]
+        while lcmc_events_with_new_mess or len(self.__interlocutor_ids) >= self.runner_len - 2:
+            chats_pack = lcmc_events_with_new_mess[:self.runner_len]
+            del lcmc_events_with_new_mess[:self.runner_len]
             bv_pack = []
             while self.make_buyer_viewing_requests and \
                     len(chats_pack) + len(bv_pack) < self.runner_len and self.__interlocutor_ids:

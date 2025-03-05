@@ -47,7 +47,7 @@ class ChatShortcut(BaseOrderInfo):
     :type determine_msg_type: :obj:`bool`, опционально
     """
 
-    def __init__(self, id_: int, name: str, last_message_text: str,
+    def __init__(self, id_: int, name: str, last_message_text: str, node_msg_id: int, user_msg_id: int,
                  unread: bool, html: str, determine_msg_type: bool = True):
         self.id: int = id_
         """ID чата."""
@@ -61,6 +61,10 @@ class ChatShortcut(BaseOrderInfo):
         """Отпралено ли последнее сообщение через Vertex?"""
         self.unread: bool = unread
         """Флаг \"непрочитанности\" (если True - в чате есть непрочитанные сообщения)."""
+        self.node_msg_id: int = node_msg_id
+        """ID последнего сообщения в чате."""
+        self.user_msg_id: int = user_msg_id
+        """ID последнего прочитанного сообщения."""
         self.last_message_type: MessageTypes | None = None if not determine_msg_type else self.get_last_message_type()
         """Тип последнего сообщения."""
         self.html: str = html

@@ -69,6 +69,10 @@ class Account:
         """Активные продажи."""
         self.active_purchases: int | None = None
         """Активные покупки."""
+        self.last_429_err_time: float = 0
+        """Время последнего возникновения 429 ошибки"""
+        self.last_flood_err_time: float = 0
+        """Время последнего возникновения ошибки \"Нельзя отправлять сообщения слишком часто.\""""
         self.__locale: Literal["ru", "en", "uk"] | None = None
         """Текущий язык аккаунта."""
         self.__default_locale: Literal["ru", "en", "uk"] | None = locale
@@ -193,6 +197,8 @@ class Account:
             response = getattr(requests, request_method)(link, headers=headers, data=payload,
                                                          timeout=self.requests_timeout,
                                                          proxies=self.proxy or {})
+        if response.status_code == 429:
+            self.last_429_err_time = time.time()
 
         if response.status_code == 403:
             raise exceptions.UnauthorizedError(response)
@@ -703,6 +709,10 @@ class Account:
             raise exceptions.MessageNotDeliveredError(response, None, chat_id)
 
         if (error_text := resp.get("error")) is not None:
+            if error_text in ("Нельзя отправлять сообщения слишком часто.",
+                              "You cannot send messages too frequently.",
+                              "Не можна надсилати повідомлення занадто часто."):
+                self.last_flood_err_time = time.time()
             raise exceptions.MessageNotDeliveredError(response, error_text, chat_id)
         if leave_as_unread:
             message_text = text
@@ -1512,7 +1522,8 @@ class Account:
             last_msg_text = msg.find("div", {"class": "contact-item-message"}).text
             unread = True if "unread" in msg.get("class") else False
             chat_with = msg.find("div", {"class": "media-user-name"}).text
-
+            node_msg_id = int(msg.get('data-node-msg'))
+            user_msg_id = int(msg.get('data-user-msg'))
             by_bot = False
             by_vertex = False
             is_image = last_msg_text in ("Изображение", "Зображення", "Image")
@@ -1522,7 +1533,7 @@ class Account:
             elif last_msg_text.startswith(self.old_bot_character):
                 last_msg_text = last_msg_text[1:]
                 by_vertex = True
-            chat_obj = types.ChatShortcut(chat_id, chat_with, last_msg_text, unread, str(msg))
+            chat_obj = types.ChatShortcut(chat_id, chat_with, last_msg_text, node_msg_id, user_msg_id, unread, str(msg))
             if not is_image:
                 chat_obj.last_by_bot = by_bot
                 chat_obj.last_by_vertex = by_vertex
