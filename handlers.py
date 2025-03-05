@@ -767,11 +767,10 @@ def send_order_confirmed_notification_handler(cardinal: Cardinal, event: OrderSt
         return
 
     chat = cardinal.account.get_chat_by_name(event.order.buyer_username, True)
-    Thread(target=cardinal.telegram.send_notification,
+    Thread(target=cardinal.telegram.send_notification,  # locale
            args=(
                f"""🪙 Пользователь <a href="https://funpay.com/chat/?node={chat.id}">{event.order.buyer_username}</a> """
-               f"""подтвердил выполнение заказа <code>{event.order.id}</code>. 
-               (<code>{event.order.price} {event.order.currency}</code>)""",  # locale
+               f"""подтвердил выполнение заказа <code>{event.order.id}</code>. (<code>{event.order.price} {event.order.currency}</code>)""",
                keyboards.new_order(event.order.id, event.order.buyer_username, chat.id),
                utils.NotificationTypes.order_confirmed),
            daemon=True).start()
