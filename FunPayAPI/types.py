@@ -683,6 +683,7 @@ class LotFields:
         """Приватная ссылка на лот (на изменение лота)."""
         self.currency: Currency = currency
         """Валюта лота."""
+        self.csrf_token: str | None = self.__fields.get("csrf_token")
 
     @property
     def fields(self) -> dict[str, str]:
@@ -736,6 +737,7 @@ class LotFields:
         self.__fields["fields[images]"] = ",".join(map(str, self.images))
         self.__fields["secrets"] = "\n".join(self.secrets)
         self.__fields["auto_delivery"] = "on" if self.auto_delivery else ""
+        self.__fields["csrf_token"] = self.csrf_token
         return self
 
 

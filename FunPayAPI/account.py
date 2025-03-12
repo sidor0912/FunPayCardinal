@@ -286,6 +286,7 @@ class Account:
         if not username:
             raise exceptions.UnauthorizedError(response)
 
+        self.__update_csrf_token(parser)
         offers = parser.find_all("a", {"class": "tc-item"})
         if not offers:
             return []
@@ -369,6 +370,8 @@ class Account:
         username = parser.find("div", {"class": "user-link-name"})
         if not username:
             raise exceptions.UnauthorizedError(response)
+
+        self.__update_csrf_token(parser)
         offers = parser.find_all("a", class_="tc-item")
         if not offers:
             return []
@@ -422,6 +425,8 @@ class Account:
         if not username:
             raise exceptions.UnauthorizedError(response)
 
+        self.__update_csrf_token(parser)
+
         if (page_header := parser.find("h1", class_="page-header")) \
                 and page_header.text in ("Предложение не найдено", "Пропозицію не знайдено", "Offer not found"):
             return None
@@ -472,6 +477,8 @@ class Account:
         username = parser.find("div", {"class": "user-link-name"})
         if not username:
             raise exceptions.UnauthorizedError(response)
+
+        self.__update_csrf_token(parser)
 
         balances = parser.find("select", {"name": "method"})
         balance = types.Balance(float(balances["data-balance-total-rub"]), float(balances["data-balance-rub"]),
@@ -1066,6 +1073,8 @@ class Account:
         if not username:
             raise exceptions.UnauthorizedError(response)
 
+        self.__update_csrf_token(parser)
+
         username = parser.find("span", {"class": "mr4"}).text
         user_status = parser.find("span", {"class": "media-user-status"})
         user_status = user_status.text if user_status else ""
@@ -1144,6 +1153,8 @@ class Account:
                 "a").text) in ("Чат", "Chat"):
             raise Exception("chat not found")  # todo
 
+        self.__update_csrf_token(parser)
+
         if not (chat_panel := parser.find("div", {"class": "param-item chat-panel"})):
             text, link = None, None
         else:
@@ -1193,6 +1204,8 @@ class Account:
         username = parser.find("div", {"class": "user-link-name"})
         if not username:
             raise exceptions.UnauthorizedError(response)
+
+        self.__update_csrf_token(parser)
 
         if (span := parser.find("span", {"class": "text-warning"})) and span.text in (
                 "Возврат", "Повернення", "Refund"):
@@ -1378,6 +1391,7 @@ class Account:
             sudcategories = dict()
             app_data = json.loads(parser.find("body").get("data-app-data"))
             locale = app_data.get("locale")
+            self.csrf_token = app_data.get("csrf-token") or self.csrf_token
             games_options = parser.find("select", attrs={"name": "game"})
             if games_options:
                 games_options = games_options.find_all(lambda x: x.name == "option" and x.get("value"))
@@ -1668,6 +1682,7 @@ class Account:
         })
         result.update({field["name"]: "on" for field in bs.find_all("input", {"type": "checkbox"}, checked=True)})
         subcategory = self.get_subcategory(enums.SubCategoryTypes.COMMON, int(result.get("node_id", 0)))
+        self.csrf_token = result.get("csrf_token") or self.csrf_token
         currency = utils.parse_currency(bs.find("span", class_="form-control-feedback").text)
         if self.currency != currency:
             self.currency = currency
@@ -1687,6 +1702,7 @@ class Account:
             "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
             "x-requested-with": "XMLHttpRequest",
         }
+        lot_fields.csrf_token = self.csrf_token
         fields = lot_fields.renew_fields().fields
         fields["location"] = "trade"
 
@@ -2007,6 +2023,14 @@ class Account:
                                 i.i_am_buyer = False
 
         return messages
+
+    def __update_csrf_token(self, parser: BeautifulSoup):
+        try:
+            app_data = json.loads(parser.find("body").get("data-app-data"))
+            self.csrf_token = app_data.get("csrf-token") or self.csrf_token
+        except:
+            logger.warning("Произошла ошибка при обновлении csrf.")
+            logger.debug("TRACEBACK", exc_info=True)
 
     @staticmethod
     def parse_buyer_viewing(json_responce: dict) -> types.BuyerViewing:
