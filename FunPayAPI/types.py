@@ -643,7 +643,7 @@ class LotFields:
     """
 
     def __init__(self, lot_id: int, fields: dict, subcategory: SubCategory | None = None,
-                 currency: Currency = Currency.UNKNOWN):
+                 currency: Currency = Currency.UNKNOWN, calc_result: CalcResult | None = None):
         self.lot_id: int = lot_id
         """ID лота."""
         self.__fields: dict = fields
@@ -684,6 +684,8 @@ class LotFields:
         self.currency: Currency = currency
         """Валюта лота."""
         self.csrf_token: str | None = self.__fields.get("csrf_token")
+        """CSRF-токен"""
+        self.calc_result: CalcResult | None = calc_result
 
     @property
     def fields(self) -> dict[str, str]:
@@ -974,8 +976,6 @@ class UserProfile:
         """Заблокирован ли пользователь."""
         self.html: str = html
         """HTML код страницы пользователя."""
-        self.__lots: list[LotShortcut] = []
-        """Все лоты пользователя."""
         self.__lots_ids: dict[int | str, LotShortcut] = {}
         """Все лоты пользователя в виде словаря {ID: лот}}"""
         self.__sorted_by_subcategory_lots: dict[SubCategory, dict[int | str, LotShortcut]] = {}
@@ -1006,7 +1006,7 @@ class UserProfile:
         :return: список всех лотов пользователя.
         :rtype: :obj:`list` of :class:`FunPayAPI.types.LotShortcut`
         """
-        return self.__lots
+        return list(self.__lots_ids.values())
 
     @overload
     def get_sorted_lots(self, mode: Literal[1]) -> dict[int | str, LotShortcut]:
@@ -1043,21 +1043,27 @@ class UserProfile:
         else:
             return self.__sorted_by_subcategory_type_lots
 
+    def update_lot(self, lot: LotShortcut):
+        """
+        Обновляет лот в списке лотов.
+
+        :param lot: объект лота.
+        """
+        self.__lots_ids[lot.id] = lot
+        if lot.subcategory not in self.__sorted_by_subcategory_lots:
+            self.__sorted_by_subcategory_lots[lot.subcategory] = {}
+        self.__sorted_by_subcategory_lots[lot.subcategory][lot.id] = lot
+        self.__sorted_by_subcategory_type_lots[lot.subcategory.type][lot.id] = lot
+
     def add_lot(self, lot: LotShortcut):
         """
         Добавляет лот в список лотов.
 
         :param lot: объект лота.
         """
-        if lot in self.__lots:
+        if lot.id in self.__lots_ids:
             return
-
-        self.__lots.append(lot)
-        self.__lots_ids[lot.id] = lot
-        if lot.subcategory not in self.__sorted_by_subcategory_lots:
-            self.__sorted_by_subcategory_lots[lot.subcategory] = {}
-        self.__sorted_by_subcategory_lots[lot.subcategory][lot.id] = lot
-        self.__sorted_by_subcategory_type_lots[lot.subcategory.type][lot.id] = lot
+        self.update_lot(lot)
 
     def get_common_lots(self) -> list[LotShortcut]:
         """
@@ -1217,17 +1223,20 @@ class CalcResult:
         self.account_currency = account_currency
         """Валюта аккаунта"""
 
-    @property
-    def commission_coefficient(self) -> float:
-        """Отношение цены с комиссией к цене без комиссии."""
-        if self.min_price_with_commission:
+    def get_coefficient(self, currency: Currency):
+        """Отношение цены с комиссией в переданной валюте к цене без комиссии в валюте аккаунта."""
+        if self.min_price_with_commission and currency == self.min_price_currency == self.account_currency:
             return self.min_price_with_commission / self.price
         else:
-            res = min(filter(lambda x: x.currency == self.account_currency,
-                             self.methods), key=lambda x: x.price, default=None)
+            res = min(filter(lambda x: x.currency == currency, self.methods), key=lambda x: x.price, default=None)
             if not res:
                 raise Exception("Невозможно определить коэффициент комиссии.")
             return res.price / self.price
+
+    @property
+    def commission_coefficient(self) -> float:
+        """Отношение цены с комиссией к цене без комиссии в валюте аккаунта."""
+        return self.get_coefficient(self.account_currency)
 
     @property
     def commission_percent(self) -> float:

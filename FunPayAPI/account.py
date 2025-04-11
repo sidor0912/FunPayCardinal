@@ -1369,10 +1369,8 @@ class Account:
 
         if start_from:
             filters["continue"] = start_from
-        elif locale:
-            self.locale = locale
-        else:
-            self.locale = self.__profile_parse_locale
+
+        locale = locale or self.__profile_parse_locale
         response = self.method("post" if start_from else "get", link, {}, filters, raise_not_200=True, locale=locale)
         if not start_from:
             self.locale = self.__default_locale
@@ -1643,11 +1641,11 @@ class Account:
         for method in json_resp.get("methods"):
             methods.append(PaymentMethod(method.get("name"), float(method["price"].replace(" ", "")),
                                          parse_currency(method.get("unit")), method.get("sort")))
-        try:
-            min_price, min_price_currency = json_resp.get("minPrice").rsplirt(" ", maxsplit=1)
+        if "minPrice" in json_resp:
+            min_price, min_price_currency = json_resp["minPrice"].rsplirt(" ", maxsplit=1)
             min_price = float(min_price.replace(" ", ""))
             min_price_currency = parse_currency(min_price_currency)
-        except:
+        else:
             min_price, min_price_currency = None, FunPayAPI.types.Currency.UNKNOWN
         return CalcResult(subcategory_type, subcategory_id, methods, price, min_price, min_price_currency,
                           self.currency)
@@ -1686,7 +1684,16 @@ class Account:
         currency = utils.parse_currency(bs.find("span", class_="form-control-feedback").text)
         if self.currency != currency:
             self.currency = currency
-        return types.LotFields(lot_id, result, subcategory, currency)
+        bs_buyer_prices = bs.find("table", class_="table-buyers-prices").find_all("tr")
+        payment_methods = []
+        for i, pm in enumerate(bs_buyer_prices):
+            pm_price, pm_currency = pm.find("td").text.rsplit(maxsplit=1)
+            pm_price = float(pm_price.replace(" ", ""))
+            pm_currency = parse_currency(pm_currency)
+            payment_methods.append(PaymentMethod(pm.find("th").text, pm_price, pm_currency, i))
+        calc_result = CalcResult(types.SubCategoryTypes.COMMON, subcategory.id, payment_methods,
+                                 float(result["price"]), None, types.Currency.UNKNOWN, currency)
+        return types.LotFields(lot_id, result, subcategory, currency, calc_result)
 
     def save_lot(self, lot_fields: types.LotFields):
         """

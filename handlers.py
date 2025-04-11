@@ -480,16 +480,14 @@ def update_current_lots_handler(c: Cardinal, e: OrdersListChangedEvent):
 
 
 def update_profile_lots_handler(c: Cardinal, e: OrdersListChangedEvent):
-    """Добавляет в c.profile лоты, которых не было раньше."""
+    """Обновляет лоты в c.profile"""
     if c.curr_profile_last_tag != e.runner_tag or c.profile_last_tag == e.runner_tag:
         return
     c.profile_last_tag = e.runner_tag
     lots = c.curr_profile.get_sorted_lots(1)
-    profile_lots = c.profile.get_sorted_lots(1)
 
     for lot_id, lot in lots.items():
-        if lot_id not in profile_lots.keys():
-            c.profile.add_lot(lot)
+        c.profile.update_lot(lot)
 
 
 # Новый ордер (REGISTER_TO_NEW_ORDER)
@@ -503,10 +501,35 @@ def log_new_order_handler(c: Cardinal, e: NewOrderEvent, *args):
 def setup_event_attributes_handler(c: Cardinal, e: NewOrderEvent, *args):
     config_section_name = None
     config_section_obj = None
-    for lot_name in c.AD_CFG:
-        if lot_name in e.order.description:
-            config_section_obj = c.AD_CFG[lot_name]
-            config_section_name = lot_name
+    lot_description = e.order.description
+    # пробуем найти лот, чтобы не выдавать по строке, которую вписал покупатель при оформлении заказа
+    for lot in sorted(list(c.profile.get_sorted_lots(2).get(e.order.subcategory, {}).values()),
+                      key=lambda l: len(f"{l.server}, {l.description}"), reverse=True):
+        if lot.server and lot.description:
+            temp_desc = f"{lot.server}, {lot.description}"
+        elif lot.server:
+            temp_desc = lot.server
+        else:
+            temp_desc = lot.description
+
+        if temp_desc in e.order.description:
+            lot_description = temp_desc
+            break
+
+    for i in range(3):
+        for lot_name in c.AD_CFG:
+            if i == 0:
+                rule = lot_description == lot_name
+            elif i == 1:
+                rule = lot_description.startswith(lot_name)
+            else:
+                rule = lot_name in lot_description
+
+            if rule:
+                config_section_obj = c.AD_CFG[lot_name]
+                config_section_name = lot_name
+                break
+        if config_section_obj:
             break
 
     attributes = {"config_section_name": config_section_name, "config_section_obj": config_section_obj,
@@ -675,7 +698,9 @@ def update_lots_states(cardinal: Cardinal, event: NewOrderEvent):
 
     deactivated = []
     restored = []
-    for lot in cardinal.profile.get_lots():
+    for lot in cardinal.profile.get_sorted_lots(3)[SubCategoryTypes.COMMON].values():
+        if not lot.description:
+            continue
         # -1 - деактивировать
         # 0 - ничего не делать
         # 1 - восстановить

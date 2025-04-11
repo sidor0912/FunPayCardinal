@@ -87,7 +87,7 @@
 
 ### :large_blue_diamond: Windows
 
-1. Скачайте и установите [Python](https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe).
+1. Скачайте и установите [Python 3.11.0](https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe).
     1. При установке поставьте галочку у `Add python.exe to PATH` на первом экране установки.
 2. Скачайте [FunPay Cardinal](https://github.com/sidor0912/FunPayCardinal/archive/refs/heads/master.zip)
 3. Перенести папку `FunPayCardinal-main` в нужное Вам место.
