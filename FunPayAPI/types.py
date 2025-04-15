@@ -470,7 +470,7 @@ class Order:
 
     def __init__(self, id_: str, status: OrderStatuses, subcategory: SubCategory | None, params: str | None,
                  short_description: str | None,
-                 full_description: str | None, sum_: float, currency: Currency,
+                 full_description: str | None, amount: int, sum_: float, currency: Currency,
                  buyer_id: int, buyer_username: str,
                  seller_id: int, seller_username: str, chat_id: str | int,
                  html: str, review: Review | None, order_secrets: list[str]):
@@ -506,6 +506,8 @@ class Order:
         """HTML код заказа."""
         self.review: Review | None = review
         """Объект отзыва заказа."""
+        self.amount: int = amount
+        """Количество."""
         self.order_secrets: list[str] = order_secrets
         """Список товаров автовыдачи FunPay заказа."""
 

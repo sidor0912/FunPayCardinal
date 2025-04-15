@@ -1223,6 +1223,7 @@ class Account:
         order_secrets = []
         stop_params = False
         params = None
+        amount = 1
         for div in parser.find_all("div", {"class": "param-item"}):
             if not (h := div.find("h5")):
                 continue
@@ -1251,6 +1252,12 @@ class Account:
                             "Paid product", "Paid products"):
                 secret_placeholders = div.find_all("span", class_="secret-placeholder")
                 order_secrets = [i.text for i in secret_placeholders]
+            elif h.text in ("Количество", "Amount", "Кількість"):
+                div2 = div.find("div", class_="text-bold")
+                if div2:
+                    match = RegularExpressions().PRODUCTS_AMOUNT_ORDER.fullmatch(div2.text)
+                    if match:
+                        amount = int(match.group(1).replace(" ", ""))
             elif not stop_params and h.text not in ("Игра", "Гра", "Game"):
                 div2 = div.find("div")
                 if div2:
@@ -1292,9 +1299,9 @@ class Account:
             review = types.Review(stars, text, reply, False, str(review_obj), hidden, order_id, buyer_username,
                                   buyer_id, bool(text and text.endswith(self.bot_character)),
                                   bool(reply and reply.endswith(self.bot_character)))
-        order = types.Order(order_id, status, subcategory, params, short_description, full_description, sum_, currency,
-                            buyer_id, buyer_username, seller_id, seller_username, chat_id, html_response, review,
-                            order_secrets)
+        order = types.Order(order_id, status, subcategory, params, short_description, full_description, amount,
+                            sum_, currency, buyer_id, buyer_username, seller_id, seller_username, chat_id,
+                            html_response, review, order_secrets)
         return order
 
     def get_sales(self, start_from: str | None = None, include_paid: bool = True, include_closed: bool = True,
