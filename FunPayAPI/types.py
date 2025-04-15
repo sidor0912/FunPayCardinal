@@ -428,8 +428,8 @@ class Order:
     :param subcategory: подкатегория, к которой относится заказ.
     :type subcategory: :class:`FunPayAPI.types.SubCategory` or :obj:`None`
 
-    :param params: параметры лота (значения некоторых полей заказа).
-    :type params: :obj:`str` or :obj:`None`
+    :param lot_params: параметры лота (значения некоторых полей заказа).
+    :type lot_params: :obj:`list`
 
     :param short_description: краткое описание (название) заказа.
     :type short_description: :obj:`str` or :obj:`None`
@@ -468,8 +468,8 @@ class Order:
     :type order_secrets: :obj:`list` of :obj:`str`
     """
 
-    def __init__(self, id_: str, status: OrderStatuses, subcategory: SubCategory | None, params: str | None,
-                 short_description: str | None,
+    def __init__(self, id_: str, status: OrderStatuses, subcategory: SubCategory | None,
+                 lot_params: list[tuple[str, str]], buyer_params: dict[str, str], short_description: str | None,
                  full_description: str | None, amount: int, sum_: float, currency: Currency,
                  buyer_id: int, buyer_username: str,
                  seller_id: int, seller_username: str, chat_id: str | int,
@@ -480,8 +480,10 @@ class Order:
         """Статус заказа."""
         self.subcategory: SubCategory | None = subcategory
         """Подкатегория, к которой относится заказ."""
-        self.params: str | None = params
-        """Параметры лота (значения некоторых полей заказа)"""
+        self.lot_params: list[tuple[str, str]] = lot_params
+        """Параметры лота (значения некоторых полей заказа). Название параметра - значение"""
+        self.buyer_params: dict = buyer_params
+        """Параметры заказа, указанные покупателем"""
         self.short_description: str | None = short_description
         """Краткое описание (название) заказа. То же самое, что и Order.title."""
         self.title: str | None = short_description
@@ -510,6 +512,42 @@ class Order:
         """Количество."""
         self.order_secrets: list[str] = order_secrets
         """Список товаров автовыдачи FunPay заказа."""
+
+    @property
+    def lot_params_text(self) -> str | None:
+        """
+        Возвращает параметры лота из заказа в виде строки.
+        """
+        result = None
+        for k, v in self.lot_params:
+            s = f"{v} {k.lower()}" if v.isdigit() else v
+            result = f'{result}, {s}' if result else s
+        return result
+
+    @property
+    def lot_params_dict(self) -> dict[str, str]:
+        """
+        Возвращает параметры лота из заказа в виде словаря.
+
+        !!! Если названия дублируются - часть данных будет утеряна. !!!
+        """
+        d = {}
+        for k, v in self.lot_params:
+            d[k] = v
+        return d
+
+    def get_buyer_param(self, *args: str) -> str | None:
+        """
+        Возвращает параметр, введенный покупателем по его названию.
+        """
+        for param_name in args:
+            if param_name in self.buyer_params:
+                return self.buyer_params[param_name]
+
+    @property
+    def character_name(self) -> str | None:
+        """Имя персонажа"""
+        return self.get_buyer_param("Ім'я персонажа", "Имя персонажа", "Character name")
 
     def __str__(self):
         return f"#{self.id}"

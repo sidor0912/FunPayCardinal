@@ -1222,7 +1222,9 @@ class Account:
         subcategory = None
         order_secrets = []
         stop_params = False
-        params = None
+        lot_params = []
+        buyer_params = {}
+
         amount = 1
         for div in parser.find_all("div", {"class": "param-item"}):
             if not (h := div.find("h5")):
@@ -1258,14 +1260,21 @@ class Account:
                     match = RegularExpressions().PRODUCTS_AMOUNT_ORDER.fullmatch(div2.text)
                     if match:
                         amount = int(match.group(1).replace(" ", ""))
+            elif h.text in ("Відкрито", "Открыт", "Open"):
+                continue  # todo
+            elif h.text in ("Закрито", "Закрыт", "Closed"):
+                continue  # todo
             elif not stop_params and h.text not in ("Игра", "Гра", "Game"):
                 div2 = div.find("div")
                 if div2:
                     res = div2.text.strip()
-                    res = f"{res} {h.text.lower()}" if res.isdigit() else res
-                    params = f'{params}, {res}' if params else res
+                    lot_params.append((h.text, res))
+            elif stop_params:
+                div2 = div.find("div", class_="text-bold")
+                if div2:
+                    buyer_params[h.text] = div2.text
         if not stop_params:
-            params = None
+            lot_params = []
 
         chat = parser.find("div", {"class": "chat-header"})
         chat_link = chat.find("div", {"class": "media-user-name"}).find("a")
@@ -1299,7 +1308,8 @@ class Account:
             review = types.Review(stars, text, reply, False, str(review_obj), hidden, order_id, buyer_username,
                                   buyer_id, bool(text and text.endswith(self.bot_character)),
                                   bool(reply and reply.endswith(self.bot_character)))
-        order = types.Order(order_id, status, subcategory, params, short_description, full_description, amount,
+        order = types.Order(order_id, status, subcategory, lot_params, buyer_params,
+                            short_description, full_description, amount,
                             sum_, currency, buyer_id, buyer_username, seller_id, seller_username, chat_id,
                             html_response, review, order_secrets)
         return order

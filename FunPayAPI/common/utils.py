@@ -103,7 +103,7 @@ class RegularExpressions(object):
         """
 
         self.ORDER_PURCHASED2 = re.compile(
-            r"[a-zA-Z0-9]+, не забудьте потом нажать кнопку («Подтвердить выполнение заказа»|«Подтвердить получение валюты»)\.")
+            r"[a-zA-Z0-9]+, (не забудьте потом нажать кнопку («Подтвердить выполнение заказа»|«Подтвердить получение валюты»)\.|do not forget to press the («Confirm order fulfilment»|«Confirm currency receipt») button once you finish\.)")
         """
         Скомпилированное регулярное выражение, описывающее сообщение об оплате заказа (2).
         Лучше всего использовать вместе с MessageTypesRes.ORDER_PURCHASED

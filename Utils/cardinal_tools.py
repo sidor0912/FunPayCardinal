@@ -420,7 +420,7 @@ def format_order_text(text: str, order: FunPayAPI.types.OrderShortcut | FunPayAP
         logger.debug("TRACEBACK", exc_info=True)
     description = order.description if isinstance(order,
                                                   FunPayAPI.types.OrderShortcut) else order.short_description if order.short_description else ""
-    params = order.params if isinstance(order, FunPayAPI.types.Order) and order.params else ""
+    params = order.lot_params_text if isinstance(order, FunPayAPI.types.Order) and order.lot_params else ""
     variables = {
         "$full_date_text": str_full_date,
         "$date_text": str_date,
