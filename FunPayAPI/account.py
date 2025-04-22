@@ -73,6 +73,8 @@ class Account:
         """Время последнего возникновения 429 ошибки"""
         self.last_flood_err_time: float = 0
         """Время последнего возникновения ошибки \"Нельзя отправлять сообщения слишком часто.\""""
+        self.last_multiuser_flood_err_time: float = 0
+        """Время последнего возникновения ошибки \"Нельзя слишком часто отправлять сообщения разным пользователям.\""""
         self.__locale: Literal["ru", "en", "uk"] | None = None
         """Текущий язык аккаунта."""
         self.__default_locale: Literal["ru", "en", "uk"] | None = locale
@@ -720,6 +722,10 @@ class Account:
                               "You cannot send messages too frequently.",
                               "Не можна надсилати повідомлення занадто часто."):
                 self.last_flood_err_time = time.time()
+            elif error_text in ("Нельзя слишком часто отправлять сообщения разным пользователям.",
+                                "Не можна надто часто надсилати повідомлення різним користувачам.",
+                                "You cannot message multiple users too frequently."):
+                self.last_multiuser_flood_err_time = time.time()
             raise exceptions.MessageNotDeliveredError(response, error_text, chat_id)
         if leave_as_unread:
             message_text = text
@@ -1394,9 +1400,11 @@ class Account:
         html_response = response.content.decode()
 
         parser = BeautifulSoup(html_response, "lxml")
-        check_user = parser.find("div", {"class": "content-account content-account-login"})
-        if check_user:
-            raise exceptions.UnauthorizedError(response)
+
+        if not start_from:
+            username = parser.find("div", {"class": "user-link-name"})
+            if not username:
+                raise exceptions.UnauthorizedError(response)
 
         next_order_id = parser.find("input", {"type": "hidden", "name": "continue"})
         next_order_id = next_order_id.get("value") if next_order_id else None
