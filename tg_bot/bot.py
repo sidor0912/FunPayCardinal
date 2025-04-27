@@ -1145,7 +1145,7 @@ class TGBot:
         self.cbq_handler(self.empty_callback, lambda c: c.data == CBT.EMPTY)
         self.cbq_handler(self.switch_lang, lambda c: c.data.startswith(f"{CBT.LANG}:"))
 
-    def send_notification(self, text: str | None, keyboard=None,
+    def send_notification(self, text: str | None, keyboard: K | None = None,
                           notification_type: str = utils.NotificationTypes.other, photo: bytes | None = None,
                           pin: bool = False):
         """

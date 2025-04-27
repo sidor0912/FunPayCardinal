@@ -671,7 +671,8 @@ def templates_list_ans_mode(c: Cardinal, offset: int, node_id: int, username: st
                  None, f"{CBT.SEND_TMPLT}:{offset + index}:{node_id}:{username}:{prev_page}{extra_str}"))
 
     extra_list = [node_id, username, prev_page]
-    extra_list.extend(extra)
+    if extra:
+        extra_list.extend(extra)
     kb = add_navigation_buttons(kb, offset, MENU_CFG.TMPLT_BTNS_AMOUNT, len(templates),
                                 len(c.telegram.answer_templates), CBT.TMPLT_LIST_ANS_MODE,
                                 extra_list)

@@ -316,7 +316,9 @@ power_off_error = "❌ Дана кнопка не належить цьому з
 
 enter_msg_text = "Введи текст повідомлення."
 msg_sent = "✅ Повідомлення відправлено у чат <a href=\"https://funpay.com/chat/?node={}\">{}</a>."
+msg_sent_short = "✅ Повідомлення відправлено."
 msg_sending_error = "❌ Не вдалося відправити повідомлення у чат <a href=\"https://funpay.com/chat/?node={}\">{}</a>."
+msg_sending_error_short = "❌ Не вдалося відправити повідомлення у чат."
 send_img = "Відправ мені зображення."
 
 greeting_changed = "✅ Текст привітання змінено."

@@ -314,7 +314,9 @@ power_off_error = "❌ This button does not belong to this session.\nCall this m
 
 enter_msg_text = "Enter message text."
 msg_sent = "✅ Message sent to <a href=\"https://funpay.com/chat/?node={}\">{}</a> chat."
+msg_sent_short = "✅ Message sent."
 msg_sending_error = "❌ Failed to send a message to <a href=\"https://funpay.com/chat/?node={}\">{}</a> chat."
+msg_sending_error_short = "❌ Failed to send a message to chat."
 send_img = "Send me an image."
 
 greeting_changed = "✅ The greeting text has been changed."

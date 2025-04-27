@@ -128,7 +128,8 @@ def init_templates_cp(cardinal: Cardinal, *args):
                                                                split[5:])
 
         if template_index > len(tg.answer_templates) - 1:
-            bot.send_message(c.message.chat.id, _("tmplt_not_found_err", template_index))
+            bot.send_message(c.message.chat.id, _("tmplt_not_found_err", template_index),
+                             message_thread_id=c.message.message_thread_id)
             if prev_page == 0:
                 bot.edit_message_reply_markup(c.message.chat.id, c.message.id,
                                               reply_markup=keyboards.reply(node_id, username))
@@ -144,12 +145,16 @@ def init_templates_cp(cardinal: Cardinal, *args):
 
         text = tg.answer_templates[template_index].replace("$username", safe_text(username))
         result = cardinal.send_message(node_id, text, username)
-        if result:
-            bot.send_message(c.message.chat.id, _("tmplt_msg_sent", node_id, username, utils.escape(text)),
-                             reply_markup=keyboards.reply(node_id, username, again=True, extend=True))
+
+        if prev_page == 3:
+            bot.answer_callback_query(c.id, _("msg_sent_short") if result else _("msg_sending_error_short"))
+            return
         else:
-            bot.send_message(c.message.chat.id, _("msg_sending_error", node_id, username),
-                             reply_markup=keyboards.reply(node_id, username, again=True, extend=True))
+            msg_text = _("tmplt_msg_sent", node_id, username, utils.escape(text)) if result else \
+                _("msg_sending_error", node_id, username)
+            bot.send_message(c.message.chat.id, msg_text,
+                             reply_markup=keyboards.reply(node_id, username, again=True, extend=True),
+                             message_thread_id=c.message.message_thread_id)
         bot.answer_callback_query(c.id)
 
     tg.cbq_handler(open_templates_list, lambda c: c.data.startswith(f"{CBT.TMPLT_LIST}:"))
