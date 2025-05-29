@@ -308,7 +308,7 @@ class Account:
             if subcategory_type is types.SubCategoryTypes.COMMON:
                 price = float(tc_price["data-s"])
             else:
-                price = float(tc_price.find("div").text.split()[0])
+                price = float(tc_price.find("div").text.rsplit(maxsplit=1)[0].replace(" ", ""))
             if currency is None:
                 currency = parse_currency(tc_price.find("span", class_="unit").text)
                 if self.currency != currency:
@@ -1643,21 +1643,29 @@ class Account:
         self.add_chats(self.request_chats())
         return self.get_chat_by_id(chat_id)
 
-    def calc(self, subcategory_type: enums.SubCategoryTypes, subcategory_id: int, price: int | float = 1000):
+    def calc(self, subcategory_type: enums.SubCategoryTypes, subcategory_id: int | None = None,
+             game_id: int | None = None, price: int | float = 1000):
         if not self.is_initiated:
             raise exceptions.AccountNotInitiatedError()
+
+        if subcategory_type == types.SubCategoryTypes.COMMON:
+            key = "nodeId"
+            type_ = "lots"
+            value = subcategory_id
+        else:
+            key = "game"
+            type_ = "chips"
+            value = game_id
+
+        assert value is not None
+
         headers = {
             "accept": "*/*",
             "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
             "x-requested-with": "XMLHttpRequest"
         }
-        if subcategory_type.COMMON:
-            key = "nodeId"
-            type_ = "lots"
-        else:
-            key = "game"
-            type_ = "chips"
-        r = self.method("post", f"{type_}/calc", headers, {key: subcategory_id, "price": price},
+
+        r = self.method("post", f"{type_}/calc", headers, {key: value, "price": price},
                         raise_not_200=True)
         json_resp = r.json()
         if (error := json_resp.get("error")):
@@ -1667,7 +1675,7 @@ class Account:
             methods.append(PaymentMethod(method.get("name"), float(method["price"].replace(" ", "")),
                                          parse_currency(method.get("unit")), method.get("sort")))
         if "minPrice" in json_resp:
-            min_price, min_price_currency = json_resp["minPrice"].rsplirt(" ", maxsplit=1)
+            min_price, min_price_currency = json_resp["minPrice"].rsplit(" ", maxsplit=1)
             min_price = float(min_price.replace(" ", ""))
             min_price_currency = parse_currency(min_price_currency)
         else:
@@ -1720,12 +1728,24 @@ class Account:
                                  float(result["price"]), None, types.Currency.UNKNOWN, currency)
         return types.LotFields(lot_id, result, subcategory, currency, calc_result)
 
-    def save_lot(self, lot_fields: types.LotFields):
+    def get_chip_fields(self, subcategory_id: int) -> types.ChipFields:
+        if not self.is_initiated:
+            raise exceptions.AccountNotInitiatedError()
+        headers = {}
+        response = self.method("get", f"chips/{subcategory_id}/trade", headers, {}, raise_not_200=True)
+
+        html_response = response.content.decode()
+        bs = BeautifulSoup(html_response, "lxml")
+        result = {field["name"]: field.get("value") or "" for field in bs.find_all("input") if field["name"] != "query"}
+        result.update({field["name"]: "on" for field in bs.find_all("input", {"type": "checkbox"}, checked=True)})
+        return types.ChipFields(self.id, subcategory_id, result)
+
+    def save_offer(self, offer_fields: types.LotFields | types.ChipFields):
         """
         Сохраняет лот на FunPay.
 
-        :param lot_fields: объект с полями лота.
-        :type lot_fields: :class:`FunPayAPI.types.LotFields`
+        :param offer_fields: объект с полями лота.
+        :type offer_fields: :class:`FunPayAPI.types.LotFields`
         """
         if not self.is_initiated:
             raise exceptions.AccountNotInitiatedError()
@@ -1734,11 +1754,18 @@ class Account:
             "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
             "x-requested-with": "XMLHttpRequest",
         }
-        lot_fields.csrf_token = self.csrf_token
-        fields = lot_fields.renew_fields().fields
-        fields["location"] = "trade"
+        offer_fields.csrf_token = self.csrf_token
 
-        response = self.method("post", "lots/offerSave", headers, fields, raise_not_200=True)
+        if isinstance(offer_fields, types.LotFields):
+            id_ = offer_fields.lot_id
+            fields = offer_fields.renew_fields().fields
+            fields["location"] = "trade"
+            api_method = "lots/offerSave"
+        else:
+            id_ = offer_fields.subcategory_id
+            fields = offer_fields.renew_fields().fields
+            api_method = "chips/saveOffers"
+        response = self.method("post", api_method, headers, fields, raise_not_200=True)
         json_response = response.json()
         errors_dict = {}
         if (errors := json_response.get("errors")) or json_response.get("error"):
@@ -1746,7 +1773,13 @@ class Account:
                 for k, v in errors:
                     errors_dict.update({k: v})
 
-            raise exceptions.LotSavingError(response, json_response.get("error"), lot_fields.lot_id, errors_dict)
+            raise exceptions.LotSavingError(response, json_response.get("error"), id_, errors_dict)
+
+    def save_chip(self, chip_fields: types.ChipFields):
+        self.save_offer(chip_fields)
+
+    def save_lot(self, lot_fields: types.LotFields):
+        self.save_offer(lot_fields)
 
     def delete_lot(self, lot_id: int) -> None:
         """

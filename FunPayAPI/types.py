@@ -2,6 +2,8 @@
 В данном модуле описаны все типы пакета FunPayAPI
 """
 from __future__ import annotations
+
+import re
 from typing import Literal, overload, Optional
 
 import FunPayAPI.common.enums
@@ -781,6 +783,90 @@ class LotFields:
         self.__fields["auto_delivery"] = "on" if self.auto_delivery else ""
         self.__fields["csrf_token"] = self.csrf_token
         return self
+
+
+class ChipOffer:
+    def __init__(self, lot_id: str, active: bool = False, server: str | None = None,
+                 side: str | None = None, price: float | None = None, amount: int | None = None):
+        self.lot_id = lot_id
+        self.active = active
+        self.server = server
+        self.side = side
+        self.price = price
+        self.amount = amount
+
+    @property
+    def key(self):
+        s = "".join([f"[{i}]" for i in self.lot_id.split("-")[3:]])
+        return f"offers{s}"
+
+
+class ChipFields:
+    def __init__(self, account_id: int, subcategory_id: int, fields: dict[str, str]):
+        self.subcategory_id = subcategory_id
+        self.__fields = fields
+
+        self.min_sum = float(i) if (i := self.__fields.get("options[chip_min_sum]")) else None
+        self.account_id: int = account_id
+        """ID аккаунта FunPay"""
+        self.game_id = int(self.__fields.get("game"))
+        """ID игры"""
+        self.csrf_token: str | None = self.__fields.get("csrf_token")
+        """CSRF-токен"""
+
+        self.chip_offers: dict[str, ChipOffer] = {}
+        self.__parse_offers()
+
+    @property
+    def fields(self) -> dict[str, str]:
+        """
+        Возвращает все поля лота в виде словаря.
+
+        :return: все поля лота в виде словаря.
+        :rtype: :obj:`dict` {:obj:`str`: :obj:`str`}
+        """
+        return self.__fields
+
+    def renew_fields(self) -> ChipFields:
+        """
+        Обновляет :py:obj:`~__fields` (возвращается в методе :meth:`FunPayAPI.types.ChipFields.get_fields`),
+        основываясь на свойствах экземпляра.
+        Необходимо вызвать перед сохранением лота на FunPay после изменения любого свойства экземпляра.
+
+        :return: экземпляр класса :class:`FunPayAPI.types.ChipFields` с новыми полями лота.
+        :rtype: :class:`FunPayAPI.types.ChipFields`
+        """
+        self.__fields["game"] = str(self.game_id)
+        self.__fields["chip"] = str(self.subcategory_id)
+        self.__fields["options[chip_min_sum]"] = str(self.min_sum) if self.min_sum is not None else ""
+        self.__fields["csrf_token"] = self.csrf_token
+        for chip_offer in self.chip_offers.values():
+            key = chip_offer.key
+            self.__fields[f"{key}[amount]"] = str(chip_offer.amount) if chip_offer.amount is not None else ""
+            self.__fields[f"{key}[price]"] = str(chip_offer.price) if chip_offer.price is not None else ""
+            if chip_offer.active:
+                self.__fields[f"{key}[active]"] = "on"
+            else:
+                self.__fields.pop(f"{key}[active]", None)
+        return self
+
+    def __parse_offers(self):
+        for k, v in self.__fields.items():
+            if not k.startswith("offers"):
+                continue
+            nums = re.findall(r'\d+', k)
+            key = "-".join(list(map(str, nums)))
+            offer_id = f"{self.account_id}-{self.game_id}-{self.subcategory_id}-{key}"
+            if offer_id not in self.chip_offers:
+                self.chip_offers[offer_id] = ChipOffer(offer_id)
+            chip_offer = self.chip_offers[offer_id]
+            field = k.split("[")[-1].rstrip("]")
+            if field == "active":
+                chip_offer.active = v == "on"
+            elif field == "price":
+                chip_offer.price = float(v) if v else None
+            elif field == "amount":
+                chip_offer.amount = int(v) if v else None
 
 
 class LotPage:
