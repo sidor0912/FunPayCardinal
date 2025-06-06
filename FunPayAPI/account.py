@@ -1087,8 +1087,18 @@ class Account:
         avatar_link = parser.find("div", {"class": "avatar-photo"}).get("style").split("(")[1].split(")")[0]
         avatar_link = avatar_link if avatar_link.startswith("https") else f"https://funpay.com{avatar_link}"
         banned = bool(parser.find("span", {"class": "label label-danger"}))
+        activation = parser.find("span", class_="label label-warning")
+        activation = "Нет" if activation and "не активирован" in activation.text else "Да"
+        reg_data = parser.find("div", class_="text-nowrap")
+        reg_data = reg_data.text.split('\n')[1].strip() if reg_data else "Неизвестно"
+        support = parser.find("span", class_="label label-success")
+        support = "Да" if support and "поддержка" in support.text else "Нет"
+        rating = parser.find("div", class_="rating-full-count")
+        rating = re.search(r"\d+", rating.text).group() if rating else "0"
+        reviews = parser.find("span", class_="big")
+        reviews = reviews.text if reviews else "0"
         user_obj = types.UserProfile(user_id, username, avatar_link, "Онлайн" in user_status or "Online" in user_status,
-                                     banned, html_response)
+                                     banned, activation, reg_data, support, rating, reviews, html_response)
 
         subcategories_divs = parser.find_all("div", {"class": "offer-list-title-container"})
 
