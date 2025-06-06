@@ -1089,7 +1089,7 @@ class UserProfile:
     :type html: :obj:`str`
     """
 
-    def __init__(self, id_: int, username: str, profile_photo: str, online: bool, banned: bool, html: str):
+    def __init__(self, id_: int, username: str, profile_photo: str, online: bool, banned: bool, activation: str, reg_data: str, support: str, rating: str, reviews: str, html: str):
         self.id: int = id_
         """ID пользователя."""
         self.username: str = username
@@ -1100,6 +1100,16 @@ class UserProfile:
         """Онлайн ли пользователь."""
         self.banned: bool = banned
         """Заблокирован ли пользователь."""
+        self.activation: str = activation
+        "Активирован ли пользователь."
+        self.reg_data: str = reg_data
+        """Дата регистрации пользователя."""
+        self.support: str = support
+        """Является ли пользователь поддержкой."""
+        self.rating: str = rating
+        """Рейтинг пользователя."""
+        self.reviews: str = reviews
+        """Количество отзывов пользователя."""
         self.html: str = html
         """HTML код страницы пользователя."""
         self.__lots_ids: dict[int | str, LotShortcut] = {}
