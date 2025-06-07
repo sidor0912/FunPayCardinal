@@ -685,11 +685,15 @@ class LotFields:
     """
 
     def __init__(self, lot_id: int, fields: dict, subcategory: SubCategory | None = None,
-                 currency: Currency = Currency.UNKNOWN, calc_result: CalcResult | None = None):
+                 currency: Currency = Currency.UNKNOWN, calc_result: CalcResult | None = None, html: str = None, all_fields: dict = None):
         self.lot_id: int = lot_id
         """ID лота."""
+        self.html: str = html
+        """HTML код страницы редактирования лота."""
         self.__fields: dict = fields
         """Поля лота."""
+        self.all_fields: dict = all_fields
+        """Все возможные варианты для <select> полей"""
 
         self.title_ru: str = self.__fields.get("fields[summary][ru]", "")
         """Русское краткое описание (название) лота."""
@@ -783,7 +787,6 @@ class LotFields:
         self.__fields["auto_delivery"] = "on" if self.auto_delivery else ""
         self.__fields["csrf_token"] = self.csrf_token
         return self
-
 
 class ChipOffer:
     def __init__(self, lot_id: str, active: bool = False, server: str | None = None,
@@ -1089,7 +1092,7 @@ class UserProfile:
     :type html: :obj:`str`
     """
 
-    def __init__(self, id_: int, username: str, profile_photo: str, online: bool, banned: bool, activation: str, reg_data: str, support: str, rating: str, reviews: str, html: str):
+    def __init__(self, id_: int, username: str, profile_photo: str, online: bool, banned: bool, activation: bool, reg_data: str, support: bool, rating: int, reviews: int, lots_count: int, html: str):
         self.id: int = id_
         """ID пользователя."""
         self.username: str = username
@@ -1100,16 +1103,18 @@ class UserProfile:
         """Онлайн ли пользователь."""
         self.banned: bool = banned
         """Заблокирован ли пользователь."""
-        self.activation: str = activation
+        self.activation: bool = activation
         "Активирован ли пользователь."
         self.reg_data: str = reg_data
         """Дата регистрации пользователя."""
-        self.support: str = support
+        self.support: bool = support
         """Является ли пользователь поддержкой."""
-        self.rating: str = rating
+        self.rating: int = rating
         """Рейтинг пользователя."""
-        self.reviews: str = reviews
+        self.reviews: int = reviews
         """Количество отзывов пользователя."""
+        self.lots_count: int = lots_count
+        """Количество лотов пользователя"""
         self.html: str = html
         """HTML код страницы пользователя."""
         self.__lots_ids: dict[int | str, LotShortcut] = {}

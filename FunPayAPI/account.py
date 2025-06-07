@@ -25,7 +25,6 @@ from .common import exceptions, utils, enums
 logger = logging.getLogger("FunPayAPI.account")
 PRIVATE_CHAT_ID_RE = re.compile(r"users-\d+-\d+$")
 
-
 class Account:
     """
     Класс для управления аккаунтом FunPay.
@@ -1087,18 +1086,17 @@ class Account:
         avatar_link = parser.find("div", {"class": "avatar-photo"}).get("style").split("(")[1].split(")")[0]
         avatar_link = avatar_link if avatar_link.startswith("https") else f"https://funpay.com{avatar_link}"
         banned = bool(parser.find("span", {"class": "label label-danger"}))
-        activation = parser.find("span", class_="label label-warning")
-        activation = "Нет" if activation and "не активирован" in activation.text else "Да"
+        activation = bool(parser.find("span", {"class": "label label-warning"}))
         reg_data = parser.find("div", class_="text-nowrap")
         reg_data = reg_data.text.split('\n')[1].strip() if reg_data else "Неизвестно"
-        support = parser.find("span", class_="label label-success")
-        support = "Да" if support and "поддержка" in support.text else "Нет"
+        support = bool(parser.find("span", {"class": "label label-success"}))
         rating = parser.find("div", class_="rating-full-count")
         rating = re.search(r"\d+", rating.text).group() if rating else "0"
         reviews = parser.find("span", class_="big")
         reviews = reviews.text if reviews else "0"
+        lots_count = len(parser.find_all("a", {"class": "tc-item"}))
         user_obj = types.UserProfile(user_id, username, avatar_link, "Онлайн" in user_status or "Online" in user_status,
-                                     banned, activation, reg_data, support, rating, reviews, html_response)
+                                     banned, activation, reg_data, support, rating, reviews, lots_count, html_response)
 
         subcategories_divs = parser.find_all("div", {"class": "offer-list-title-container"})
 
@@ -1693,14 +1691,17 @@ class Account:
         return CalcResult(subcategory_type, subcategory_id, methods, price, min_price, min_price_currency,
                           self.currency)
 
-    def get_lot_fields(self, lot_id: int) -> types.LotFields:
+    def get_lot_fields(self, lot_id: int, skip_error: bool = False) -> types.LotFields:
         """
-        Получает все поля лота.
+        Получает поля лота, с указанием обработки исключений для <select>.
 
         :param lot_id: ID лота.
         :type lot_id: :obj:`int`
+        :param skip_error: Если True, заполняет all_fields и игнорирует отсутствие выбора в <select>;
+                        если False, выбрасывает ошибку для <select> без выбора.
+        :type skip_error: :obj:`bool`
 
-        :return: объект с полями лота.
+        :return: объект с полями лота и (опционально) значениями <select>.
         :rtype: :class:`FunPayAPI.types.LotFields`
         """
         if not self.is_initiated:
@@ -1709,34 +1710,64 @@ class Account:
         response = self.method("get", f"lots/offerEdit?offer={lot_id}", headers, {}, raise_not_200=True)
 
         html_response = response.content.decode()
-        bs = BeautifulSoup(html_response, "lxml")
-        error_message = bs.find("p", class_="lead")
+        parser = BeautifulSoup(html_response, "lxml")
+        error_message = parser.find("p", class_="lead")
         if error_message:
-            raise exceptions.LotParsingError(response, error_message.text, lot_id)
+            raise exceptions.LotParsingError(error_message.text, lot_id)
+
         result = {}
-        result.update({field["name"]: field.get("value") or "" for field in bs.find_all("input")})
-        result.update({field["name"]: field.text or "" for field in bs.find_all("textarea")})
-        result.update({
-            field["name"]: field.find("option", selected=True)["value"]
-            for field in bs.find_all("select") if
-            "hidden" not in field.find_parent(class_="form-group").get("class", [])
-        })
-        result.update({field["name"]: "on" for field in bs.find_all("input", {"type": "checkbox"}, checked=True)})
+        all_fields = {} if not skip_error else {}
+
+        select_elements = parser.find_all("select")
+        result.update({field["name"]: field.get("value", "") for field in parser.find_all("input")})
+        result.update({field["name"]: field.text.strip() for field in parser.find_all("textarea")})
+
+        seen_names = set()
+        for element in select_elements:
+            if "hidden" in element.find_parent(class_="form-group").get("class", []):
+                continue
+            field_name = element["name"]
+            if field_name in seen_names:
+                logger.warning(f"Duplicate select field: {field_name}")
+                continue
+            seen_names.add(field_name)
+
+            try:
+                selected_option = element.find("option", selected=True)
+                if skip_error:
+                    result[field_name] = selected_option["value"].strip() if selected_option and selected_option.get("value") else ""
+                    options = [option.get("value", "") for option in element.find_all("option")]
+                    unique_options = list(dict.fromkeys(options))
+                    all_fields[field_name] = unique_options
+                else:
+                    result[field_name] = selected_option["value"]
+
+            except TypeError as e:
+                raise
+            except Exception as e:
+                if skip_error:
+                    all_fields[field_name] = []
+                continue
+
+        result.update({field["name"]: "on" for field in parser.find_all("input", {"type": "checkbox"}, checked=True)})
         subcategory = self.get_subcategory(enums.SubCategoryTypes.COMMON, int(result.get("node_id", 0)))
         self.csrf_token = result.get("csrf_token") or self.csrf_token
-        currency = utils.parse_currency(bs.find("span", class_="form-control-feedback").text)
+        currency = utils.parse_currency(parser.find("span", class_="form-control-feedback").text)
         if self.currency != currency:
             self.currency = currency
-        bs_buyer_prices = bs.find("table", class_="table-buyers-prices").find_all("tr")
+
+        buyer_prices = parser.find("table", class_="table-buyers-prices").find_all("tr")
         payment_methods = []
-        for i, pm in enumerate(bs_buyer_prices):
-            pm_price, pm_currency = pm.find("td").text.rsplit(maxsplit=1)
-            pm_price = float(pm_price.replace(" ", ""))
-            pm_currency = parse_currency(pm_currency)
-            payment_methods.append(PaymentMethod(pm.find("th").text, pm_price, pm_currency, i))
-        calc_result = CalcResult(types.SubCategoryTypes.COMMON, subcategory.id, payment_methods,
-                                 float(result["price"]), None, types.Currency.UNKNOWN, currency)
-        return types.LotFields(lot_id, result, subcategory, currency, calc_result)
+        for i, price_method in enumerate(buyer_prices):
+            price, currency_code = price_method.find("td").text.rsplit(maxsplit=1)
+            price = float(price.replace(" ", ""))
+            currency_code = utils.parse_currency(currency_code)
+            payment_methods.append(PaymentMethod(price_method.find("th").text, price, currency_code, i))
+
+        calc_result = CalcResult(types.SubCategoryTypes.COMMON, subcategory.id if subcategory else 0, payment_methods,
+                                float(result["price"]), None, types.Currency.UNKNOWN, currency)
+
+        return types.LotFields(lot_id, result, subcategory, currency, calc_result, html_response, all_fields)
 
     def get_chip_fields(self, subcategory_id: int) -> types.ChipFields:
         if not self.is_initiated:
