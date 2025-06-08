@@ -612,6 +612,7 @@ crd_msg_send_err = "An error occurred when sending a message to chat $YELLOW{}$R
 crd_msg_attempts_left = "Attempts left: $YELLOW{}$RESET."
 crd_msg_no_more_attempts_err = "Failed to send a message to chat $YELLOW{}$RESET: the number of attempts exceeded."
 crd_msg_sent = "Sent a message to the chat $YELLOW{}."
+crd_msg_link_delay = "Failed to send message to chat $YELLOW{}$RESET. Waiting $YELLOW{}$RESET sec. before retrying."
 crd_session_timeout_err = "Failed to refresh session: timeout exceeded."
 crd_session_unexpected_err = "An unexpected error occurred while refreshing the session."
 crd_session_no_more_attempts_err = "Failed to refresh session: the number of attempts was exceeded."

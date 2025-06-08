@@ -436,8 +436,8 @@ class Cardinal(object):
         return entities
 
     def send_message(self, chat_id: int | str, message_text: str, chat_name: str | None = None,
-                     interlocutor_id: int | None = None, attempts: int = 3,
-                     watermark: bool = True) -> list[FunPayAPI.types.Message] | None:
+                    interlocutor_id: int | None = None, attempts: int = 3,
+                    watermark: bool = True) -> list[FunPayAPI.types.Message] | None:
         """
         Отправляет сообщение в чат FunPay.
 
@@ -460,7 +460,7 @@ class Cardinal(object):
         result = []
         for entity in entities:
             current_attempts = attempts
-            while current_attempts:
+            while True:
                 try:
                     if isinstance(entity, str):
                         msg = self.account.send_message(chat_id, entity, chat_name,
@@ -472,24 +472,29 @@ class Cardinal(object):
                         logger.info(_("crd_msg_sent", chat_id))
                     elif isinstance(entity, int):
                         msg = self.account.send_image(chat_id, entity, chat_name,
-                                                      interlocutor_id or self.account.interlocutor_ids.get(chat_id),
-                                                      not self.old_mode_enabled,
-                                                      self.old_mode_enabled,
-                                                      self.keep_sent_messages_unread)
+                                                    interlocutor_id or self.account.interlocutor_ids.get(chat_id),
+                                                    not self.old_mode_enabled,
+                                                    self.old_mode_enabled,
+                                                    self.keep_sent_messages_unread)
                         result.append(msg)
                         logger.info(_("crd_msg_sent", chat_id))
                     elif isinstance(entity, float):
                         time.sleep(entity)
                     break
                 except Exception as ex:
-                    logger.warning(_("crd_msg_send_err", chat_id))
-                    logger.debug("TRACEBACK", exc_info=True)
-                    logger.info(_("crd_msg_attempts_left", current_attempts))
-                    current_attempts -= 1
-                    time.sleep(1)
-            else:
-                logger.error(_("crd_msg_no_more_attempts_err", chat_id))
-                return []
+                    if "Нельзя отправлять ссылки слишком часто" in str(ex):
+                        logger.info(_("crd_msg_link_delay", 3, chat_id))
+                        time.sleep(3)
+                        continue
+                    else:
+                        logger.warning(_("crd_msg_send_err", chat_id))
+                        logger.debug("TRACEBACK", exc_info=True)
+                        logger.info(_("crd_msg_attempts_left", current_attempts))
+                        current_attempts -= 1
+                        time.sleep(1)
+                        if current_attempts <= 0:
+                            logger.error(_("crd_msg_no_more_attempts_err", chat_id))
+                            return []
         return result
 
     def get_exchange_rate(self, base_currency: types.Currency, target_currency: types.Currency, min_interval: int = 60):

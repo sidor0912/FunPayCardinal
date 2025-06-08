@@ -615,6 +615,7 @@ crd_msg_send_err = "Произошла ошибка при отправке со
 crd_msg_attempts_left = "Осталось попыток: $YELLOW{}$RESET."
 crd_msg_no_more_attempts_err = "Не удалось отправить сообщение в чат $YELLOW{}$RESET: превышено кол-во попыток."
 crd_msg_sent = "Отправил сообщение в чат $YELLOW{}."
+crd_msg_link_delay = "Не удалось отправить сообщение в чат $YELLOW{}$RESET. Ожидаю $YELLOW{}$RESET сек. перед повторной попыткой."
 crd_session_timeout_err = "Не удалось обновить сессию: превышен тайм-аут ожидания."
 crd_session_unexpected_err = "Произошла непредвиденная ошибка при обновлении сессии."
 crd_session_no_more_attempts_err = "Не удалось обновить сессию: превышено кол-во попыток."
