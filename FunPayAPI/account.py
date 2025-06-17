@@ -835,9 +835,10 @@ class Account:
             "accept": "*/*",
             "x-requested-with": "XMLHttpRequest"
         }
+        text = text.strip()
         payload = {
             "authorId": self.id,
-            "text": f"{text}{self.__bot_character}",
+            "text": f"{text}{self.__bot_character}" if text else text,
             "rating": rating,
             "csrf_token": self.csrf_token,
             "orderId": order_id
@@ -1326,7 +1327,7 @@ class Account:
                   state: Optional[Literal["closed", "paid", "refunded"]] = None, game: Optional[int] = None,
                   section: Optional[str] = None, server: Optional[int] = None,
                   side: Optional[int] = None, locale: Literal["ru", "en", "uk"] | None = None,
-                  sudcategories: dict[str, tuple[types.SubCategoryTypes, int]] = None, **more_filters) -> \
+                  subcategories: dict[str, tuple[types.SubCategoryTypes, int]] | None = None, **more_filters) -> \
             tuple[str | None, list[types.OrderShortcut], Literal["ru", "en", "uk"],
             dict[str, types.SubCategory]]:
         """
@@ -1380,6 +1381,8 @@ class Account:
             raise exceptions.AccountNotInitiatedError()
 
         exclude_ids = exclude_ids or []
+        _subcategories = more_filters.pop("sudcategories", None)
+        subcategories = subcategories or _subcategories
         filters = {"id": id, "buyer": buyer, "state": state, "game": game, "section": section, "server": server,
                    "side": side}
         filters = {name: filters[name] for name in filters if filters[name]}
@@ -1411,7 +1414,7 @@ class Account:
 
         order_divs = parser.find_all("a", {"class": "tc-item"})
         if not start_from:
-            sudcategories = dict()
+            subcategories = dict()
             app_data = json.loads(parser.find("body").get("data-app-data"))
             locale = app_data.get("locale")
             self.csrf_token = app_data.get("csrf-token") or self.csrf_token
@@ -1425,11 +1428,11 @@ class Account:
                         section_type, section_id = key.split("-")
                         section_type = types.SubCategoryTypes.COMMON if section_type == "lot" else types.SubCategoryTypes.CURRENCY
                         section_id = int(section_id)
-                        sudcategories[f"{game_name}, {section_name}"] = self.get_subcategory(section_type, section_id)
+                        subcategories[f"{game_name}, {section_name}"] = self.get_subcategory(section_type, section_id)
             else:
-                sudcategories = None
+                subcategories = None
         if not order_divs:
-            return None, [], locale, sudcategories
+            return None, [], locale, subcategories
 
         sales = []
         for div in order_divs:
@@ -1462,8 +1465,8 @@ class Account:
             buyer_id = int(buyer_div.get("data-href")[:-1].split("/users/")[1])
             subcategory_name = div.find("div", {"class": "text-muted"}).text
             subcategory = None
-            if sudcategories:
-                subcategory = sudcategories.get(subcategory_name)
+            if subcategories:
+                subcategory = subcategories.get(subcategory_name)
 
             now = datetime.now()
             order_date_text = div.find("div", {"class": "tc-date-time"}).text
@@ -1492,7 +1495,7 @@ class Account:
                                             order_status, order_date, subcategory_name, subcategory, str(div))
             sales.append(order_obj)
 
-        return next_order_id, sales, locale, sudcategories
+        return next_order_id, sales, locale, subcategories
 
     def get_sells(self, start_from: str | None = None, include_paid: bool = True, include_closed: bool = True,
                   include_refunded: bool = True, exclude_ids: list[str] | None = None,
