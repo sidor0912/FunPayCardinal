@@ -501,6 +501,8 @@ def log_new_order_handler(c: Cardinal, e: NewOrderEvent, *args):
 def setup_event_attributes_handler(c: Cardinal, e: NewOrderEvent, *args):
     config_section_name = None
     config_section_obj = None
+    lot_shortcut = None
+    lot_id = None
     lot_description = e.order.description
     # пробуем найти лот, чтобы не выдавать по строке, которую вписал покупатель при оформлении заказа
     for lot in sorted(list(c.profile.get_sorted_lots(2).get(e.order.subcategory, {}).values()),
@@ -514,6 +516,8 @@ def setup_event_attributes_handler(c: Cardinal, e: NewOrderEvent, *args):
 
         if temp_desc in e.order.description:
             lot_description = temp_desc
+            lot_shortcut = lot
+            lot_id = lot.id
             break
 
     for i in range(3):
@@ -534,7 +538,7 @@ def setup_event_attributes_handler(c: Cardinal, e: NewOrderEvent, *args):
 
     attributes = {"config_section_name": config_section_name, "config_section_obj": config_section_obj,
                   "delivered": False, "delivery_text": None, "goods_delivered": 0, "goods_left": None,
-                  "error": 0, "error_text": None}
+                  "error": 0, "error_text": None, "lot_id": lot_id, "lot_shortcut": lot_shortcut}
     for i in attributes:
         setattr(e, i, attributes[i])
 
