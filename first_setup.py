@@ -84,7 +84,7 @@ default_config = {
     },
 
     "Other": {
-        "watermark": "🤖 𝑭𝒖𝒏𝑷𝒂𝒚 𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍 🐦",
+        "watermark": "🐦",
         "requestsDelay": "4",
         "language": "ru"
     }

@@ -488,7 +488,7 @@ class TGBot:
             self.bot.reply_to(m, _("watermark_error"))
             return
         preview = f"<a href=\"https://sfunpay.com/s/chat/zb/wl/zbwl4vwc8cc1wsftqnx5.jpg\">⁢</a>" if not \
-            any([i.lower() in watermark.lower() for i in ("🐦", "FPC", "𝑭𝑷𝑪", "𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍", "Cardinal", "Кардинал")]) else \
+            any([i.lower() in watermark.lower() for i in ("🐦", "FPC", "𝑭𝑷𝑪", "Cardinal", "Кардинал")]) else \
             f"<a href=\"https://sfunpay.com/s/chat/kd/8i/kd8isyquw660kcueck3g.jpg\">⁢</a>"
         self.cardinal.MAIN_CFG["Other"]["watermark"] = watermark
         self.cardinal.save_config(self.cardinal.MAIN_CFG, "configs/_main.cfg")
