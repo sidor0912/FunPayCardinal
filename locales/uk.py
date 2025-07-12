@@ -267,12 +267,19 @@ proxy_format = "❌ Проксі повинні мати формат <u>login:p
 proxy_adding_error = "❌ Під час додавання проксі сталася якась помилка."
 proxy_undeletable = "❌ Ці проксі неможливо видалити, оскільки вони зараз використовуються."
 
-act_edit_watermark = "Введи новий текст водяного знака. Наприклад:\n{}\n<code>𝑭𝒖𝒏𝑷𝒂𝒚 𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍</code>\n" \
-                     "<code>FunPay Cardinal</code>\n<code>[FunPay / Cardinal]</code>\n<code>𝑭𝑷𝑪</code>\n" \
-                     "<code>FPC</code>\n<code>🤖</code>\n<code>🐦</code>\n\n" \
-                     "Приклади можна скопіювати натисканням і відредагувати на свій розсуд.\nВрахуй, що на FunPay емодзі " \
-                     "🐦 виглядає не так, як в Telegram." \
-                     "\n\nЯкщо потрібно видалити водяний знак, відправ <code>-</code>."
+act_edit_watermark = "Введи новий текст водяного знака. Наприклад:\n{}\n" \
+                     "<code>𝓕𝓾𝓷𝓟𝓪𝔂 𝓒𝓪𝓻𝓭𝓲𝓷𝓪𝓵</code>\n" \
+                     "<code>𝔽𝕦𝕟ℙ𝕒𝕪 ℂ𝕒𝕣𝕕𝕚𝕟𝕒𝕝</code>\n<code>ＦｕｎＰａｙ Ｃａｒｄｉｎａｌ</code>\n" \
+                     "<code>ꜰᴜɴᴘᴀʏ ᴄᴀʀᴅɪɴᴀʟ</code>\n<code>🄵🅄🄽🄿🄰🅈 🄲🄰🅁🄳🄸🄽🄰🄻</code>\n" \
+                     "<code>ⒻⓤⓝⓅⓐⓨ Ⓒⓐⓡⓓⓘⓝⓐⓛ</code>\n<code>𝐅𝐮𝐧𝐏𝐚𝐲 𝐂𝐚𝐫𝐝𝐢𝐧𝐚𝐥</code>\n" \
+                     "<code>𝗙𝘂𝗻𝗣𝗮𝘆 𝗖𝗮𝗿𝗱𝗶𝗻𝗮𝗹</code>\n<code>𝘍𝘶𝘯𝘗𝘢𝘺 𝘊𝘢𝘳𝘥𝘪𝘯𝘢𝘭</code>\n" \
+                     "<code>𝙁𝙪𝙣𝙋𝙖𝙮 𝘾𝙖𝙧𝙙𝙞𝙣𝙖𝙡</code>\n<code>𝙵𝚞𝚗𝙿𝚊𝚢 𝙲𝚊𝚛𝚍𝚒𝚗𝚊𝚕</code>\n" \
+                     "<code>ᖴᑌᑎᑭᗩY ᑕᗩᖇᗪIᑎᗩᒪ</code>\n" \
+                     "<code>FunPay Cardinal</code>\n<code>[FunPay / Cardinal]</code>\n" \
+                     "<code>🤖</code>\n<code>🐦</code>\n\n" \
+                     "Приклади можна скопіювати натисканням і відредагувати на свій смак.\nМай на увазі, що на FunPay емодзі " \
+                     "🐦 виглядає не так, як у Telegram." \
+                     "\n\nЩоб видалити водяний знак, надішли <code>-</code>."
 watermark_changed = "✅ Водяний знак повідомлень змінено."
 watermark_deleted = "✅ Водяний знак повідомлень видалено."
 watermark_error = "❌ Невалідний водяний знак."

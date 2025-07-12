@@ -476,7 +476,7 @@ class TGBot:
         Активирует режим ввода вотемарки сообщений.
         """
         watermark = self.cardinal.MAIN_CFG["Other"]["watermark"]
-        watermark = f"\n<code>{watermark}</code>" if watermark else ""
+        watermark = f"\n<code>{utils.escape(watermark)}</code>" if watermark else ""
         result = self.bot.send_message(m.chat.id, _("act_edit_watermark").format(watermark),
                                        reply_markup=skb.CLEAR_STATE_BTN())
         self.set_state(m.chat.id, result.id, m.from_user.id, CBT.EDIT_WATERMARK)
@@ -487,8 +487,9 @@ class TGBot:
         if re.fullmatch(r"\[[a-zA-Z]+]", watermark):
             self.bot.reply_to(m, _("watermark_error"))
             return
+
         preview = f"<a href=\"https://sfunpay.com/s/chat/zb/wl/zbwl4vwc8cc1wsftqnx5.jpg\">⁢</a>" if not \
-            any([i.lower() in watermark.lower() for i in ("🐦", "FPC", "𝑭𝑷𝑪", "Cardinal", "Кардинал")]) else \
+            utils.has_brand_mark(watermark) else \
             f"<a href=\"https://sfunpay.com/s/chat/kd/8i/kd8isyquw660kcueck3g.jpg\">⁢</a>"
         self.cardinal.MAIN_CFG["Other"]["watermark"] = watermark
         self.cardinal.save_config(self.cardinal.MAIN_CFG, "configs/_main.cfg")

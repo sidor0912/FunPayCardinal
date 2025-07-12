@@ -16,7 +16,7 @@ import datetime
 import os.path
 import json
 import time
-
+import unicodedata
 import Utils.cardinal_tools
 from tg_bot import CBT
 
@@ -154,6 +154,18 @@ def escape(text: str) -> str:
     for char in escape_characters:
         text = text.replace(char, escape_characters[char])
     return text
+
+
+def has_brand_mark(watermark: str) -> bool:
+    """
+    Проверяет, содержит ли watermark какую-нибудь форму названия
+    """
+    simplified = (unicodedata.normalize("NFKD", watermark)
+                  .encode("ascii", "ignore").decode("ascii").lower())
+    ascii_hits = any(kw in simplified for kw in ("cardinal", "fpc"))
+    raw_hits = any(kw in watermark.lower() for kw in ("кардинал", "🐦", "ᴄᴀʀᴅɪɴᴀʟ"))
+
+    return ascii_hits or raw_hits or "ᑕᗩᖇᗪIᑎᗩᒪ" in watermark
 
 
 def split_by_limit(list_of_str: list[str], limit: int = 4096):
