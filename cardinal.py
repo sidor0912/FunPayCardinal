@@ -146,9 +146,14 @@ class Cardinal(object):
         self.profile_last_tag: str | None = None
         # Тег последнего event'а, после которого обновлялось состояние лотов.
         self.last_state_change_tag: str | None = None
+        # Тег последнего event'а, перед которым пороговое значение для определения новых чатов.
+        self.last_greeting_chat_id_threshold_change_tag: str | None = None
+        self.greeting_threshold_chat_ids = set()  # ID чатов для последующего обновления  self.greeting_chat_id_threshold
         self.blacklist = cardinal_tools.load_blacklist()  # ЧС.
         self.old_users = cardinal_tools.load_old_users(
             float(self.MAIN_CFG["Greetings"]["greetingsCooldown"]))  # Уже написавшие пользователи.
+        self.greeting_chat_id_threshold = max(self.old_users.keys(), default=0)
+        # пороговое значение для определения новых чатов (для приветствия)
 
         # Хэндлеры
         self.pre_init_handlers = []
@@ -853,7 +858,8 @@ class Cardinal(object):
         """
         for func in handlers_list:
             try:
-                if getattr(func, "plugin_uuid") is None or self.plugins[getattr(func, "plugin_uuid")].enabled:
+                plugin_uuid = getattr(func, "plugin_uuid")
+                if plugin_uuid is None or (plugin_uuid in self.plugins and self.plugins[plugin_uuid].enabled):
                     func(*args)
             except Exception as ex:
                 text = _("crd_handler_err")

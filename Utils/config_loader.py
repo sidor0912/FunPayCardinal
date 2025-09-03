@@ -108,6 +108,7 @@ def load_main_config(config_path: str):
 
         "Greetings": {
             "ignoreSystemMessages": ["0", "1"],
+            "onlyNewChats": ["0", "1"],
             "sendGreetings": ["0", "1"],
             "greetingsText": "any",
             "greetingsCooldown": "any"
@@ -218,6 +219,11 @@ def load_main_config(config_path: str):
             elif section_name == "Other" and param_name == "watermark" and \
                     param_name in config[section_name] and "𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍" in config[section_name][param_name]:
                 config.set(section_name, param_name, "🐦")
+                with open("configs/_main.cfg", "w", encoding="utf-8") as f:
+                    config.write(f)
+            elif section_name == "Greetings" and param_name == "onlyNewChats" and param_name not in config[
+                section_name]:
+                config.set("Greetings", "onlyNewChats", "0")
                 with open("configs/_main.cfg", "w", encoding="utf-8") as f:
                     config.write(f)
 

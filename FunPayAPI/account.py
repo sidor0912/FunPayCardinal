@@ -304,6 +304,8 @@ class Account:
             description = description.text if description else None
             server = offer.find("div", class_="tc-server")
             server = server.text if server else None
+            side = offer.find("div", class_="tc-side")
+            side = side.text if side else None
             tc_price = offer.find("div", {"class": "tc-price"})
             if subcategory_type is types.SubCategoryTypes.COMMON:
                 price = float(tc_price["data-s"])
@@ -344,7 +346,8 @@ class Account:
                 if i in attributes:
                     del attributes[i]
 
-            lot_obj = types.LotShortcut(offer_id, server, description, amount, price, currency, subcategory_obj, seller,
+            lot_obj = types.LotShortcut(offer_id, server, side, description, amount, price, currency, subcategory_obj,
+                                        seller,
                                         auto, promo, attributes, str(offer))
             result.append(lot_obj)
         return result
@@ -387,6 +390,8 @@ class Account:
             description = description.text if description else None
             server = offer.find("div", class_="tc-server")
             server = server.text if server else None
+            side = offer.find("div", class_="tc-side")
+            side = side.text if side else None
             tc_price = offer.find("div", class_="tc-price")
             price = float(tc_price["data-s"])
             if currency is None:
@@ -398,7 +403,7 @@ class Account:
             amount = tc_amount.text.replace(" ", "") if tc_amount else None
             amount = int(amount) if amount and amount.isdigit() else None
             active = "warning" not in offer.get("class", [])
-            lot_obj = types.MyLotShortcut(offer_id, server, description, amount, price, currency, subcategory_obj,
+            lot_obj = types.MyLotShortcut(offer_id, server, side, description, amount, price, currency, subcategory_obj,
                                           auto, active, str(offer))
             result.append(lot_obj)
         return result
@@ -1113,6 +1118,8 @@ class Account:
                 description = description.text if description else None
                 server = j.find("div", class_="tc-server")
                 server = server.text if server else None
+                side = j.find("div", class_="tc-side")
+                side = side.text if side else None
                 auto = j.find("i", class_="auto-dlv-icon") is not None
                 tc_price = j.find("div", {"class": "tc-price"})
                 tc_amount = j.find("div", class_="tc-amount")
@@ -1126,7 +1133,8 @@ class Account:
                     currency = parse_currency(tc_price.find("span", class_="unit").text)
                     if self.currency != currency:
                         self.currency = currency
-                lot_obj = types.LotShortcut(offer_id, server, description, amount, price, currency, subcategory_obj,
+                lot_obj = types.LotShortcut(offer_id, server, side, description, amount, price, currency,
+                                            subcategory_obj,
                                             None, auto,
                                             None, None, str(j))
                 user_obj.add_lot(lot_obj)

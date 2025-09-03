@@ -953,6 +953,9 @@ class LotShortcut:
     :param server: название сервера (если указан в лоте).
     :type server: :obj:`str` or :obj:`None`
 
+    :param side: название стороны (если указана в лоте).
+    :type side: :obj:`str` or :obj:`None`
+
     :param description: краткое описание (название) лота.
     :type description: :obj:`str` or :obj:`None`
 
@@ -969,7 +972,7 @@ class LotShortcut:
     :type html: :obj:`str`
     """
 
-    def __init__(self, id_: int | str, server: str | None,
+    def __init__(self, id_: int | str, server: str | None, side: str | None,
                  description: str | None, amount: int | None, price: float, currency: Currency,
                  subcategory: SubCategory | None,
                  seller: SellerShortcut | None, auto: bool, promo: bool | None, attributes: dict[str, int | str] | None,
@@ -980,6 +983,8 @@ class LotShortcut:
         """ID лота."""
         self.server: str | None = server
         """Название сервера (если указан)."""
+        self.side: str | None = side
+        """Сторона (если указана)."""
         self.description: str | None = description
         """Краткое описание (название) лота."""
         self.title: str | None = description
@@ -1017,6 +1022,9 @@ class MyLotShortcut:
     :param server: название сервера (если указан в лоте).
     :type server: :obj:`str` or :obj:`None`
 
+    :param side: название стороны (если указана в лоте).
+    :type side: :obj:`str` or :obj:`None`
+
     :param description: краткое описание (название) лота.
     :type description: :obj:`str` or :obj:`None`
 
@@ -1033,7 +1041,7 @@ class MyLotShortcut:
     :type html: :obj:`str`
     """
 
-    def __init__(self, id_: int | str, server: str | None,
+    def __init__(self, id_: int | str, server: str | None, side: str | None,
                  description: str | None, amount: int | None, price: float, currency: Currency,
                  subcategory: SubCategory | None, auto: bool, active: bool,
                  html: str):
@@ -1043,6 +1051,8 @@ class MyLotShortcut:
         """ID лота."""
         self.server: str | None = server
         """Название сервера (если указан)."""
+        self.side: str | None = side
+        """Сторона (если указана)."""
         self.description: str | None = description
         """Краткое описание (название) лота."""
         self.title: str | None = description

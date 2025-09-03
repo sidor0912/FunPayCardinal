@@ -86,8 +86,6 @@ class Runner:
         """Экземпляр аккаунта, к которому привязан Runner."""
         self.account.runner = self
 
-        self.__msg_time_re = re.compile(r"\d{2}:\d{2}")
-
     def get_updates(self) -> dict:
         """
         Запрашивает список событий FunPay.

@@ -50,6 +50,7 @@ default_config = {
 
     "Greetings": {
         "ignoreSystemMessages": "0",
+        "onlyNewChats": "0",
         "sendGreetings": "0",
         "greetingsText": "Привет, $chat_name!",
         "greetingsCooldown": "2"

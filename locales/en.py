@@ -114,6 +114,7 @@ tmplt_add_another = "➕ Add another"
 # Greeting settings
 gr_greetings = "{} Greet users"
 gr_ignore_sys_msgs = "{} Ignore system messages"
+gr_only_new_chats = "{} Only in new chats"
 gr_edit_message = "✏️ Change the text of the welcome message"
 gr_edit_cooldown = "⏱️ Cooldown: {} days"
 

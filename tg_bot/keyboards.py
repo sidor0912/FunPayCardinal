@@ -150,12 +150,16 @@ def greeting_settings(c: Cardinal):
 
     cd = float(c.MAIN_CFG["Greetings"]["greetingsCooldown"])
     cd = int(cd) if int(cd) == cd else cd
+    only_new_chats = c.MAIN_CFG["Greetings"].getboolean("onlyNewChats")
     kb = K() \
         .add(B(_("gr_greetings", l("sendGreetings")), None, f"{p}:sendGreetings")) \
         .add(B(_("gr_ignore_sys_msgs", l("ignoreSystemMessages")), None, f"{p}:ignoreSystemMessages")) \
-        .add(B(_("gr_edit_message"), None, CBT.EDIT_GREETINGS_TEXT)) \
-        .add(B(_("gr_edit_cooldown").format(cd), None, CBT.EDIT_GREETINGS_COOLDOWN)) \
-        .add(B(_("gl_back"), None, CBT.MAIN2))
+        .add(B(_("gr_only_new_chats", l("onlyNewChats")), None, f"{p}:onlyNewChats")) \
+        .add(B(_("gr_edit_message"), None, CBT.EDIT_GREETINGS_TEXT))
+    if not only_new_chats:
+        kb.add(B(_("gr_edit_cooldown").format(cd), None, CBT.EDIT_GREETINGS_COOLDOWN))
+
+    kb.add(B(_("gl_back"), None, CBT.MAIN2))
     return kb
 
 
