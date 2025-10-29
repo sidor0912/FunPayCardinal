@@ -305,6 +305,8 @@ update_done_exe = "✅ The update is installed! New <code>FPC.exe</code> is in <
                   "Turn off <i>FPC</i>, replace old <code>FPC.exe</code> with new one and run <code>Start.bat</code>. "
 update_install_error = "❌ An error occurred while installing the update."
 
+send_backup = "Send me the backup.\n\n<b>⚠️ WARNING! Uploading backups from untrusted sources may lead to serious consequences.</b>"
+
 restarting = "Restarting..."
 power_off_0 = """<b><u>Are you sure you want to turn me off?</u></b>\n
 You <b><u>wont be able</u></b> to turn me on via <i>Telegram</i>!"""
@@ -431,9 +433,7 @@ adv_description = """🐦 FunPay Cardinal v{}🐦
 🧩 Plugins
 🌟 And much more...
 
-🛠️ Made with: github.com/sidor0912/FunPayCardinal
-👨‍💻 Author: @woopertail, @sidor0912
-💰 Donate: @sidor_donate
+🛠️ Create your own bot: github.com/sidor0912/FunPayCardinal
 🔄 Updates: @fpc_updates
 🧩 Plugins: @fpc_plugins
 💬 Chat: @funpay_cardinal"""
@@ -490,6 +490,7 @@ cmd_update = "upgrade to the next version"
 cmd_sys = "system load information"
 cmd_create_backup = "create backup"
 cmd_get_backup = "get backup"
+cmd_upload_backup = "upload backup"
 cmd_restart = "restart FPC"
 cmd_power_off = "shutdown FPC"
 

@@ -42,8 +42,7 @@ class Runner:
     """
 
     def __init__(self, account: Account, disable_message_requests: bool = False,
-                 disabled_order_requests: bool = False,
-                 disabled_buyer_viewing_requests: bool = True):
+                 disabled_order_requests: bool = False):
         # todo добавить события и исключение событий о новых покупках (не продажах!)
         if not account.is_initiated:
             raise exceptions.AccountNotInitiatedError()
@@ -54,8 +53,6 @@ class Runner:
         """Делать ли доп. запросы для получения всех новых сообщений изменившихся чатов?"""
         self.make_order_requests: bool = False if disabled_order_requests else True
         """Делать ли доп запросы для получения новых / изменившихся заказов?"""
-        self.make_buyer_viewing_requests: bool = False if disabled_buyer_viewing_requests else True
-        """Делать ли доп запросы для получения поля "Покупатель смотрит"?"""
 
         self.__first_request = True
         self.__last_msg_event_tag = utils.random_tag()
@@ -79,8 +76,6 @@ class Runner:
 
         self.runner_len: int = 10
         """Количество событий, на которое успешно отвечает funpay.com/runner/"""
-        self.__interlocutor_ids: set = set()
-        """Айди собеседников, у которых будет получено поле "Покупатель смотрит\""""
 
         self.account: Account = account
         """Экземпляр аккаунта, к которому привязан Runner."""
@@ -105,12 +100,8 @@ class Runner:
             "tag": self.__last_msg_event_tag,
             "data": False
         }
-        buyers = [{"type": "c-p-u",
-                   "id": str(buyer),
-                   "tag": utils.random_tag(),
-                   "data": False} for buyer in self.__interlocutor_ids or []]
         payload = {
-            "objects": json.dumps([orders, chats, *buyers]),
+            "objects": json.dumps([orders, chats]),
             "request": False,
             "csrf_token": self.account.csrf_token
         }
@@ -150,9 +141,6 @@ class Runner:
                 events.extend(self.parse_chat_updates(obj))
             elif obj.get("type") == "orders_counters":
                 events.extend(self.parse_order_updates(obj))
-            elif obj.get("type") == "c-p-u":
-                bv = self.account.parse_buyer_viewing(obj)
-                self.buyers_viewing[bv.buyer_id] = bv
         if self.__first_request:
             self.__first_request = False
         return events
@@ -241,32 +229,12 @@ class Runner:
                 lcmc_events_with_new_mess.append(lcmc_event)
         events.extend(lcmc_events_without_new_mess)
 
-        if self.make_buyer_viewing_requests:
-            # в приоритете те, у которых не известен айди собеседника (чтобы быстрее узнать, что они смотрят)
-            lcmc_events_with_new_mess.sort(key=lambda i: i.chat.id not in self.account.interlocutor_ids)
-            self.__interlocutor_ids = self.__interlocutor_ids | set([self.account.interlocutor_ids.get(i.chat.id)
-                                                                     for i in lcmc_events_with_new_mess if
-                                                                     i.chat.id in self.account.interlocutor_ids])
-
-        while lcmc_events_with_new_mess or len(self.__interlocutor_ids) >= self.runner_len - 2:
+        while lcmc_events_with_new_mess:
             chats_pack = lcmc_events_with_new_mess[:self.runner_len]
             del lcmc_events_with_new_mess[:self.runner_len]
-            bv_pack = []
-            while self.make_buyer_viewing_requests and \
-                    len(chats_pack) + len(bv_pack) < self.runner_len and self.__interlocutor_ids:
-                interlocutor_id = self.__interlocutor_ids.pop()
-                if interlocutor_id not in self.buyers_viewing:
-                    bv_pack.append(interlocutor_id)
 
             chats_data = {i.chat.id: i.chat.name for i in chats_pack}
-            new_msg_events = self.generate_new_message_events(chats_data, bv_pack)
-
-            if self.make_buyer_viewing_requests:
-                # Если раньше айди не знали, то добавляем
-                for chat_id, msgs in new_msg_events.items():
-                    if chat_id not in self.account.interlocutor_ids and msgs and msgs[0].message.interlocutor_id:
-                        self.account.interlocutor_ids[chat_id] = msgs[0].message.interlocutor_id
-                        self.__interlocutor_ids.add(msgs[0].message.interlocutor_id)
+            new_msg_events = self.generate_new_message_events(chats_data)
 
             # [LastChatMessageChanged, NewMSG, NewMSG ..., LastChatMessageChanged, NewMSG, NewMSG ...]
             for i in chats_pack:
@@ -275,8 +243,7 @@ class Runner:
                     events.extend(new_msg_events[i.chat.id])
         return events
 
-    def generate_new_message_events(self, chats_data: dict[int, str],
-                                    interlocutor_ids: list[int] | None = None) -> dict[int, list[NewMessageEvent]]:
+    def generate_new_message_events(self, chats_data: dict[int, str]) -> dict[int, list[NewMessageEvent]]:
         """
         Получает историю переданных чатов и генерирует события новых сообщений.
 
@@ -292,7 +259,7 @@ class Runner:
         while attempts:
             attempts -= 1
             try:
-                chats = self.account.get_chats_histories(chats_data, interlocutor_ids)
+                chats = self.account.get_chats_histories(chats_data)
                 break
             except exceptions.RequestFailedError as e:
                 logger.error(e)
@@ -447,27 +414,14 @@ class Runner:
             :class:`FunPayAPI.updater.events.NewOrderEvent`,
             :class:`FunPayAPI.updater.events.OrderStatusChangedEvent`
         """
-        events = []
+
         while True:
             start_time = time.time()
             try:
-                self.__interlocutor_ids = set([event.message.interlocutor_id for event in events
-                                               if event.type == EventTypes.NEW_MESSAGE])
                 updates = self.get_updates()
-                events.extend(self.parse_updates(updates))
-                next_events = []
+                events = self.parse_updates(updates)
                 for event in events:
-                    if self.make_msg_requests and self.make_buyer_viewing_requests \
-                            and event.type == EventTypes.NEW_MESSAGE \
-                            and event.message.interlocutor_id is not None:
-                        event.message.buyer_viewing = self.buyers_viewing.get(event.message.interlocutor_id)
-                        if event.message.buyer_viewing is None:
-                            next_events.append(event)
-                            continue
-
                     yield event
-                events = next_events
-                self.buyers_viewing = {}
             except Exception as e:
                 if not ignore_exceptions:
                     raise e

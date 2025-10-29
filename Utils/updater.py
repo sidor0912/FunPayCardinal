@@ -10,7 +10,6 @@ import zipfile
 import shutil
 import json
 
-
 logger = getLogger("FPC.update_checker")
 localizer = Localizer()
 _ = localizer.translate
@@ -24,6 +23,7 @@ class Release:
     """
     Класс, описывающий релиз.
     """
+
     def __init__(self, name: str, description: str, sources_link: str):
         """
         :param name: название релиза.
@@ -78,11 +78,11 @@ def get_next_tag(tags: list[str], current_tag: str):
     try:
         curr_index = tags.index(current_tag)
     except ValueError:
-        return tags[len(tags)-1]
+        return tags[len(tags) - 1]
 
     if not curr_index:
         return None
-    return tags[curr_index-1]
+    return tags[curr_index - 1]
 
 
 def get_releases(from_tag: str) -> list[Release] | None:
@@ -227,6 +227,25 @@ def create_backup() -> int:
         return 1
 
 
+def extract_backup_archive() -> bool:
+    """
+    Разархивирует скачанный backup.zip. в storage/cache/backup/
+
+    :return: True, если разархивировано. False в случае ошибок.
+    """
+    try:
+        if os.path.exists("storage/cache/backup/"):
+            shutil.rmtree("storage/cache/backup/", ignore_errors=True)
+        os.makedirs("storage/cache/backup")
+
+        with zipfile.ZipFile("storage/cache/backup.zip", "r") as zip:
+            zip.extractall("storage/cache/backup/")
+        return True
+    except:
+        logger.debug("TRACEBACK", exc_info=True)
+        return False
+
+
 def install_release(folder_name: str) -> int:
     """
     Устанавливает обновление.
@@ -271,3 +290,25 @@ def install_release(folder_name: str) -> int:
     except:
         logger.debug("TRACEBACK", exc_info=True)
         return 1
+
+
+def install_backup() -> bool:
+    """
+    Устанавливает бекап.
+    """
+    try:
+        backup_folder = "storage/cache/backup"
+        if not os.path.exists(backup_folder):
+            return False
+
+        for i in os.listdir(backup_folder):
+            source = os.path.join(backup_folder, i)
+
+            if os.path.isfile(source):
+                shutil.copy2(source, i)
+            else:
+                shutil.copytree(source, os.path.join(".", i), dirs_exist_ok=True)
+        return True
+    except:
+        logger.debug("TRACEBACK", exc_info=True)
+        return False

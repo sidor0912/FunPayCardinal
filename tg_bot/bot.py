@@ -87,6 +87,7 @@ class TGBot:
             "sys": "cmd_sys",
             "get_backup": "cmd_get_backup",
             "create_backup": "cmd_create_backup",
+            "upload_backup": "cmd_upload_backup",
             "del_logs": "cmd_del_logs",
             "power_off": "cmd_power_off",
             "watermark": "cmd_watermark",
@@ -714,6 +715,13 @@ class TGBot:
         result = self.bot.send_message(m.chat.id, _("send_img"), reply_markup=skb.CLEAR_STATE_BTN())
         self.set_state(m.chat.id, result.id, m.from_user.id, cbt)
 
+    def act_upload_backup(self, m: Message):
+        """
+        Активирует режим ожидания бекапа.
+        """
+        result = self.bot.send_message(m.chat.id, _("send_backup"), reply_markup=skb.CLEAR_STATE_BTN())
+        self.set_state(m.chat.id, result.id, m.from_user.id, CBT.UPLOAD_BACKUP)
+
     def act_edit_greetings_text(self, c: CallbackQuery):
         variables = ["v_date", "v_date_text", "v_full_date_text", "v_time", "v_full_time", "v_username",
                      "v_message_text", "v_chat_id", "v_chat_name", "v_photo", "v_sleep"]
@@ -1090,6 +1098,7 @@ class TGBot:
         self.cbq_handler(self.update_profile, lambda c: c.data == CBT.UPDATE_PROFILE)
         self.msg_handler(self.act_manual_delivery_test, commands=["test_lot"])
         self.msg_handler(self.act_upload_image, commands=["upload_chat_img", "upload_offer_img"])
+        self.msg_handler(self.act_upload_backup, commands=["upload_backup"])
         self.cbq_handler(self.act_edit_greetings_text, lambda c: c.data == CBT.EDIT_GREETINGS_TEXT)
         self.msg_handler(self.edit_greetings_text,
                          func=lambda m: self.check_state(m.chat.id, m.from_user.id, CBT.EDIT_GREETINGS_TEXT))

@@ -469,7 +469,7 @@ class Cardinal(object):
                 try:
                     if isinstance(entity, str):
                         msg = self.account.send_message(chat_id, entity, chat_name,
-                                                        interlocutor_id or self.account.interlocutor_ids.get(chat_id),
+                                                        interlocutor_id,
                                                         None, not self.old_mode_enabled,
                                                         self.old_mode_enabled,
                                                         self.keep_sent_messages_unread)
@@ -477,7 +477,7 @@ class Cardinal(object):
                         logger.info(_("crd_msg_sent", chat_id))
                     elif isinstance(entity, int):
                         msg = self.account.send_image(chat_id, entity, chat_name,
-                                                      interlocutor_id or self.account.interlocutor_ids.get(chat_id),
+                                                      interlocutor_id,
                                                       not self.old_mode_enabled,
                                                       self.old_mode_enabled,
                                                       self.keep_sent_messages_unread)

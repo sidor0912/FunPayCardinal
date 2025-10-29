@@ -239,7 +239,7 @@ if ! sudo mkdir /home/$username/FunPayCardinal ; then
 fi
 
 #17
-if ! sudo mv /home/$username/fpc-install/*/* /home/$username/FunPayCardinal/ ; then
+if ! sudo bash -c "mv /home/$username/fpc-install/*/* /home/$username/FunPayCardinal/"; then
   echo -e "${start_process_line}\nПроизошла ошибка при перемещении файлов. (17/${commands})\n${end_process_line}"
   exit 2
 fi

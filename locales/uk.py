@@ -307,6 +307,8 @@ update_done_exe = "✅ Встановив оновлення! Новий <code>F
                   "і запусти <code>Start.bat</code>."
 update_install_error = "❌ Сталася помилка при встановленні оновлення."
 
+send_backup = "Надішли мені бекап.\n\n<b>⚠️ УВАГА! Завантаження бекапів із сумнівних джерел може призвести до сумних наслідків.</b>"
+
 restarting = "Перезавантажуюсь..."
 power_off_0 = """<b><u>Ти впевнений, що хочеш вимкнути мене?</u></b>\n
 Увімкнути мене через <i>Telegram</i> ПУ <b><u>не вийде!</u></b>"""
@@ -433,9 +435,7 @@ adv_description = """🐦 𝑭𝒖𝒏𝑷𝒂𝒚 𝑪𝒂𝒓𝒅𝒊𝒏𝒂�
 🧩 Плагіни
 🌟 І багато іншого...
 
-🛠️ Створено за допомогою: github.com/sidor0912/FunPayCardinal
-👨‍💻 Автор: @woopertail, @sidor0912
-💰 Донат: @sidor_donate
+🛠️ Створити свого бота: github.com/sidor0912/FunPayCardinal
 🔄 Оновлення: @fpc_updates
 🧩 Плагіни: @fpc_plugins
 💬 Чат: @funpay_cardinal"""
@@ -492,6 +492,7 @@ cmd_update = "оновитися до наст. версії"
 cmd_sys = "інформація про навантаження на систему"
 cmd_create_backup = "створити бекап"
 cmd_get_backup = "отримати бекап"
+cmd_upload_backup = "вивантажити бекап"
 cmd_restart = "перезапустити FPC"
 cmd_power_off = "вимкнути FPC"
 

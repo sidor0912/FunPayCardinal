@@ -19,6 +19,8 @@ import json
 import time
 import re
 
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from . import types
 from .common import exceptions, utils, enums
 
@@ -104,9 +106,6 @@ class Account:
         self.last_update: int | None = None
         """Последнее время обновления аккаунта."""
 
-        self.interlocutor_ids: dict[int, int] = {}
-        """{id чата: id собеседника}"""
-
         self.__initiated: bool = False
 
         self.__saved_chats: dict[int, types.ChatShortcut] = {}
@@ -127,6 +126,19 @@ class Account:
         """Если сообщение начинается с этого символа, значит оно отправлено ботом."""
         self.__old_bot_character = "⁤"
         """Старое значение self.__bot_character, для корректной маркировки отправки ботом старых сообщений"""
+        self.session = requests.Session()
+        retry_strategy = Retry(
+            total=6,
+            connect=6,
+            read=6,
+            redirect=6,
+            status=6,
+            backoff_factor=1,
+            status_forcelist=[500, 502, 503, 504],
+            allowed_methods={"GET", "POST"}
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        self.session.mount("https://", adapter)
 
     def method(self, request_method: Literal["post", "get"], api_method: str, headers: dict, payload: Any,
                exclude_phpsessid: bool = False, raise_not_200: bool = False,
@@ -187,20 +199,42 @@ class Account:
         locale = locale or self.__set_locale
         if request_method == "get" and locale and locale != self.locale:
             link += f'{"&" if "?" in link else "?"}setlocale={locale}'
-        for i in range(10):
-            response = getattr(requests, request_method)(link, headers=headers, data=payload,
-                                                         timeout=self.requests_timeout,
-                                                         proxies=self.proxy or {}, allow_redirects=False)
-            if not (300 <= response.status_code < 400) or 'Location' not in response.headers:
+        kwargs = {"method": request_method,
+                  "headers": headers,
+                  "timeout": self.requests_timeout,
+                  "proxies": self.proxy or {}}
+        i = 0
+        response = None
+        while i < 10 or response.status_code == 429:
+            response = self.session.request(url=link, data=payload, allow_redirects=False, **kwargs)
+            if response.status_code == 429:
+                self.last_429_err_time = time.time()
+                time.sleep(min(2 ** i, 30))
+                continue
+            elif response.status_code == 400 and isinstance(payload, dict) and "csrf_token" in payload:
+                content_type = response.headers.get("Content-Type")
+                if content_type and "application/json" in content_type:
+                    d = response.json()
+                    if d.get("error") == 1 and d.get("msg") in ("Оновіть сторінку та повторіть спробу.",
+                                                                "Обновите страницу и повторите попытку.",
+                                                                "Please refresh your page and try again."):
+                        while payload["csrf_token"] == self.csrf_token:
+                            try:
+                                self.get()
+                            except:
+                                logger.warning("Произошла ошибка при обновлении данных аккаунта")
+                                logger.debug("TRACEBACK", exc_info=True)
+                                time.sleep(2)
+                        payload["csrf_token"] = self.csrf_token
+                        continue
+                break
+            elif not (300 <= response.status_code < 400) or 'Location' not in response.headers:
                 break
             link = response.headers['Location']
             update_locale(link)
+            i += 1
         else:
-            response = getattr(requests, request_method)(link, headers=headers, data=payload,
-                                                         timeout=self.requests_timeout,
-                                                         proxies=self.proxy or {})
-        if response.status_code == 429:
-            self.last_429_err_time = time.time()
+            response = self.session.request(url=link, data=payload, allow_redirects=True, **kwargs)
 
         if response.status_code == 403:
             raise exceptions.UnauthorizedError(response)
@@ -493,6 +527,52 @@ class Account:
                                 float(balances["data-balance-total-eur"]), float(balances["data-balance-eur"]))
         return balance
 
+    # def get_withdraw_payment_data(self) -> types.WithdrawPaymentData:
+    #     if not self.is_initiated:
+    #         raise exceptions.AccountNotInitiatedError()
+    #     response = self.method("get", f"account/balance", {"accept": "*/*"}, {}, raise_not_200=True)
+    #     html_response = response.content.decode()
+    #     parser = BeautifulSoup(html_response, "lxml")
+    #
+    #     username = parser.find("div", {"class": "user-link-name"})
+    #     if not username:
+    #         raise exceptions.UnauthorizedError(response)
+    #
+    #     self.__update_csrf_token(parser)
+    #     data_data = parser.find("div", class_="withdraw-box").get("data-data")
+    #     parsed_data = json.loads(html.unescape(data_data))
+    #     ext_currencies = {}
+    #     for ext_currency_name, ext_currency_data in parsed_data["extCurrencies"].items():
+    #         wallet_info = WithdrawWalletInfo(
+    #             ext_currency=ext_currency_name,
+    #             name=ext_currency_data["name"],
+    #             unit=ext_currency_data["unit"],
+    #             wallet_name=ext_currency_data["walletName"],
+    #             wallets=ext_currency_data["wallets"]
+    #         )
+    #         ext_currencies[ext_currency_name] = wallet_info
+    #
+    #     currencies = {}
+    #     for currency_name, currency_data in parsed_data["currencies"].items():
+    #         channels = []
+    #         for channel_data in currency_data["channels"]:
+    #             ext_currency = channel_data["extCurrency"]
+    #             wallet_info = ext_currencies.get(ext_currency)
+    #             channel_info = WithdrawMethod(
+    #                 name=channel_data["name"],
+    #                 ext_currency=ext_currency,
+    #                 fee_info=channel_data["feeInfo"],
+    #                 wallet_info=wallet_info
+    #             )
+    #             channels.append(channel_info)
+    #         currency = parse_currency(currency_data["unit"])
+    #         currency_info = WithdrawCurrencyInfo(
+    #             currency=currency,
+    #             channels=channels
+    #         )
+    #         currencies[currency] = currency_info
+    #     return WithdrawPaymentData(ext_currencies=ext_currencies, currencies=currencies)
+
     def get_chat_history(self, chat_id: int | str, last_message_id: int = 99999999999999999999999,
                          interlocutor_username: Optional[str] = None, from_id: int = 0) -> list[types.Message]:
         """
@@ -541,12 +621,10 @@ class Account:
         return self.__parse_messages(json_response["chat"]["messages"], chat_id, interlocutor_id,
                                      interlocutor_username, from_id)
 
-    def get_chats_histories(self, chats_data: dict[int | str, str | None],
-                            interlocutor_ids: list[int] | None = None) -> dict[int, list[types.Message]]:
+    def get_chats_histories(self, chats_data: dict[int | str, str | None]) -> dict[int, list[types.Message]]:
         """
         Получает историю сообщений сразу нескольких чатов
         (до 50 сообщений на личный чат, до 25 сообщений на публичный чат).
-        Прокидывает в Account.runner информацию о том, какие лоты смотрят cобеседники (interlocutor_ids).
 
         :param chats_data: ID чатов и никнеймы собеседников (None, если никнейм неизвестен)\n
             Например: {48392847: "SLLMK", 58392098: "Amongus", 38948728: None}
@@ -562,12 +640,8 @@ class Account:
         }
         chats = [{"type": "chat_node", "id": i, "tag": "00000000",
                   "data": {"node": i, "last_message": -1, "content": ""}} for i in chats_data]
-        buyers = [{"type": "c-p-u",
-                   "id": str(buyer),
-                   "tag": utils.random_tag(),
-                   "data": False} for buyer in interlocutor_ids or []]
         payload = {
-            "objects": json.dumps([*chats, *buyers]),
+            "objects": json.dumps(chats),
             "request": False,
             "csrf_token": self.csrf_token
         }
@@ -576,10 +650,7 @@ class Account:
 
         result = {}
         for i in json_response["objects"]:
-            if i.get("type") == "c-p-u":
-                bv = self.parse_buyer_viewing(i)
-                self.runner.buyers_viewing[bv.buyer_id] = bv
-            elif i.get("type") == "chat_node":
+            if i.get("type") == "chat_node":
                 if not i.get("data"):
                     result[i.get("id")] = []
                     continue
@@ -1715,7 +1786,8 @@ class Account:
         if error_message:
             raise exceptions.LotParsingError(response, error_message.text, lot_id)
         result = {}
-        result.update({field["name"]: field.get("value") or "" for field in bs.find_all("input")})
+        result.update(
+            {field["name"]: field.get("value") or "" for field in bs.find_all("input") if field["name"] != "query"})
         result.update({field["name"]: field.text or "" for field in bs.find_all("textarea")})
         result.update({
             field["name"]: field.find("option", selected=True)["value"]
@@ -1766,16 +1838,15 @@ class Account:
             "x-requested-with": "XMLHttpRequest",
         }
         offer_fields.csrf_token = self.csrf_token
+        fields = offer_fields.renew_fields().fields
 
         if isinstance(offer_fields, types.LotFields):
             id_ = offer_fields.lot_id
-            fields = offer_fields.renew_fields().fields
-            fields["location"] = "trade"
             api_method = "lots/offerSave"
         else:
             id_ = offer_fields.subcategory_id
-            fields = offer_fields.renew_fields().fields
             api_method = "chips/saveOffers"
+
         response = self.method("post", api_method, headers, fields, raise_not_200=True)
         json_response = response.json()
         errors_dict = {}
@@ -1980,7 +2051,7 @@ class Account:
         messages = []
         ids = {self.id: self.username, 0: "FunPay"}
         badges = {}
-        if interlocutor_id is not None:
+        if None not in (interlocutor_id, interlocutor_username):
             ids[interlocutor_id] = interlocutor_username
 
         for i in json_messages:
@@ -1998,9 +2069,12 @@ class Account:
                 if ids.get(author_id) is None:
                     author = author_div.find("a").text.strip()
                     ids[author_id] = author
-                    if self.chat_id_private(chat_id) and author_id == interlocutor_id and not interlocutor_username:
-                        interlocutor_username = author
-                        ids[interlocutor_id] = interlocutor_username
+                    if self.chat_id_private(chat_id):
+                        if author_id == interlocutor_id and not interlocutor_username:
+                            interlocutor_username = author
+                        elif interlocutor_username == author and not interlocutor_id:
+                            interlocutor_id = author_id
+
             by_bot = False
             by_vertex = False
             image_name = None
@@ -2041,6 +2115,7 @@ class Account:
         for i in messages:
             i.author = ids.get(i.author_id)
             i.chat_name = interlocutor_username
+            i.interlocutor_id = interlocutor_id
             i.badge = badges.get(i.author_id) if badges.get(i.author_id) != 0 else None
             parser = BeautifulSoup(i.html, "lxml")
             if i.badge:
@@ -2109,7 +2184,7 @@ class Account:
             logger.debug("TRACEBACK", exc_info=True)
 
     @staticmethod
-    def parse_buyer_viewing(json_responce: dict) -> types.BuyerViewing:
+    def __parse_buyer_viewing(json_responce: dict) -> types.BuyerViewing:
         buyer_id = json_responce.get("id")
         if not json_responce["data"]:
             return types.BuyerViewing(buyer_id, None, None, None, None)

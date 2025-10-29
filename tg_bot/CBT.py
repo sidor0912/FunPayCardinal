@@ -425,6 +425,11 @@ UPLOAD_OFFER_IMAGE = "upload_offer_image"
 User-state: ожидается сообщение с изображением для выгрузки на сервер FunPay (лот).
 """
 
+UPLOAD_BACKUP = "upload_backup"
+"""
+User-state: ожидается сообщение с бекапом.
+"""
+
 UPDATE_PROFILE = "39"
 """
 Callback для обновления статистики аккаунта.
