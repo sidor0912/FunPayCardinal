@@ -206,33 +206,17 @@ class Account:
         i = 0
         response = None
         while i < 10 or response.status_code == 429:
+            i += 1
             response = self.session.request(url=link, data=payload, allow_redirects=False, **kwargs)
             if response.status_code == 429:
                 self.last_429_err_time = time.time()
                 time.sleep(min(2 ** i, 30))
                 continue
-            elif response.status_code == 400 and isinstance(payload, dict) and "csrf_token" in payload:
-                content_type = response.headers.get("Content-Type")
-                if content_type and "application/json" in content_type:
-                    d = response.json()
-                    if d.get("error") == 1 and d.get("msg") in ("Оновіть сторінку та повторіть спробу.",
-                                                                "Обновите страницу и повторите попытку.",
-                                                                "Please refresh your page and try again."):
-                        while payload["csrf_token"] == self.csrf_token:
-                            try:
-                                self.get()
-                            except:
-                                logger.warning("Произошла ошибка при обновлении данных аккаунта")
-                                logger.debug("TRACEBACK", exc_info=True)
-                                time.sleep(2)
-                        payload["csrf_token"] = self.csrf_token
-                        continue
-                break
             elif not (300 <= response.status_code < 400) or 'Location' not in response.headers:
                 break
             link = response.headers['Location']
             update_locale(link)
-            i += 1
+
         else:
             response = self.session.request(url=link, data=payload, allow_redirects=True, **kwargs)
 
