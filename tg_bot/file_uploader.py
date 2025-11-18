@@ -278,17 +278,15 @@ def init_uploader(cardinal: Cardinal):
             file_info = tg.bot.get_file(photo.file_id)
             file = tg.bot.download_file(file_info.file_path)
             image_id = cardinal.account.upload_image(file, type_="chat")
-            result = cardinal.account.send_message(chat_id, None, username, image_id)
+            result = cardinal.send_message(chat_id, f"$photo={image_id}", username, watermark=False)
             if not result:
-                tg.bot.reply_to(m, f'❌ Не удалось отправить сообщение в переписку '
-                                   f'<a href="https://funpay.com/chat/?node={chat_id}">{username}</a>. '
-                                   f'Подробнее в файле <code>logs/log.log</code>',
-                                reply_markup=keyboards.reply(chat_id, username, again=True))
-                return
+                raise Exception("Нету сообщений")
             tg.bot.reply_to(m, f'✅ Сообщение отправлено в переписку '
                                f'<a href="https://funpay.com/chat/?node={chat_id}">{username}</a>.',
                             reply_markup=keyboards.reply(chat_id, username, again=True))
         except:
+            logger.warning("Произошла ошибка при отправке изображения.")
+            logger.debug("TRACEBACK", exc_info=True)
             tg.bot.reply_to(m, f'❌ Не удалось отправить сообщение в переписку '
                                f'<a href="https://funpay.com/chat/?node={chat_id}">{username}</a>. '
                                f'Подробнее в файле <code>logs/log.log</code>',
