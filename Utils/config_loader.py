@@ -260,9 +260,13 @@ def load_auto_response_config(config_path: str):
         try:
             check_param("response", config[command])
             check_param("telegramNotification", config[command], valid_values=["0", "1"], raise_if_not_exists=False)
+            check_param("enabled", config[command], valid_values=["0", "1"], raise_if_not_exists=False)
             check_param("notificationText", config[command], raise_if_not_exists=False)
         except (ParamNotFoundError, EmptyValueError, ValueNotValidError) as e:
             raise ConfigParseError(config_path, command, e)
+
+        if not config.has_option(command, "enabled"):
+            config.set(command, "enabled", "1")
 
         if "|" in command:
             command_sets.append(command)
@@ -291,7 +295,11 @@ def load_raw_auto_response_config(config_path: str):
 
     :return: спарсеный конфиг команд.
     """
-    return create_config_obj(config_path)
+    config = create_config_obj(config_path)
+    for raw_commands in config.sections():
+        if not config.has_option(raw_commands, "enabled"):
+            config.set(raw_commands, "enabled", "1")
+    return config
 
 
 def load_auto_delivery_config(config_path: str):

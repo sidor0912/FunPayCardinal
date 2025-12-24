@@ -472,7 +472,7 @@ class Cardinal(object):
                                                         interlocutor_id,
                                                         None, not self.old_mode_enabled,
                                                         self.old_mode_enabled,
-                                                        self.keep_sent_messages_unread)
+                                                        self.keep_sent_messages_unread and not self.old_mode_enabled)
                         result.append(msg)
                         logger.info(_("crd_msg_sent", chat_id))
                     elif isinstance(entity, int):
@@ -480,7 +480,7 @@ class Cardinal(object):
                                                       interlocutor_id,
                                                       not self.old_mode_enabled,
                                                       self.old_mode_enabled,
-                                                      self.keep_sent_messages_unread)
+                                                      self.keep_sent_messages_unread and not self.old_mode_enabled)
                         result.append(msg)
                         logger.info(_("crd_msg_sent", chat_id))
                     elif isinstance(entity, float):
@@ -680,6 +680,7 @@ class Cardinal(object):
         """
         self.run_id += 1
         self.start_time = int(time.time())
+        Thread(target=self.runner.loop, daemon=True).start()
         self.run_handlers(self.pre_start_handlers, (self,))
         self.run_handlers(self.post_start_handlers, (self,))
 

@@ -142,6 +142,24 @@ class BuyerViewing:
         self.text: str | None = text
         self.tag: str | None = tag
         self.html: str | None = html
+        self.is_viewing_lot: bool = bool(self.link)
+
+    @property
+    def lot_id(self) -> str | int | None:
+        if self.is_viewing_lot:
+            id_ = self.link.split("=")[-1]
+            return int(id_) if id_.isdigit() else id_
+        else:
+            return None
+
+    @property
+    def subcategory_type(self) -> SubCategoryTypes | None:
+        if self.is_viewing_lot:
+            return SubCategoryTypes.COMMON if "/lots/" in self.link else SubCategoryTypes.CURRENCY
+        else:
+            return None
+
+
 
 
 class Chat:
@@ -665,6 +683,22 @@ class SubCategory:
         """Публичная ссылка на список лотов подкатегории."""
         self.private_link: str = f"{self.public_link}trade"
         """Приватная ссылка на список лотов подкатегории (для редактирования лотов)."""
+
+    @property
+    def is_common(self):
+        return self.type == SubCategoryTypes.COMMON
+
+    @property
+    def is_lots(self):
+        return self.is_common
+
+    @property
+    def is_currency(self):
+        return self.type == SubCategoryTypes.CURRENCY
+
+    @property
+    def is_chips(self):
+        return self.is_currency
 
 
 class LotFields:

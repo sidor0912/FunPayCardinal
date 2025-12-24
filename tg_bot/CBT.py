@@ -93,10 +93,10 @@ command_index: int - числовой индекс команды.
 offset: int - смещение списка команд.
 """
 
-SWITCH_CMD_NOTIFICATION = "9"
+SWITCH_CMD_SETTING = "9"
 """
 Callback для вкл/выкл Telegram уведомления об использовании команды.
-Использование: CBT.SWITCH_CMD_NOTIFICATION:command_index:offset
+Использование: CBT.SWITCH_CMD_SETTING:command_index:offset:setting
 
 command_index: int - числовой индекс команды.
 offset: int - смещение списка команд.

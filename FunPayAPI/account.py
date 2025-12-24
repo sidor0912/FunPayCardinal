@@ -276,6 +276,85 @@ class Account:
         self.__initiated = True
         return self
 
+    def runner_request(self, payload: dict) -> requests.Response:
+        """
+        Отправляет запрос к эндпоинту `runner/` с указанной полезной нагрузкой.
+
+        :param payload: словарь с данными для отправки.
+        :type payload: dict
+
+        :return: объект ответа.
+        :rtype: requests.Response
+        """
+        headers = {
+            "accept": "*/*",
+            "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "x-requested-with": "XMLHttpRequest"
+        }
+        payload["csrf_token"] = self.csrf_token
+        payload["objects"] = json.dumps(payload.get("objects", []))
+        payload["request"] = False if not payload.get("request") else json.dumps(payload["request"])
+        response = self.method("post", "runner/", headers, payload, raise_not_200=True)
+
+        return response
+
+    def abuse_runner(self, chats_data: dict[int | str, str | None] | None = None,
+               last_order_event_tag: str | None = None,
+               last_msg_event_tag: str | None = None,
+               buyer_viewing_ids: list[int | str] | None = None,
+               request: None | dict = None) -> requests.Response:
+        """
+        Формирует и добавляет запрос в очередь Runner, дожидается ответа.
+        ВНИМАНИЕ! В ответе могут присутствовать данные, полученные для других запросов Runner-a
+
+        :param chats_data: словарь с ID чатов и никнеймами собеседников (None, если никнейм неизвестен).
+        :type chats_data: dict[int | str, str | None] | None
+
+        :param last_order_event_tag: тег последнего события заказа, если нужно отслеживать изменения в заказах.
+        :type last_order_event_tag: str | None
+
+        :param last_msg_event_tag: тег последнего события сообщения, если нужно отслеживать список диалогов.
+        :type last_msg_event_tag: str | None
+
+        :param buyer_viewing_ids: список ID покупателей, у которых нужно получить "Покупатель смотрит".
+        :type buyer_viewing_ids: list[int | str] | None
+
+        :param request: дополнительный объект запроса (отправка сообщений).
+        :type request: dict | None
+
+        :return: результат выполнения запроса через `runner.get_result`.
+        :rtype: requests.Response
+        """
+
+        if not chats_data:
+            chats_data = {}
+        objects = [{"type": "chat_node", "id": i, "tag": "00000000",
+                  "data": {"node": i, "last_message": -1, "content": ""}} for i in chats_data]
+
+        if last_msg_event_tag:
+            objects.append({
+            "type": "chat_bookmarks",
+            "id": self.id,
+            "tag": last_msg_event_tag,
+            "data": False
+        })
+        if last_order_event_tag:
+            objects.append({
+                "type": "orders_counters",
+                "id": self.id,
+                "tag": last_order_event_tag,
+                "data": False
+            })
+        if buyer_viewing_ids:
+            objects.extend([{"type":"c-p-u", "id": str(i), "tag":"00000000", "data": False}
+                            for i in buyer_viewing_ids])
+        payload = {
+            "objects": objects,
+            "request": request
+        }
+
+        return self.runner.get_result(payload)
+
     def get_subcategory_public_lots(self, subcategory_type: enums.SubCategoryTypes, subcategory_id: int,
                                     locale: Literal["ru", "en", "uk"] | None = None) -> list[types.LotShortcut]:
         """
@@ -557,7 +636,7 @@ class Account:
     #         currencies[currency] = currency_info
     #     return WithdrawPaymentData(ext_currencies=ext_currencies, currencies=currencies)
 
-    def get_chat_history(self, chat_id: int | str, last_message_id: int = 99999999999999999999999,
+    def get_chat_history(self, chat_id: int | str, last_message_id: int | None = None,
                          interlocutor_username: Optional[str] = None, from_id: int = 0) -> list[types.Message]:
         """
         Получает историю указанного чата (до 100 последних сообщений).
@@ -566,7 +645,7 @@ class Account:
         :type chat_id: :obj:`int` or :obj:`str`
 
         :param last_message_id: ID сообщения, с которого начинать историю (фильтр FunPay).
-        :type last_message_id: :obj:`int`
+        :type last_message_id: :obj:`int` or None
 
         :param interlocutor_username: никнейм собеседника. Не нужно указывать для получения истории публичного чата.
             Так же не обязательно, но желательно указывать для получения истории личного чата.
@@ -580,6 +659,9 @@ class Account:
         """
         if not self.is_initiated:
             raise exceptions.AccountNotInitiatedError()
+
+        if last_message_id is None:
+            return self.get_chats_histories({chat_id: interlocutor_username}).get(chat_id, [])
 
         headers = {
             "accept": "*/*",
@@ -597,15 +679,70 @@ class Account:
             return []
         if json_response["chat"]["node"]["silent"]:
             interlocutor_id = None
+            is_private = False
         else:
             interlocutors = json_response["chat"]["node"]["name"].split("-")[1:]
             interlocutors.remove(str(self.id))
             interlocutor_id = int(interlocutors[0])
+            is_private = True
 
-        return self.__parse_messages(json_response["chat"]["messages"], chat_id, interlocutor_id,
-                                     interlocutor_username, from_id)
+        return self.__parse_messages(json_response["chat"]["messages"], json_response["chat"]["node"]["id"],
+                                     interlocutor_id,
+                                     interlocutor_username, from_id, is_private)
 
-    def get_chats_histories(self, chats_data: dict[int | str, str | None]) -> dict[int, list[types.Message]]:
+    def parse_chats_histories(self, chats_data: dict[int | str, str | None],
+                              objects: list[dict]) -> dict[int | str, list[types.Message]]:
+        """
+        Разбирает объекты истории чатов и формирует словарь сообщений по каждому чату.
+
+        Для каждого объекта типа `chat_node`:
+        - проверяет наличие данных,
+        - определяет идентификатор и имя собеседника,
+        - обрабатывает сообщения через `__parse_messages`,
+        - учитывает приватные и "тихие" чаты (`silent`).
+
+        :param chats_data: словарь с ID чатов и никнеймами собеседников (None, если никнейм неизвестен).
+        :type chats_data: dict[int | str, str | None]
+
+        :param objects: список объектов из ответа сервера `runner` для анализа.
+        :type objects: list[dict]
+
+        :return: словарь с историями сообщений по каждому чату в формате {ID чата: список сообщений `types.Message`}.
+        :rtype: dict[int | str, list[types.Message]]
+        """
+
+        result = {}
+        for i in objects:
+            if i.get("type") == "chat_node":
+                if not i.get("data"):
+                    id_ = i.get("id")
+                    if isinstance(id_, str) and id_.isdigit() or isinstance(id_, int):
+                        result_ids = (int(id_), str(id_))
+                    else:
+                        result_ids = (id_, )
+                    for result_id in result_ids:
+                        if result_id in chats_data:
+                            result[result_id] = []
+                    continue
+
+                name = i["data"]["node"]["name"]
+                id_ = i["data"]["node"]["id"]
+                result_ids = {name, str(id_), id_} & set(chats_data.keys())
+                for result_id in result_ids:
+                    if i["data"]["node"]["silent"]:
+                        interlocutor_id = None
+                        interlocutor_name = None
+                    else:
+                        interlocutors = name.split("-")[1:]
+                        interlocutors.remove(str(self.id))
+                        interlocutor_id = int(interlocutors[0])
+                        interlocutor_name = chats_data.get(result_id)
+                    messages = self.__parse_messages(i["data"]["messages"], id_, interlocutor_id,
+                                                     interlocutor_name, is_private=not i["data"]["node"]["silent"])
+                    result[result_id] = messages
+        return result
+
+    def get_chats_histories(self, chats_data: dict[int | str, str | None]) -> dict[int | str, list[types.Message]]:
         """
         Получает историю сообщений сразу нескольких чатов
         (до 50 сообщений на личный чат, до 25 сообщений на публичный чат).
@@ -617,38 +754,11 @@ class Account:
         :return: словарь с историями чатов в формате {ID чата: [список сообщений]}
         :rtype: :obj:`dict` {:obj:`int`: :obj:`list` of :class:`FunPayAPI.types.Message`}
         """
-        headers = {
-            "accept": "*/*",
-            "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-            "x-requested-with": "XMLHttpRequest"
-        }
-        chats = [{"type": "chat_node", "id": i, "tag": "00000000",
-                  "data": {"node": i, "last_message": -1, "content": ""}} for i in chats_data]
-        payload = {
-            "objects": json.dumps(chats),
-            "request": False,
-            "csrf_token": self.csrf_token
-        }
-        response = self.method("post", "runner/", headers, payload, raise_not_200=True)
-        json_response = response.json()
+        response = self.abuse_runner(chats_data=chats_data)
+        objects = response.json()["objects"]
+        print(objects)
+        return self.parse_chats_histories(chats_data, objects)
 
-        result = {}
-        for i in json_response["objects"]:
-            if i.get("type") == "chat_node":
-                if not i.get("data"):
-                    result[i.get("id")] = []
-                    continue
-                if i["data"]["node"]["silent"]:
-                    interlocutor_id = None
-                    interlocutor_name = None
-                else:
-                    interlocutors = i["data"]["node"]["name"].split("-")[1:]
-                    interlocutors.remove(str(self.id))
-                    interlocutor_id = int(interlocutors[0])
-                    interlocutor_name = chats_data[i.get("id")]
-                messages = self.__parse_messages(i["data"]["messages"], i.get("id"), interlocutor_id, interlocutor_name)
-                result[i.get("id")] = messages
-        return result
 
     def upload_image(self, image: str | IO[bytes], type_: Literal["chat", "offer"] = "chat") -> int:
         """
@@ -742,11 +852,6 @@ class Account:
         if not self.is_initiated:
             raise exceptions.AccountNotInitiatedError()
 
-        headers = {
-            "accept": "*/*",
-            "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-            "x-requested-with": "XMLHttpRequest"
-        }
         request = {
             "action": "chat_message",
             "data": {"node": chat_id, "last_message": -1, "content": text}
@@ -758,21 +863,9 @@ class Account:
         else:
             request["data"]["content"] = f"{self.__bot_character}{text}" if text else ""
 
-        objects = [
-            {
-                "type": "chat_node",
-                "id": chat_id,
-                "tag": "00000000",
-                "data": {"node": chat_id, "last_message": -1, "content": ""}
-            }
-        ]
-        payload = {
-            "objects": "" if leave_as_unread else json.dumps(objects),
-            "request": json.dumps(request),
-            "csrf_token": self.csrf_token
-        }
+        chats_data = None if leave_as_unread else {chat_id: chat_name}
 
-        response = self.method("post", "runner/", headers, payload, raise_not_200=True)
+        response = self.abuse_runner(chats_data=chats_data, request=request)
         json_response = response.json()
         if not (resp := json_response.get("response")):
             raise exceptions.MessageNotDeliveredError(response, None, chat_id)
@@ -787,7 +880,11 @@ class Account:
                                 "You cannot message multiple users too frequently."):
                 self.last_multiuser_flood_err_time = time.time()
             raise exceptions.MessageNotDeliveredError(response, error_text, chat_id)
-        if leave_as_unread:
+        obj = next(iter([i for i in json_response["objects"] if (i["type"] == "chat_node" and (chat_id in (i["data"]["node"]["id"],
+                                                                   str(i["data"]["node"]["id"]),
+                                                                   i["data"]["node"]["name"])))]), None)
+        is_private_chat = True
+        if obj is None:
             message_text = text
             fake_html = f"""
             <div class="chat-msg-item" id="message-0000000000">
@@ -802,11 +899,14 @@ class Account:
                                         fake_html, None,
                                         None)
         else:
-            mes = json_response["objects"][0]["data"]["messages"][-1]
+            mes = obj["data"]["messages"][-1]
             parser = BeautifulSoup(mes["html"].replace("<br>", "\n"), "lxml")
             image_name = None
             image_link = None
             message_text = None
+            chat_id = obj["data"]["node"]["id"]
+            is_private_chat = not obj["data"]["node"]["silent"]
+
             try:
                 if image_tag := parser.find("a", {"class": "chat-img-link"}):
                     image_name = image_tag.find("img")
@@ -822,7 +922,7 @@ class Account:
             message_obj = types.Message(int(mes["id"]), message_text, chat_id, chat_name, interlocutor_id,
                                         self.username, self.id,
                                         mes["html"], image_link, image_name)
-        if self.runner and isinstance(chat_id, int):
+        if self.runner and is_private_chat and isinstance(chat_id, int):
             if add_to_ignore_list and message_obj.id:
                 self.runner.mark_as_by_bot(chat_id, message_obj.id)
             if update_last_saved_message:
@@ -899,7 +999,7 @@ class Account:
         payload = {
             "authorId": self.id,
             "text": f"{text}{self.__bot_character}" if text else text,
-            "rating": rating,
+            "rating": rating or "",
             "csrf_token": self.csrf_token,
             "orderId": order_id
         }
@@ -1231,7 +1331,7 @@ class Account:
             a = chat_panel.find("a")
             text, link = a.text, a["href"]
         if with_history:
-            history = self.get_chat_history(chat_id, interlocutor_username=name)
+            history = self.get_chats_histories({chat_id: name}).get(chat_id, [])
         else:
             history = []
         return types.Chat(chat_id, name, link, text, html_response, history)
@@ -1247,6 +1347,8 @@ class Account:
         :rtype: :class:`FunPayAPI.types.OrderShortcut`
         """
         # todo взаимодействие с покупками
+        if self.runner.saved_orders is not None:
+            return self.get_sales(id=order_id)[1][0]
         return self.runner.saved_orders.get(order_id, self.get_sales(id=order_id)[1][0])
 
     def get_order(self, order_id: str, locale: Literal["ru", "en", "uk"] | None = None) -> types.Order:
@@ -1589,23 +1691,8 @@ class Account:
         :return: объекты чатов (не больше 50).
         :rtype: :obj:`list` of :class:`FunPayAPI.types.ChatShortcut`
         """
-        chats = {
-            "type": "chat_bookmarks",
-            "id": self.id,
-            "tag": utils.random_tag(),
-            "data": False
-        }
-        payload = {
-            "objects": json.dumps([chats]),
-            "request": False,
-            "csrf_token": self.csrf_token
-        }
-        headers = {
-            "accept": "*/*",
-            "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-            "x-requested-with": "XMLHttpRequest"
-        }
-        response = self.method("post", "https://funpay.com/runner/", headers, payload, raise_not_200=True)
+
+        response = self.abuse_runner(last_msg_event_tag=utils.random_tag())
         json_response = response.json()
 
         msgs = ""
@@ -1807,7 +1894,8 @@ class Account:
         result.update({field["name"]: "on" for field in bs.find_all("input", {"type": "checkbox"}, checked=True)})
         return types.ChipFields(self.id, subcategory_id, result)
 
-    def save_offer(self, offer_fields: types.LotFields | types.ChipFields):
+    def save_offer(self, offer_fields: types.LotFields | types.ChipFields,
+                   locale: Literal["ru", "en", "uk"] | None = None):
         """
         Сохраняет лот на FunPay.
 
@@ -1831,7 +1919,7 @@ class Account:
             id_ = offer_fields.subcategory_id
             api_method = "chips/saveOffers"
 
-        response = self.method("post", api_method, headers, fields, raise_not_200=True)
+        response = self.method("post", api_method, headers, fields, raise_not_200=True, locale=locale)
         json_response = response.json()
         errors_dict = {}
         if (errors := json_response.get("errors")) or json_response.get("error"):
@@ -1841,11 +1929,11 @@ class Account:
 
             raise exceptions.LotSavingError(response, json_response.get("error"), id_, errors_dict)
 
-    def save_chip(self, chip_fields: types.ChipFields):
-        self.save_offer(chip_fields)
+    def save_chip(self, chip_fields: types.ChipFields, locale: Literal["ru", "en", "uk"] | None = None):
+        self.save_offer(chip_fields, locale)
 
-    def save_lot(self, lot_fields: types.LotFields):
-        self.save_offer(lot_fields)
+    def save_lot(self, lot_fields: types.LotFields, locale: Literal["ru", "en", "uk"] | None = None):
+        self.save_offer(lot_fields, locale)
 
     def delete_lot(self, lot_id: int) -> None:
         """
@@ -1892,6 +1980,23 @@ class Account:
                 return price2 / price1, now_currency
             else:
                 return price1 / price2, now_currency
+
+    def get_buyer_viewing(self, buyer_id: int) -> types.BuyerViewing:
+        json_result = self.abuse_runner(buyer_viewing_ids=[buyer_id,]).json()
+        for obj in json_result["objects"]:
+            if obj["type"] != "c-p-u" or obj["id"] != int(buyer_id):
+                continue
+            return self.__parse_buyer_viewing(obj)
+        return types.BuyerViewing(buyer_id, None, None, None, None)
+
+    def get_buyers_viewing(self, *ids):
+        json_result = self.abuse_runner(buyer_viewing_ids=list(ids)).json()
+        result = {}
+        for obj in json_result["objects"]:
+            if obj["type"] != "c-p-u" or obj["id"] not in ids:
+                continue
+            result[obj["id"]] = self.__parse_buyer_viewing(obj)
+        return result
 
     def get_category(self, category_id: int) -> types.Category | None:
         """
@@ -2031,10 +2136,12 @@ class Account:
 
     def __parse_messages(self, json_messages: dict, chat_id: int | str,
                          interlocutor_id: Optional[int] = None, interlocutor_username: Optional[str] = None,
-                         from_id: int = 0) -> list[types.Message]:
+                         from_id: int = 0, is_private: bool | None = None) -> list[types.Message]:
         messages = []
         ids = {self.id: self.username, 0: "FunPay"}
         badges = {}
+        mb_chat_is_private = (is_private or interlocutor_id or interlocutor_username
+                              or (is_private is None and self.chat_id_private(chat_id)))
         if None not in (interlocutor_id, interlocutor_username):
             ids[interlocutor_id] = interlocutor_username
 
@@ -2053,7 +2160,7 @@ class Account:
                 if ids.get(author_id) is None:
                     author = author_div.find("a").text.strip()
                     ids[author_id] = author
-                    if self.chat_id_private(chat_id):
+                    if mb_chat_is_private:
                         if author_id == interlocutor_id and not interlocutor_username:
                             interlocutor_username = author
                         elif interlocutor_username == author and not interlocutor_id:
@@ -2062,7 +2169,7 @@ class Account:
             by_bot = False
             by_vertex = False
             image_name = None
-            if self.chat_id_private(chat_id) and (image_tag := parser.find("a", {"class": "chat-img-link"})):
+            if mb_chat_is_private and (image_tag := parser.find("a", {"class": "chat-img-link"})):
                 image_name = image_tag.find("img")
                 image_name = image_name.get('alt') if image_name else None
                 image_link = image_tag.get("href")
@@ -2168,13 +2275,13 @@ class Account:
             logger.debug("TRACEBACK", exc_info=True)
 
     @staticmethod
-    def __parse_buyer_viewing(json_responce: dict) -> types.BuyerViewing:
-        buyer_id = json_responce.get("id")
-        if not json_responce["data"]:
+    def __parse_buyer_viewing(json_buyer_viewing: dict) -> types.BuyerViewing:
+        buyer_id = json_buyer_viewing.get("id")
+        if not json_buyer_viewing["data"]:
             return types.BuyerViewing(buyer_id, None, None, None, None)
 
-        tag = json_responce["tag"]
-        html = json_responce["data"]["html"]
+        tag = json_buyer_viewing["tag"]
+        html = json_buyer_viewing["data"]["html"]
         if html:
             html = html["desktop"]
             element = BeautifulSoup(html, "lxml").find("a")

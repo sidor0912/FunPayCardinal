@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from Utils.cardinal_tools import funpay_greetings_text
+
 if TYPE_CHECKING:
     from cardinal import Cardinal
 
@@ -156,7 +158,7 @@ def greetings_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChangedEv
         return
 
     logger.info(_("log_sending_greetings", chat_name, chat_id))
-    text = cardinal_tools.format_msg_text(c.MAIN_CFG["Greetings"]["greetingsText"], obj)
+    text = cardinal_tools.format_msg_text(funpay_greetings_text(c, obj), obj)
     Thread(target=c.send_message, args=(chat_id, text, chat_name), daemon=True).start()
 
 
@@ -198,6 +200,8 @@ def send_response_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChang
 
     mtext = mtext.replace("\n", "")
     if any([c.bl_response_enabled and username in c.blacklist, (command := mtext.strip().lower()) not in c.AR_CFG]):
+        return
+    if not c.AR_CFG[command].getboolean("enabled"):
         return
 
     logger.info(_("log_new_cmd", command, chat_name, chat_id))
@@ -407,7 +411,8 @@ def send_command_notification_handler(c: Cardinal, e: NewMessageEvent | LastChat
     if c.bl_cmd_notification_enabled and username in c.blacklist:
         return
     command = message_text.strip().lower()
-    if command not in c.AR_CFG or not c.AR_CFG[command].getboolean("telegramNotification"):
+    if (command not in c.AR_CFG or not c.AR_CFG[command].getboolean("telegramNotification")
+            or not c.AR_CFG[command].getboolean("enabled")):
         return
 
     if not c.AR_CFG[command].get("notificationText"):
