@@ -756,7 +756,6 @@ class Account:
         """
         response = self.abuse_runner(chats_data=chats_data)
         objects = response.json()["objects"]
-        print(objects)
         return self.parse_chats_histories(chats_data, objects)
 
 
