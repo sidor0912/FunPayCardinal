@@ -444,9 +444,6 @@ def format_order_text(text: str, order: FunPayAPI.types.OrderShortcut | FunPayAP
         text = text.replace(var, variables[var])
     return text
 
-def funpay_greetings_text(c: Cardinal, obj: FunPayAPI.types.Message | FunPayAPI.types.ChatShortcut) -> str:
-    return format_msg_text(c.MAIN_CFG["Greetings"]["greetingsText"], obj)
-
 
 def restart_program():
     """

@@ -147,6 +147,8 @@ class Cardinal(object):
         # Тег последнего event'а, после которого обновлялось состояние лотов.
         self.last_state_change_tag: str | None = None
         # Тег последнего event'а, перед которым пороговое значение для определения новых чатов.
+        self.last_profile_refresh_event_tag: str | None = None
+        # Тег последнего event'а, после которого был запущен отдельный поток обновления профилей и состояний лотов.
         self.last_greeting_chat_id_threshold_change_tag: str | None = None
         self.greeting_threshold_chat_ids = set()  # ID чатов для последующего обновления  self.greeting_chat_id_threshold
         self.blacklist = cardinal_tools.load_blacklist()  # ЧС.

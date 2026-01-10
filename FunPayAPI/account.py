@@ -215,6 +215,8 @@ class Account:
             elif not (300 <= response.status_code < 400) or 'Location' not in response.headers:
                 break
             link = response.headers['Location']
+            if link.endswith("account/login"):
+                raise exceptions.UnauthorizedError(response)
             update_locale(link)
 
         else:
@@ -352,8 +354,10 @@ class Account:
             "objects": objects,
             "request": request
         }
-
-        return self.runner.get_result(payload)
+        if self.runner:
+            return self.runner.get_result(payload)
+        else:
+            return self.runner_request(payload)
 
     def get_subcategory_public_lots(self, subcategory_type: enums.SubCategoryTypes, subcategory_id: int,
                                     locale: Literal["ru", "en", "uk"] | None = None) -> list[types.LotShortcut]:
@@ -1632,27 +1636,8 @@ class Account:
             if subcategories:
                 subcategory = subcategories.get(subcategory_name)
 
-            now = datetime.now()
             order_date_text = div.find("div", {"class": "tc-date-time"}).text
-            if any(today in order_date_text for today in ("сегодня", "сьогодні", "today")):  # сегодня, ЧЧ:ММ
-                h, m = order_date_text.split(", ")[1].split(":")
-                order_date = datetime(now.year, now.month, now.day, int(h), int(m))
-            elif any(yesterday in order_date_text for yesterday in ("вчера", "вчора", "yesterday")):  # вчера, ЧЧ:ММ
-                h, m = order_date_text.split(", ")[1].split(":")
-                temp = now - timedelta(days=1)
-                order_date = datetime(temp.year, temp.month, temp.day, int(h), int(m))
-            elif order_date_text.count(" ") == 2:  # ДД месяца, ЧЧ:ММ
-                split = order_date_text.split(", ")
-                day, month = split[0].split()
-                day, month = int(day), utils.MONTHS[month]
-                h, m = split[1].split(":")
-                order_date = datetime(now.year, month, day, int(h), int(m))
-            else:  # ДД месяца ГГГГ, ЧЧ:ММ
-                split = order_date_text.split(", ")
-                day, month, year = split[0].split()
-                day, month, year = int(day), utils.MONTHS[month], int(year)
-                h, m = split[1].split(":")
-                order_date = datetime(year, month, day, int(h), int(m))
+            order_date = utils.parse_funpay_datetime(order_date_text)
             id1, id2 = sorted([buyer_id, self.id])
             chat_id = f"users-{id1}-{id2}"
             order_obj = types.OrderShortcut(order_id, description, price, currency, buyer_username, buyer_id, chat_id,
@@ -1988,7 +1973,7 @@ class Account:
             return self.__parse_buyer_viewing(obj)
         return types.BuyerViewing(buyer_id, None, None, None, None)
 
-    def get_buyers_viewing(self, *ids):
+    def get_buyers_viewing(self, *ids) -> dict[int, types.BuyerViewing]:
         json_result = self.abuse_runner(buyer_viewing_ids=list(ids)).json()
         result = {}
         for obj in json_result["objects"]:
@@ -1996,6 +1981,55 @@ class Account:
                 continue
             result[obj["id"]] = self.__parse_buyer_viewing(obj)
         return result
+
+    def get_wallets(self) -> list[types.Wallet]:
+        """Получение сохраненных кошельков."""
+        response = self.method("get", "account/wallets", {}, {}, raise_not_200=True)
+        bs = BeautifulSoup(response.content.decode(), "lxml")
+        bs = bs.find("form", class_="details-editor")
+        result = []
+        for el in bs.find_all("div", class_="form-group"):
+            data_n = int(el.get("data-n"))
+            detail_id = int(el.find("input", {"name": f"details[{data_n}][detail_id]"})["value"])
+            if not detail_id:
+                continue
+            is_masked = bool(int(el.find("input", {"name": f"details[{data_n}][is_masked]"})["value"]))
+            data = el.find("input", {"name": f"details[{data_n}][data]"})["value"]
+            type_id = el.find("select", {"name": f"details[{data_n}][type_id]"}).find("option", selected=True)
+            result.append(types.Wallet(type_id["value"], data, data_n, detail_id, is_masked, type_id.text))
+        return result
+
+    def save_wallets(self, wallets: list[types.Wallet]):
+        """Сохранение кошельков."""
+        payload = {"csrf_token": self.csrf_token, "cat_id": "wallets"}
+        max_n = max([i.data_n for i in wallets if i.data_n is not None], default=-1) + 1
+
+        for wallet in wallets:
+            if wallet.data_n is None:
+                i = max_n
+                max_n += 1
+            else:
+                i = wallet.data_n
+            payload.update({f"details[{i}][detail_id]": wallet.detail_id or 0,
+                            f"details[{i}][is_masked]": int(wallet.is_masked)})
+            if not wallet.is_masked:
+                payload[f"details[{i}][type_id]"] = wallet.type_id
+                payload[f"details[{i}][data]"] =  wallet.data
+
+        payload.update({f"details[{max_n}][detail_id]": 0,
+                        f"details[{max_n}][is_masked]": 0,
+                        f"details[{max_n}][type_id]": "",
+                        f"details[{max_n}][data]": ""})
+        headers = {
+            "accept": "*/*",
+            "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "x-requested-with": "XMLHttpRequest",
+        }
+        r = self.method("post", "account/details", headers, payload, raise_not_200=True)
+        if r.json().get("error"):
+            raise Exception(r.json().get("msg"))
+
+
 
     def get_category(self, category_id: int) -> types.Category | None:
         """

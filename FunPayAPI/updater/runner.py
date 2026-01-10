@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import random
 import re
 import time
 import uuid
@@ -93,6 +94,7 @@ class Runner:
 
         self.__orders_counters: dict | None = None
         self.__chat_bookmarks: list[dict] = []
+        self.__last_chat_bookmarks: dict | None = None
         self.__chat_nodes: dict[int, tuple[dict, int]] = {}
         self.__chat_bookmarks_time = 0
         self.account.runner = self
@@ -136,6 +138,37 @@ class Runner:
             raise result
         return result
 
+    def __detect_chats_with_activity(self, amount: int) -> list[int]:
+        if not self.__last_chat_bookmarks:
+            return []
+        if not self.__chat_bookmarks or len(self.__chat_bookmarks) < 2:
+            return self.__last_chat_bookmarks["data"]["order"][:amount]
+        new_list = self.__chat_bookmarks[-1]["data"]["order"]
+        old_list = random.choice(self.__chat_bookmarks[:-1])["data"]["order"]
+        old_positions = {chat_id: i for i, chat_id in enumerate(old_list)}
+        last = float('inf')
+        split_index = len(new_list)
+        for i in range(len(new_list)-1, -1, -1):
+            idx = old_positions.get(new_list[i])
+
+            if idx is None or i < idx or last < idx:
+                split_index = i
+                break
+            else:
+                last = idx
+
+        result = new_list[:split_index+1]
+        if len(result) >= amount:
+            return random.sample(result, amount)
+        i = 0
+        result = set(result)
+        while len(result) < amount and i < len(new_list):
+            result.add(new_list[i])
+            i+=1
+
+        return list(result)
+
+
     def __fill_request_data(self, request_data: dict) -> dict:
         """
         Дополняет словарь запроса дополнительными объектами для отправки на сервер.
@@ -153,6 +186,15 @@ class Runner:
         """
 
         if not self.__first_request:
+            if (len(request_data["objects"]) < self.runner_len and not self.__orders_counters
+                    and "orders_counters" not in [i["type"] for i in request_data["objects"]]):
+                request_data["objects"].append({
+                    "type": "orders_counters",
+                    "id": self.account.id,
+                    "tag": self.__last_order_event_tag,
+                    "data": False
+                })
+
             if (len(request_data["objects"]) < self.runner_len
                     and time.time() - self.__chat_bookmarks_time > 1.5 ** len(self.__chat_bookmarks) - 1
                     and "chat_bookmarks" not in [i["type"] for i in request_data["objects"]]):
@@ -164,21 +206,14 @@ class Runner:
                 })
                 self.__chat_bookmarks_time = time.time()
 
-            if (len(request_data["objects"]) < self.runner_len and not self.__orders_counters
-                    and "orders_counters" not in [i["type"] for i in request_data["objects"]]):
-                request_data["objects"].append({
-                    "type": "orders_counters",
-                    "id": self.account.id,
-                    "tag": self.__last_order_event_tag,
-                    "data": False
-                })
+
 
         try:
-            if (self.make_msg_requests and (remaining := self.runner_len - len(request_data["objects"])) > 0
-                    and self.__chat_bookmarks and (last_chats := self.__chat_bookmarks[-1]["data"]["order"])):
-                request_data["objects"].extend([{"type": "chat_node", "id": i, "tag": "00000000",
-                                                 "data": {"node": i, "last_message": -1, "content": ""}} for i in
-                                                last_chats[:remaining]])
+            if (self.make_msg_requests and (remaining := self.runner_len - len(request_data["objects"])) > 0):
+                objs = [{"type": "chat_node", "id": i, "tag": "00000000",
+                         "data": {"node": i, "last_message": -1, "content": ""}}
+                        for i in self.__detect_chats_with_activity(remaining)]
+                request_data["objects"].extend(objs)
         except:
             logger.warning("Что-то пошло не так во время подкидывания чатов.")
             logger.debug("TRACEBACK", exc_info=True)
@@ -237,6 +272,7 @@ class Runner:
                             self.__orders_counters = obj
                         elif obj["type"] == "chat_bookmarks":
                             self.__chat_bookmarks.append(obj)
+                            self.__last_chat_bookmarks = obj
                         elif (self.make_msg_requests and
                               (obj["type"] == "chat_node" and (data := obj.get("data")) and
                                (node := data.get("node")) and
@@ -266,7 +302,7 @@ class Runner:
         json_response = response.json()
         return json_response
 
-    def parse_updates(self, updates_objects: dict) -> list[InitialChatEvent | ChatsListChangedEvent |
+    def parse_updates(self, updates_objects: list[dict]) -> list[InitialChatEvent | ChatsListChangedEvent |
                                                    LastChatMessageChangedEvent | NewMessageEvent | InitialOrderEvent |
                                                    OrdersListChangedEvent | NewOrderEvent | OrderStatusChangedEvent]:
         """
@@ -593,10 +629,15 @@ class Runner:
                     updates_objects = self.get_updates()["objects"]
                     is_request_made = True
                 else:
-                    updates_objects = [{"orders_counters": self.__orders_counters},]
-                    chat_bookmarks = self.__chat_bookmarks
+                    updates_objects = [self.__orders_counters,]
+                    chat_bookmarks = self.__chat_bookmarks[::-1]
+                    chat_ids = set()
                     for cb in chat_bookmarks:
-                        updates_objects.append({"chat_bookmarks": cb})
+                        cb_ids = set(cb["data"]["order"])
+                        if chat_ids.issuperset(cb_ids):
+                            continue
+                        chat_ids.update(cb_ids)
+                        updates_objects.append(cb)
                     is_request_made = False
                 self.__orders_counters = None
                 self.__chat_bookmarks = []

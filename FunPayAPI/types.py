@@ -1412,3 +1412,17 @@ class CalcResult:
     def commission_percent(self) -> float:
         """Процент комиссии."""
         return (self.commission_coefficient - 1) * 100
+
+class Wallet:
+    """Класс, описывающий кошелёк со страницы https://funpay.com/account/wallets"""
+
+    def __init__(self, type_id: str, data: str, data_n: int | None = None,
+                 detail_id: int | None = None, is_masked: bool = False, type_text: str | None = None):
+        self.detail_id: int | None = detail_id
+        self.type_id: str = type_id
+        self.data: str = data
+        self.is_masked: bool = is_masked
+        self.type_text: str = type_text
+        self.data_n: int | None = data_n
+
+
