@@ -252,7 +252,11 @@ class Runner:
                 if not request_data["objects"] and not request_data["request"]:
                     time.sleep(0.1)
                     continue
-
+                types_ = [i["type"] for i in request_data["objects"]]
+                if "orders_counters" in types_ and "chat_bookmarks" in types_:
+                    is_listener_request = True
+                else:
+                    is_listener_request = False
                 request_data = self.__fill_request_data(request_data)
 
                 try:
@@ -268,10 +272,11 @@ class Runner:
                 try:
                     result = result.json()
                     for obj in result["objects"]:
-                        if obj["type"] == "orders_counters":
+                        if not is_listener_request and obj["type"] == "orders_counters":
                             self.__orders_counters = obj
-                        elif obj["type"] == "chat_bookmarks":
-                            self.__chat_bookmarks.append(obj)
+                        elif obj["type"] == "chat_bookmarks" and (data := obj.get("data")) and data.get("order"):
+                            if not is_listener_request:
+                                self.__chat_bookmarks.append(obj)
                             self.__last_chat_bookmarks = obj
                         elif (self.make_msg_requests and
                               (obj["type"] == "chat_node" and (data := obj.get("data")) and

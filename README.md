@@ -82,7 +82,7 @@
 
 ## :arrow_down: Установка
 
-Арендовать виртуальный сервер можно на [FirstByte](https://firstbyte.ru/?from=162840). Выбирайте Ubuntu 20+ версии,
+Арендовать виртуальный сервер можно на [FirstByte](https://firstbyte.ru/?from=162840). Выбирайте Ubuntu 22-24 версии,
 остальные параметры не важны.
 
 ### :large_blue_diamond: Windows
