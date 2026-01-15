@@ -120,6 +120,11 @@ class ChatShortcut(BaseOrderInfo):
         else:
             return MessageTypes.NON_SYSTEM
 
+    @property
+    def is_autoreply(self):
+        """Последнее сообщение в чате - автоответ?"""
+        return self.user_msg_id == 0
+
     def __str__(self):
         return self.last_message_text
 
