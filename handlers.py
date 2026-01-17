@@ -146,10 +146,8 @@ def greetings_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChangedEv
         chat_id, chat_name, mtype, its_me, badge = obj.chat_id, obj.chat_name, obj.type, obj.author_id == c.account.id, obj.badge
     else:
         obj = e.chat
-        chat_id, chat_name, mtype, its_me = obj.id, obj.name, obj.last_message_type, not obj.unread
+        chat_id, chat_name, mtype, its_me, badge = obj.id, obj.name, obj.last_message_type, not obj.unread, None
     is_old_chat = (chat_id <= c.greeting_chat_id_threshold or chat_id in c.greeting_threshold_chat_ids)
-    if c.old_mode_enabled:
-        badge = "автоответ" if (is_old_chat and obj.user_msg_id == 0) else None
 
     if any([c.MAIN_CFG["Greetings"].getboolean("onlyNewChats") and is_old_chat,
             time.time() - c.old_users.get(chat_id, 0) < float(
