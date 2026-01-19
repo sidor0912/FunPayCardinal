@@ -142,7 +142,7 @@ class Runner:
         if not self.__last_chat_bookmarks:
             return []
         if not self.__chat_bookmarks or len(self.__chat_bookmarks) < 2:
-            return self.__last_chat_bookmarks["data"]["order"][:amount]
+            return []
         new_list = self.__chat_bookmarks[-1]["data"]["order"]
         old_list = random.choice(self.__chat_bookmarks[:-1])["data"]["order"]
         old_positions = {chat_id: i for i, chat_id in enumerate(old_list)}
