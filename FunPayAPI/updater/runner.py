@@ -78,6 +78,12 @@ class Runner:
         self.last_messages_ids: dict[int, int] = {}
         """ID последних сообщений в чатах ({ID чата: ID последнего сообщения})."""
 
+        self.chat_node_tags: dict[int, str] = {}
+        """Теги прочитанных чатов ({ID чата: тег})"""
+
+        self.users_ids: dict[int, int] = {}
+        """id чата - id собеседника"""
+
         self.buyers_viewing: dict[int, types.BuyerViewing] = {}
         """Что смотрит покупатель? ({ID покупателя: что смотрит}"""
 
@@ -94,7 +100,6 @@ class Runner:
 
         self.__orders_counters: dict | None = None
         self.__chat_bookmarks: list[dict] = []
-        self.__last_chat_bookmarks: dict | None = None
         self.__chat_nodes: dict[int, tuple[dict, int]] = {}
         self.__chat_bookmarks_time = 0
         self.account.runner = self
@@ -139,8 +144,6 @@ class Runner:
         return result
 
     def __detect_chats_with_activity(self, amount: int) -> list[int]:
-        if not self.__last_chat_bookmarks:
-            return []
         if not self.__chat_bookmarks or len(self.__chat_bookmarks) < 2:
             return []
         new_list = self.__chat_bookmarks[-1]["data"]["order"]
@@ -188,32 +191,21 @@ class Runner:
         if not self.__first_request:
             if (len(request_data["objects"]) < self.runner_len and not self.__orders_counters
                     and "orders_counters" not in [i["type"] for i in request_data["objects"]]):
-                request_data["objects"].append({
-                    "type": "orders_counters",
-                    "id": self.account.id,
-                    "tag": self.__last_order_event_tag,
-                    "data": False
-                })
+                request_data["objects"].extend(
+                    self.account.get_payload_data(last_order_event_tag=self.__last_order_event_tag)["objects"])
 
             if (len(request_data["objects"]) < self.runner_len
                     and time.time() - self.__chat_bookmarks_time > 1.5 ** len(self.__chat_bookmarks) - 1
                     and "chat_bookmarks" not in [i["type"] for i in request_data["objects"]]):
-                request_data["objects"].append({
-                    "type": "chat_bookmarks",
-                    "id": self.account.id,
-                    "tag": self.__last_msg_event_tag,
-                    "data": False
-                })
+                request_data["objects"].extend(
+                    self.account.get_payload_data(last_msg_event_tag=self.__last_msg_event_tag)["objects"])
                 self.__chat_bookmarks_time = time.time()
-
-
 
         try:
             if (self.make_msg_requests and (remaining := self.runner_len - len(request_data["objects"])) > 0):
-                objs = [{"type": "chat_node", "id": i, "tag": "00000000",
-                         "data": {"node": i, "last_message": -1, "content": ""}}
-                        for i in self.__detect_chats_with_activity(remaining)]
-                request_data["objects"].extend(objs)
+                payload_data = self.account.get_payload_data(chats_data=self.__detect_chats_with_activity(remaining),
+                                                             include_runner_context=True)
+                request_data["objects"].extend(payload_data["objects"])
         except:
             logger.warning("Что-то пошло не так во время подкидывания чатов.")
             logger.debug("TRACEBACK", exc_info=True)
@@ -277,7 +269,6 @@ class Runner:
                         elif obj["type"] == "chat_bookmarks" and (data := obj.get("data")) and data.get("order"):
                             if not is_listener_request:
                                 self.__chat_bookmarks.append(obj)
-                            self.__last_chat_bookmarks = obj
                         elif (self.make_msg_requests and
                               (obj["type"] == "chat_node" and (data := obj.get("data")) and
                                (node := data.get("node")) and
@@ -473,7 +464,7 @@ class Runner:
             while attempts:
                 attempts -= 1
                 try:
-                    chats = self.account.get_chats_histories(chats_data)
+                    chats = self.account.get_chats_histories(chats_data, include_runner_context=True)
                     break
                 except exceptions.RequestFailedError as e:
                     logger.error(e)
@@ -512,6 +503,8 @@ class Runner:
                             m.id > min(self.last_messages_ids.values(), default=10 ** 20)] or messages[-1:]
 
             self.last_messages_ids[cid] = messages[-1].id  # Перезаписываем ID последнего сообщение
+            self.chat_node_tags[cid] = messages[-1].tag # Перезаписываем тег чата
+            self.users_ids[cid] = messages[-1].interlocutor_id
             self.by_bot_ids[cid] = [i for i in self.by_bot_ids[cid] if i > self.last_messages_ids[cid]]  # чистим память
 
             for msg in messages:

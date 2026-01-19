@@ -237,7 +237,7 @@ class Message(BaseOrderInfo):
                  interlocutor_id: int | None,
                  author: str | None, author_id: int, html: str,
                  image_link: str | None = None, image_name: str | None = None,
-                 determine_msg_type: bool = True, badge_text: Optional[str] = None):
+                 determine_msg_type: bool = True, badge_text: Optional[str] = None, tag: Optional[str] = None):
         self.id: int = id_
         """ID сообщения."""
         self.text: str | None = text
@@ -286,6 +286,7 @@ class Message(BaseOrderInfo):
         """Являемся ли мы продавцом по заказу (для системных сообщений)."""
         self.i_am_buyer: bool | None = None
         """Являемся ли мы покупателем по заказу (для системных сообщений)."""
+        self.tag: str | None = tag
 
         BaseOrderInfo.__init__(self)
 
