@@ -708,20 +708,23 @@ def update_lot_state(cardinal: Cardinal, lot: types.LotShortcut, task: int) -> b
     while attempts:
         try:
             lot_fields = cardinal.account.get_lot_fields(lot.id)
-            if task == (1 if lot_fields.active else -1):
-                #если лот и так в нужном состоянии
+            if lot_fields.auto_delivery:
+                # если включена автовыдача FunPay - не трогаем
+                return False
+            elif lot_fields.amount and task == (1 if lot_fields.active else -1):
+                #если у лота есть наличие (есть поле + не 0) и лот и так в нужном состоянии
                 return True
             elif task == 1:
                 lot_fields.active = True
                 cardinal.account.save_lot(lot_fields)
-                logger.info(f"Восстановил лот $YELLOW{lot.description}$RESET.")  # locale
+                logger.info(f"Восстановил лот $YELLOW{lot.id} - {lot.description}$RESET.")  # locale
             elif task == -1:
                 lot_fields.active = False
                 cardinal.account.save_lot(lot_fields)
-                logger.info(f"Деактивировал лот $YELLOW{lot.description}$RESET.")  # locale
+                logger.info(f"Деактивировал лот $YELLOW{lot.id} - {lot.description}$RESET.")  # locale
             return True
         except Exception as e:
-            if isinstance(e, exceptions.RequestFailedError) and e.status_code == 404:
+            if isinstance(e, exceptions.LotParsingError):
                 logger.error(f"Произошла ошибка при изменении состояния лота $YELLOW{lot.description}$RESET:"  # locale
                              "лот не найден.")
                 return False

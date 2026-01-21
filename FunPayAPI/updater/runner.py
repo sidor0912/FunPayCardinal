@@ -411,7 +411,7 @@ class Runner:
         for lcmc_event in lcmc_events:
             if lcmc_event.chat.node_msg_id <= self.last_messages_ids.get(lcmc_event.chat.id, -1):
                 lcmc_events_without_new_mess.append(lcmc_event)
-            elif lcmc_event.chat.node_msg_id == self.__chat_nodes.get(lcmc_event.chat.id, ({}, -1))[-1]:
+            elif lcmc_event.chat.node_msg_id <= self.__chat_nodes.get(lcmc_event.chat.id, ({}, -1))[-1]:
                 lcmc_events_with_chat_node.append(lcmc_event)
             else:
                 lcmc_events_with_new_mess.append(lcmc_event)

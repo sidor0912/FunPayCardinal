@@ -740,29 +740,53 @@ class LotFields:
         """Английское сообщение покупателю после оплаты"""
         self.images: list[int] = [int(i) for i in self.__fields.get("fields[images]", "").split(",") if i]
         """ID изображений лота"""
-        self.auto_delivery: bool = self.__fields.get("auto_delivery") == "on"
+        self.auto_delivery: bool | None = bool(self.__fields["auto_delivery"]) if "auto_delivery" in self.__fields else None
         """Включена ли автовыдача FunPay"""
         self.secrets: list[str] = [i for i in self.__fields.get("secrets", "").strip().split("\n") if i]
-        """Товары встроенной автовыдачи"""
-        self.amount: int | None = int(i) if (i := self.__fields.get("amount")) else None
-        """Кол-во товара."""
+        """Товары встроенной автовыдачи FunPay"""
+        self._amount: int | None = self.__fields.get("amount")
+        if self._amount is not None:
+            self._amount = int(self._amount) if bool(self._amount) else 0
+        """Кол-во товара (значение поля "Наличие")."""
         self.price: float = float(i) if (i := self.__fields.get("price")) else None
         """Цена за 1шт."""
         self.active: bool = self.__fields.get("active") == "on"
         """Активен ли лот."""
-        self.deactivate_after_sale: bool = self.__fields.get("deactivate_after_sale") == "on"
+        self.deactivate_after_sale: bool | None = bool(self.__fields["deactivate_after_sale"]) if "deactivate_after_sale" in self.__fields else None
         """Деактивировать ли лот после продажи."""
         self.subcategory: SubCategory | None = subcategory
         """Подкатегория лота"""
-        self.public_link: str = f"https://funpay.com/lots/offer?id={lot_id}"
-        """Публичная ссылка на лот."""
-        self.private_link: str = f"https://funpay.com/lots/offerEdit?offer={lot_id}"
-        """Приватная ссылка на лот (на изменение лота)."""
         self.currency: Currency = currency
         """Валюта лота."""
         self.csrf_token: str | None = self.__fields.get("csrf_token")
         """CSRF-токен"""
         self.calc_result: CalcResult | None = calc_result
+
+    @property
+    def amount(self) -> int | None:
+        """Кол-во товара:
+
+        Кол-во товаров в автовыдаче FunPay, если она включена в лоте.
+        None, если у товара нет поля "Наличие"
+        Наличие
+        """
+        if self.auto_delivery:
+            return len(self.secrets)
+        return self._amount
+
+    @amount.setter
+    def amount(self, value: int | None):
+        self._amount = value
+
+    @property
+    def public_link(self) -> str:
+        """Публичная ссылка на лот."""
+        return f"https://funpay.com/lots/offer?id={self.lot_id}"
+
+    @property
+    def private_link(self) -> str:
+        """Приватная ссылка на лот (на изменение лота)."""
+        return f"https://funpay.com/lots/offerEdit?offer={self.lot_id}"
 
     @property
     def fields(self) -> dict[str, str]:
@@ -810,13 +834,26 @@ class LotFields:
         self.__fields["fields[payment_msg][ru]"] = self.payment_msg_ru
         self.__fields["fields[payment_msg][en]"] = self.payment_msg_en
         self.__fields["price"] = str(self.price) if self.price is not None else ""
-        self.__fields["deactivate_after_sale"] = "on" if self.deactivate_after_sale else ""
         self.__fields["active"] = "on" if self.active else ""
-        self.__fields["amount"] = self.amount if self.amount is not None else ""
         self.__fields["fields[images]"] = ",".join(map(str, self.images))
         self.__fields["secrets"] = "\n".join(self.secrets)
-        self.__fields["auto_delivery"] = "on" if self.auto_delivery else ""
         self.__fields["csrf_token"] = self.csrf_token
+
+        if self._amount is not None:
+            self.__fields["amount"] = self._amount or ""
+        else:
+            self.__fields.pop("amount", None)
+
+        if self.deactivate_after_sale is not None:
+            self.__fields["deactivate_after_sale"] = "on" if self.deactivate_after_sale else ""
+        else:
+            self.__fields.pop("deactivate_after_sale", None)
+
+        if self.auto_delivery is not None:
+            self.__fields["auto_delivery"] = "on" if self.auto_delivery else ""
+        else:
+            self.__fields.pop("auto_delivery", None)
+
         return self
 
 
