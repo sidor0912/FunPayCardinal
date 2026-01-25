@@ -138,6 +138,8 @@ mv_show_image_name = "{} Відображати назви зображень"
 pl_add = "➕ Додати плагін"
 pl_activate = "Активувати"
 pl_deactivate = "Деактивувати"
+pl_pin = "Закріпити"
+pl_unpin = "Відкріпити"
 pl_commands = "⌨️ Команди"
 pl_settings = "⚙️ Налаштування"
 

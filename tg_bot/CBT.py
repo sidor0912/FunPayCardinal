@@ -699,3 +699,12 @@ Callback для удаления прокси.
 offset: int - смещение списка прокси.
 proxy_id: int - ID proxy
 """
+
+PIN_PLUGIN = "73"
+"""
+Callback для закрепления плагина в списке плагинов.
+Использование: CBT.PIN_PLUGIN:UUID:offset
+
+UUID: str - UUID плагина.
+offset: int - смещение списка плагинов.
+"""

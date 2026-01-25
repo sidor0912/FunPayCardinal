@@ -52,7 +52,8 @@ class PluginData:
     """
 
     def __init__(self, name: str, version: str, desc: str, credentials: str, uuid: str,
-                 path: str, plugin: ModuleType, settings_page: bool, delete_handler: Callable | None, enabled: bool):
+                 path: str, plugin: ModuleType, settings_page: bool, delete_handler: Callable | None, enabled: bool,
+                 pinned: bool):
         """
         :param name: название плагина.
         :param version: версия плагина.
@@ -64,6 +65,7 @@ class PluginData:
         :param settings_page: есть ли страница настроек у плагина.
         :param delete_handler: хэндлер, привязанный к удалению плагина.
         :param enabled: включен ли плагин.
+        :param pinned: закреплен ли плагин в списке плагинов?
         """
         self.name = name
         self.version = version
@@ -77,6 +79,7 @@ class PluginData:
         self.commands = {}
         self.delete_handler = delete_handler
         self.enabled = enabled
+        self.pinned = pinned
 
 
 class Cardinal(object):
@@ -203,6 +206,7 @@ class Cardinal(object):
 
         self.plugins: dict[str, PluginData] = {}
         self.disabled_plugins = cardinal_tools.load_disabled_plugins()
+        self.pinned_plugins = cardinal_tools.load_pinned_plugins()
 
     def __init_account(self) -> None:
         """
@@ -823,7 +827,8 @@ class Cardinal(object):
 
             plugin_data = PluginData(data["NAME"], data["VERSION"], data["DESCRIPTION"], data["CREDITS"], data["UUID"],
                                      f"plugins/{file}", plugin, data["SETTINGS_PAGE"], data["BIND_TO_DELETE"],
-                                     False if data["UUID"] in self.disabled_plugins else True)
+                                     False if data["UUID"] in self.disabled_plugins else True,
+                                     True if data["UUID"] in self.pinned_plugins else False)
 
             self.plugins[data["UUID"]] = plugin_data
 
@@ -904,6 +909,18 @@ class Cardinal(object):
         elif not self.plugins[uuid].enabled and uuid not in self.disabled_plugins:
             self.disabled_plugins.append(uuid)
         cardinal_tools.cache_disabled_plugins(self.disabled_plugins)
+
+    def pin_plugin(self, uuid):
+        """
+        Закрепляет / открепляет плагин в списке плагинов.
+        :param uuid: UUID плагина.
+        """
+        self.plugins[uuid].pinned = not self.plugins[uuid].pinned
+        if not self.plugins[uuid].pinned and uuid in self.pinned_plugins:
+            self.pinned_plugins.remove(uuid)
+        elif self.plugins[uuid].pinned and uuid not in self.pinned_plugins:
+            self.pinned_plugins.append(uuid)
+        cardinal_tools.cache_pinned_plugins(self.pinned_plugins)
 
     # Настройки
     @property

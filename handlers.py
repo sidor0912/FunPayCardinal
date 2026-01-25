@@ -711,8 +711,8 @@ def update_lot_state(cardinal: Cardinal, lot: types.LotShortcut, task: int) -> b
             if lot_fields.auto_delivery:
                 # если включена автовыдача FunPay - не трогаем
                 return False
-            elif lot_fields.amount and task == (1 if lot_fields.active else -1):
-                #если у лота есть наличие (есть поле + не 0) и лот и так в нужном состоянии
+            elif task == (1 if lot_fields.active else -1):
+                #если лот и так в нужном состоянии
                 return True
             elif task == 1:
                 lot_fields.active = True

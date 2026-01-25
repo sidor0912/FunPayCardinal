@@ -717,10 +717,17 @@ class LotFields:
 
     :param currency: валюта лота.
     :type currency: :class:`FunPayAPI.common.enums.Currency`
+
+    :param calc_result: объект рассчитанной комиссии лота.
+    :type calc_result: :class:`FunPayAPI.types.CalcResult` or :obj:`None`
+
+    :param db_amount: количество в БД FunPay, нужно для определения фактической активности лота.
+    :type db_amount: :class:`int` or :obj:`None`
     """
 
     def __init__(self, lot_id: int, fields: dict, subcategory: SubCategory | None = None,
-                 currency: Currency = Currency.UNKNOWN, calc_result: CalcResult | None = None):
+                 currency: Currency = Currency.UNKNOWN, calc_result: CalcResult | None = None,
+                 db_amount: int | None = None):
         self.lot_id: int = lot_id
         """ID лота."""
         self.__fields: dict = fields
@@ -750,7 +757,7 @@ class LotFields:
         """Кол-во товара (значение поля "Наличие")."""
         self.price: float = float(i) if (i := self.__fields.get("price")) else None
         """Цена за 1шт."""
-        self.active: bool = self.__fields.get("active") == "on"
+        self.active: bool = False if db_amount == 0 else self.__fields.get("active") == "on"
         """Активен ли лот."""
         self.deactivate_after_sale: bool | None = bool(self.__fields["deactivate_after_sale"]) if "deactivate_after_sale" in self.__fields else None
         """Деактивировать ли лот после продажи."""

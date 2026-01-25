@@ -138,6 +138,8 @@ mv_show_image_name = "{} Show image names"
 pl_add = "➕ Add plugin"
 pl_activate = "Activate"
 pl_deactivate = "Deactivate"
+pl_pin = "Pin"
+pl_unpin = "Unpin"
 pl_commands = "⌨️ Commands"
 pl_settings = "⚙️ Settings"
 

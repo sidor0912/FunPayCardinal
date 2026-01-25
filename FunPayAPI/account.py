@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import html
 from typing import TYPE_CHECKING, Literal, Any, Optional, IO
 
 import FunPayAPI.common.enums
@@ -616,52 +618,6 @@ class Account:
                                 float(balances["data-balance-total-usd"]), float(balances["data-balance-usd"]),
                                 float(balances["data-balance-total-eur"]), float(balances["data-balance-eur"]))
         return balance
-
-    # def get_withdraw_payment_data(self) -> types.WithdrawPaymentData:
-    #     if not self.is_initiated:
-    #         raise exceptions.AccountNotInitiatedError()
-    #     response = self.method("get", f"account/balance", {"accept": "*/*"}, {}, raise_not_200=True)
-    #     html_response = response.content.decode()
-    #     parser = BeautifulSoup(html_response, "lxml")
-    #
-    #     username = parser.find("div", {"class": "user-link-name"})
-    #     if not username:
-    #         raise exceptions.UnauthorizedError(response)
-    #
-    #     self.__update_csrf_token(parser)
-    #     data_data = parser.find("div", class_="withdraw-box").get("data-data")
-    #     parsed_data = json.loads(html.unescape(data_data))
-    #     ext_currencies = {}
-    #     for ext_currency_name, ext_currency_data in parsed_data["extCurrencies"].items():
-    #         wallet_info = WithdrawWalletInfo(
-    #             ext_currency=ext_currency_name,
-    #             name=ext_currency_data["name"],
-    #             unit=ext_currency_data["unit"],
-    #             wallet_name=ext_currency_data["walletName"],
-    #             wallets=ext_currency_data["wallets"]
-    #         )
-    #         ext_currencies[ext_currency_name] = wallet_info
-    #
-    #     currencies = {}
-    #     for currency_name, currency_data in parsed_data["currencies"].items():
-    #         channels = []
-    #         for channel_data in currency_data["channels"]:
-    #             ext_currency = channel_data["extCurrency"]
-    #             wallet_info = ext_currencies.get(ext_currency)
-    #             channel_info = WithdrawMethod(
-    #                 name=channel_data["name"],
-    #                 ext_currency=ext_currency,
-    #                 fee_info=channel_data["feeInfo"],
-    #                 wallet_info=wallet_info
-    #             )
-    #             channels.append(channel_info)
-    #         currency = parse_currency(currency_data["unit"])
-    #         currency_info = WithdrawCurrencyInfo(
-    #             currency=currency,
-    #             channels=channels
-    #         )
-    #         currencies[currency] = currency_info
-    #     return WithdrawPaymentData(ext_currencies=ext_currencies, currencies=currencies)
 
     def get_chat_history(self, chat_id: int | str, last_message_id: int | None = None,
                          interlocutor_username: Optional[str] = None, from_id: int = 0) -> list[types.Message]:
@@ -1870,6 +1826,7 @@ class Account:
         error_message = bs.find("p", class_="lead")
         if error_message:
             raise exceptions.LotParsingError(response, error_message.text, lot_id)
+        bs = bs.find("form", class_="form-offer-editor")
         result = {}
         result.update(
             {field["name"]: field.get("value") or "" for field in bs.find_all("input") if field["name"] != "query"})
@@ -1894,7 +1851,8 @@ class Account:
             payment_methods.append(PaymentMethod(pm.find("th").text, pm_price, pm_currency, i))
         calc_result = CalcResult(types.SubCategoryTypes.COMMON, subcategory.id, payment_methods,
                                  float(result["price"]), None, types.Currency.UNKNOWN, currency)
-        return types.LotFields(lot_id, result, subcategory, currency, calc_result)
+        db_amount = json.loads(html.unescape(bs.get("data-offer"))).get("amount")
+        return types.LotFields(lot_id, result, subcategory, currency, calc_result, db_amount)
 
     def get_chip_fields(self, subcategory_id: int) -> types.ChipFields:
         if not self.is_initiated:
