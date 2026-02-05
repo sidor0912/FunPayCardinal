@@ -170,17 +170,18 @@ def has_brand_mark(watermark: str) -> bool:
 
 def split_by_limit(list_of_str: list[str], limit: int = 4096):
     result = []
-    start = 0
-    end = 0
-    temp_len = 0
-    for i, s in enumerate(list_of_str):
-        if temp_len + len(s) > limit or i == len(list_of_str) - 1:
-            result.append("".join(list_of_str[start:end + 1]))
-            start = i
-            temp_len = len(s)
+    current = ""
+
+    for part in list_of_str:
+        if len(current) + len(part) > limit:
+            result.append(current)
+            current = part
         else:
-            temp_len += len(s)
-        end = i
+            current += part
+
+    if current:
+        result.append(current)
+
     return result
 
 

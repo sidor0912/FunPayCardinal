@@ -230,7 +230,7 @@ class Account:
             raise exceptions.RequestFailedError(response)
         return response
 
-    def get(self, update_phpsessid: bool = True) -> Account:
+    def get(self, update_phpsessid: bool = False) -> Account:
         """
         Получает / обновляет данные об аккаунте. Необходимо вызывать каждые 40-60 минут, дабы обновить
         :py:obj:`.Account.phpsessid`.
@@ -243,7 +243,8 @@ class Account:
         """
         if not self.is_initiated:
             self.locale = self.__subcategories_parse_locale
-        response = self.method("get", "https://funpay.com/", {}, {}, update_phpsessid, raise_not_200=True)
+        response = self.method("get", "https://funpay.com/", {}, {},
+                               update_phpsessid, raise_not_200=True)
         if not self.is_initiated:
             self.locale = self.__default_locale
         html_response = response.content.decode()
@@ -1528,8 +1529,18 @@ class Account:
 
         :param more_filters: доп. фильтры.
 
-        :return: (ID след. заказа (для start_from), список заказов)
-        :rtype: :obj:`tuple` (:obj:`str` or :obj:`None`, :obj:`list` of :class:`FunPayAPI.types.OrderShortcut`)
+		:return: (
+				ID следующего заказа (для start_from),
+				список заказов,
+				язык ("ru", "en" или "uk"),
+				словарь подкатегорий (для subcategories)
+		)
+		:rtype: :obj:`tuple` (
+				:obj:`str` or :obj:`None`,
+				:obj:`list` of :class:`FunPayAPI.types.OrderShortcut`,
+				:obj:`str`,
+				:obj:`dict` of :obj:`str` to :class:`FunPayAPI.types.SubCategory`
+		)
         """
         if not self.is_initiated:
             raise exceptions.AccountNotInitiatedError()

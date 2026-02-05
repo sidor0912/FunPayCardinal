@@ -701,6 +701,18 @@ class SubCategory:
     def is_chips(self):
         return self.is_currency
 
+    @property
+    def ui_name(self):
+        return f"{self.category.name} / {self.name}"
+
+    def telegram_text(self, link: Literal["private", "public", None] = None) -> str:
+        if link == "private":
+            return f"<a href='{self.private_link}'>{self.ui_name}</a>"
+        if link == "public":
+            return f"<a href='{self.public_link}'>{self.ui_name}</a>"
+        return self.ui_name
+
+
 
 class LotFields:
     """

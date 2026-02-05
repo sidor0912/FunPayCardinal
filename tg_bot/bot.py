@@ -306,7 +306,7 @@ class TGBot:
         else:
             self.attempts[m.from_user.id] = self.attempts.get(m.from_user.id, 0) + 1
             text = _("access_denied", m.from_user.username, language=lang)
-            kb_links = kb.LINKS_KB(language=lang)
+            kb_links = kb.links(language=lang)
             logger.warning(_("log_access_attempt", m.from_user.username, m.from_user.id))
         self.bot.send_message(m.chat.id, text, reply_markup=kb_links)
 

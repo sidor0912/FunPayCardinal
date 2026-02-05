@@ -142,6 +142,7 @@ pl_pin = "Pin"
 pl_unpin = "Unpin"
 pl_commands = "⌨️ Commands"
 pl_settings = "⚙️ Settings"
+pl_buy = "💸 Buy plugin"
 
 # Configs
 cfg_download_main = "⤵️ Download main config"

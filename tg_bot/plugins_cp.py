@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from cardinal import Cardinal
 
 from tg_bot import utils, keyboards, CBT
-from tg_bot.static_keyboards import CLEAR_STATE_BTN
+from tg_bot.static_keyboards import UPLOAD_PLUGIN
 from locales.localizer import Localizer
 
 from telebot.types import InlineKeyboardMarkup as K, InlineKeyboardButton as B, Message, CallbackQuery
@@ -183,11 +183,11 @@ def init_plugins_cp(cardinal: Cardinal, *args):
     def act_upload_plugin(obj: CallbackQuery | Message):
         if isinstance(obj, CallbackQuery):
             offset = int(obj.data.split(":")[1])
-            result = bot.send_message(obj.message.chat.id, _("pl_new"), reply_markup=CLEAR_STATE_BTN())
+            result = bot.send_message(obj.message.chat.id, _("pl_new"), reply_markup=UPLOAD_PLUGIN())
             tg.set_state(obj.message.chat.id, result.id, obj.from_user.id, CBT.UPLOAD_PLUGIN, {"offset": offset})
             bot.answer_callback_query(obj.id)
         else:
-            result = bot.send_message(obj.chat.id, _("pl_new"), reply_markup=CLEAR_STATE_BTN())
+            result = bot.send_message(obj.chat.id, _("pl_new"), reply_markup=UPLOAD_PLUGIN())
             tg.set_state(obj.chat.id, result.id, obj.from_user.id, CBT.UPLOAD_PLUGIN, {"offset": 0})
 
     tg.cbq_handler(open_plugins_list, lambda c: c.data.startswith(f"{CBT.PLUGINS_LIST}:"))
