@@ -150,6 +150,18 @@ if ! sudo apt install -y unzip ; then
   exit 2
 fi
 
+#6.1
+if grep -q '^[#[:space:]]*precedence[[:space:]]*::ffff:0:0/96' /etc/gai.conf; then
+    if ! sudo sed -i 's|^[#[:space:]]*precedence[[:space:]]*::ffff:0:0/96.*|precedence ::ffff:0:0/96 100|' /etc/gai.conf; then
+        echo -e "${start_process_line}\nПроизошла ошибка при настройке gai.conf. (6.1/${commands})\n${end_process_line}"
+        exit 2
+    fi
+elif ! grep -qxF 'precedence ::ffff:0:0/96 100' /etc/gai.conf; then
+    if ! echo 'precedence ::ffff:0:0/96 100' | sudo tee -a /etc/gai.conf >/dev/null; then
+        echo -e "${start_process_line}\nПроизошла ошибка при настройке gai.conf. (6.1/${commands})\n${end_process_line}"
+        exit 2
+    fi
+fi
 
 clear
 echo -e "$start_process_line\nУстанавливаю Python...\n$end_process_line"
