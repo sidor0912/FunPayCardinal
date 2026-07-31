@@ -521,9 +521,10 @@ $product""")  # todo
         products_text = "\n".join(products)
 
         try:
-            with open(f"storage/products/{file_name}", "a", encoding="utf-8") as f:
-                f.write("\n")
-                f.write(products_text)
+            with cardinal_tools.get_products_file_lock(f"storage/products/{file_name}"):
+                with open(f"storage/products/{file_name}", "a", encoding="utf-8") as f:
+                    f.write("\n")
+                    f.write(products_text)
         except:
             logger.debug("TRACEBACK", exc_info=True)
             keyboard = K().row(back_btn, try_again_btn)
@@ -546,16 +547,17 @@ $product""")  # todo
             return
 
         file_name = files[file_index]
-        with open(f"storage/products/{file_name}", "r", encoding="utf-8") as f:
-            data = f.read().strip()
-            if not data:
-                bot.answer_callback_query(c.id, _("gf_empty_error", file_name), show_alert=True)
-                return
+        with cardinal_tools.get_products_file_lock(f"storage/products/{file_name}"):
+            with open(f"storage/products/{file_name}", "r", encoding="utf-8") as f:
+                data = f.read().strip()
+                if not data:
+                    bot.answer_callback_query(c.id, _("gf_empty_error", file_name), show_alert=True)
+                    return
 
-            logger.info(_("log_gf_downloaded", c.from_user.username, c.from_user.id, file_name))
-            f.seek(0)
-            bot.send_document(c.message.chat.id, f)
-            bot.answer_callback_query(c.id)
+                logger.info(_("log_gf_downloaded", c.from_user.username, c.from_user.id, file_name))
+                f.seek(0)
+                bot.send_document(c.message.chat.id, f)
+                bot.answer_callback_query(c.id)
 
     def ask_del_products_file(c: CallbackQuery):
         """
@@ -595,7 +597,8 @@ $product""")  # todo
             return
 
         try:
-            os.remove(f"storage/products/{file_name}")
+            with cardinal_tools.get_products_file_lock(f"storage/products/{file_name}"):
+                os.remove(f"storage/products/{file_name}")
 
             logger.info(_("log_gf_deleted", c.from_user.username, c.from_user.id, file_name))
             bot.edit_message_text(_("desc_gf"), c.message.chat.id, c.message.id,

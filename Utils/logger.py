@@ -4,6 +4,8 @@
 from colorama import Fore, Back, Style
 import logging.handlers
 import logging
+import atexit
+import queue
 import re
 
 
@@ -95,57 +97,67 @@ class FileLoggerFormatter(logging.Formatter):
         return formatter.format(record)
 
 
-LOGGER_CONFIG = {
-    "version": 1,
-    "handlers": {
-        "file_handler": {
-            "class": "logging.handlers.RotatingFileHandler",
-            "level": "DEBUG",
-            "formatter": "file_formatter",
-            "filename": "logs/log.log",
-            "maxBytes": 20 * 1024 * 1024,  # 20 мегабайт в байтах
-            "backupCount": 25,  # Сколько ротаций оставить
-            "encoding": "utf-8"
-        },
+LOGGER_NAMES = ["main", "FunPayAPI", "FPC", "TGBot"]
+"""Логгеры, пишущие и в консоль, и в файл лога (в т.ч. дочерние, например FPC.<имя_плагина>)."""
 
-        "cli_handler": {
-            "class": "logging.StreamHandler",
-            "level": "INFO",
-            "formatter": "cli_formatter"
-        }
-    },
 
-    "formatters": {
-        "file_formatter": {
-            "()": "Utils.logger.FileLoggerFormatter"
-        },
+class _QueueHandler(logging.handlers.QueueHandler):
+    """
+    QueueHandler, кладущий LogRecord в очередь как есть, без предварительного форматирования.
 
-        "cli_formatter": {
-            "()": "Utils.logger.CLILoggerFormatter"
-        }
-    },
+    Стандартный QueueHandler.prepare() заранее рендерит record в плоскую строку и обнуляет
+    exc_info/exc_text - это сделано для multiprocessing, чтобы через очередь шли только
+    picklable-данные. Очередь тут в пределах одного процесса, поэтому сериализация не нужна,
+    а её побочный эффект вреден: exc_info схлопывается в record.msg одной строкой, из-за чего
+    FileLoggerFormatter (вырезающий переносы строк из message) заодно съедает и переносы строк
+    внутри трейсбека.
+    """
+    def prepare(self, record: logging.LogRecord) -> logging.LogRecord:
+        return record
 
-    "loggers": {
-        "main": {
-            "handlers": ["cli_handler", "file_handler"],
-            "level": "DEBUG"
-        },
-        "FunPayAPI": {
-            "handlers": ["cli_handler", "file_handler"],
-            "level": "DEBUG"
-        },
-        "FPC": {
-            "handlers": ["cli_handler", "file_handler"],
-            "level": "DEBUG"
-        },
-        "TGBot": {
-            "handlers": ["cli_handler", "file_handler"],
-            "level": "DEBUG"
-        },
-        "TeleBot": {
-            "handlers": ["file_handler"],
-            "level": "ERROR",
-            "propagate": "False"
-        }
-    }
-}
+
+def configure_logging() -> logging.handlers.QueueListener:
+    """
+    Настраивает логирование.
+
+    Реальная запись в консоль и в файл лога выполняется не в потоке вызывающего кода, а в
+    отдельном потоке-слушателе (QueueHandler/QueueListener): emit() из любого потока приложения
+    лишь кладёт запись в очередь и не блокируется. Без этого все логгеры делят одни и те же
+    хэндлеры с общим локом на запись - если запись в файл/консоль подвиснет (медленный диск,
+    journald, антивирус и т.п.), это останавливает вообще все потоки бота, а не только логирование.
+
+    :return: запущенный слушатель очереди логов. Останавливать вручную не обязательно - остановка
+        (со сбросом накопившихся в очереди записей) зарегистрирована через atexit.
+    """
+    cli_handler = logging.StreamHandler()
+    cli_handler.setLevel(logging.INFO)
+    cli_handler.setFormatter(CLILoggerFormatter())
+    # TeleBot исторически пишет только в файл лога (внутренние ошибки telebot слишком шумные для консоли).
+    cli_handler.addFilter(lambda record: record.name != "TeleBot")
+
+    file_handler = logging.handlers.RotatingFileHandler(
+        filename="logs/log.log",
+        maxBytes=20 * 1024 * 1024,  # 20 мегабайт в байтах
+        backupCount=25,  # Сколько ротаций оставить
+        encoding="utf-8"
+    )
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(FileLoggerFormatter())
+
+    log_queue = queue.SimpleQueue()
+    queue_handler = _QueueHandler(log_queue)
+
+    for name in LOGGER_NAMES:
+        logger = logging.getLogger(name)
+        logger.setLevel(logging.DEBUG)
+        logger.addHandler(queue_handler)
+
+    telebot_logger = logging.getLogger("TeleBot")
+    telebot_logger.setLevel(logging.ERROR)
+    telebot_logger.propagate = False
+    telebot_logger.addHandler(queue_handler)
+
+    listener = logging.handlers.QueueListener(log_queue, cli_handler, file_handler, respect_handler_level=True)
+    listener.start()
+    atexit.register(listener.stop)
+    return listener

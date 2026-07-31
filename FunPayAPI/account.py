@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import html
-import math
 from typing import TYPE_CHECKING, Literal, Any, Optional, IO
 
 import FunPayAPI.common.enums
@@ -224,7 +223,10 @@ class Account:
             self.__update_cookies(response)
             if response.status_code == 429:
                 self.last_429_err_time = time.time()
-                time.sleep(min(2 ** i, 30))
+                wait = min(2 ** i, 30)
+                logger.warning(f"Получен код $YELLOW429 (Too Many Requests)$RESET от FunPay "
+                               f"($YELLOW{link}$RESET). Попытка $YELLOW{i}$RESET, жду $YELLOW{wait}$RESET сек.")
+                time.sleep(wait)
                 continue
             elif not (300 <= response.status_code < 400) or 'Location' not in response.headers:
                 break
@@ -1620,7 +1622,10 @@ class Account:
 
         for msg in chats:
             chat_id = int(msg["data-id"])
-            last_msg_text = msg.find("div", {"class": "contact-item-message"}).text
+            # Если чат удален админами - скип (аналогично runner.py: parse_chat_updates).
+            if not (last_msg_text := msg.find("div", {"class": "contact-item-message"})):
+                continue
+            last_msg_text = last_msg_text.text
             unread = True if "unread" in msg.get("class") else False
             chat_with = msg.find("div", {"class": "media-user-name"}).text
             node_msg_id = int(msg.get('data-node-msg'))
@@ -1751,12 +1756,15 @@ class Account:
         return CalcResult(subcategory_type, subcategory_id, methods, price, min_price, min_price_currency,
                           self.currency)
 
-    def get_lot_fields(self, lot_id: int) -> types.LotFields:
+    def get_lot_fields(self, lot_id: int = 0, node_id: int | None = None) -> types.LotFields:
         """
         Получает все поля лота.
 
         :param lot_id: ID лота.
         :type lot_id: :obj:`int`
+
+        :param node_id: ID подкатегории.
+        :type node_id: :obj:`int`
 
         :return: объект с полями лота.
         :rtype: :class:`FunPayAPI.types.LotFields`
@@ -1764,7 +1772,9 @@ class Account:
         if not self.is_initiated:
             raise exceptions.AccountNotInitiatedError()
         headers = {}
-        response = self.method("get", f"lots/offerEdit?offer={lot_id}", headers, {}, raise_not_200=True)
+        tail = (f"offer={lot_id}" if lot_id else "") + (f"&node={node_id}" if node_id else "")
+        tail = tail.lstrip("&")
+        response = self.method("get", f"lots/offerEdit?{tail}", headers, {}, raise_not_200=True)
 
         html_response = response.content.decode()
         bs = BeautifulSoup(html_response, "lxml")
@@ -1774,7 +1784,7 @@ class Account:
         bs = bs.find("form", class_="form-offer-editor")
         result = {}
         result.update(
-            {field["name"]: field.get("value") or "" for field in bs.find_all("input") if field["name"] != "query"})
+            {field["name"]: field.get("value") or "" for field in bs.find_all("input")})
         result.update({field["name"]: field.text or "" for field in bs.find_all("textarea")})
         result.update({
             field["name"]: field.find("option", selected=True)["value"]

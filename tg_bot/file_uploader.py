@@ -97,9 +97,10 @@ def init_uploader(cardinal: Cardinal):
         tg.clear_state(m.chat.id, m.from_user.id, True)
         if not check_file(tg, m, type_="txt"):
             return
-        if not download_file(tg, m, m.document.file_name,
-                             custom_path=f"storage/products"):
-            return
+        with cardinal_tools.get_products_file_lock(f"storage/products/{m.document.file_name}"):
+            if not download_file(tg, m, m.document.file_name,
+                                 custom_path=f"storage/products"):
+                return
 
         try:
             products_count = cardinal_tools.count_products(f"storage/products/{utils.escape(m.document.file_name)}")

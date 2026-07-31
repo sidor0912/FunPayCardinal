@@ -525,6 +525,10 @@ def setup_event_attributes_handler(c: Cardinal, e: NewOrderEvent, *args):
             break
 
     for i in range(3):
+        # Собираем ВСЕ подходящие секции этого pass'а и берём самую длинную (специфичную), а не
+        # первую по порядку в файле - иначе более общее название лота, добавленное в конфиг раньше,
+        # могло бы перехватить заказ, который на самом деле соответствует более узкому названию.
+        matched_lot_names = []
         for lot_name in c.AD_CFG:
             if i == 0:
                 rule = lot_description == lot_name
@@ -534,10 +538,12 @@ def setup_event_attributes_handler(c: Cardinal, e: NewOrderEvent, *args):
                 rule = lot_name in lot_description
 
             if rule:
-                config_section_obj = c.AD_CFG[lot_name]
-                config_section_name = lot_name
-                break
-        if config_section_obj:
+                matched_lot_names.append(lot_name)
+
+        if matched_lot_names:
+            lot_name = max(matched_lot_names, key=len)
+            config_section_obj = c.AD_CFG[lot_name]
+            config_section_name = lot_name
             break
 
     attributes = {"config_section_name": config_section_name, "config_section_obj": config_section_obj,

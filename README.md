@@ -19,6 +19,7 @@
 - [Установка](#arrow_down-установка)
     - [Windows](#large_blue_diamond-windows)
     - [Linux (Ubuntu)](#hotsprings-linux-ubuntu)
+    - [Docker](#whale-docker)
 - [Установка плагинов](#electric_plug-установка-плагинов)
 - [Мне нужна помощь](#question-мне-нужна-помощь)
 - [Star it](#star-star-it)
@@ -101,6 +102,35 @@
    `wget https://raw.githubusercontent.com/sidor0912/FunPayCardinal/main/install-fpc.sh -O install-fpc.sh && bash install-fpc.sh`
 2. Следуйте инструкциям установщика.
    Данный скрипт автоматически установит всё необходимое и запустит бота как фоновый процесс.
+
+### :whale: Docker
+
+1. Установите [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows/Mac) или Docker Engine +
+   Docker Compose (Linux) и запустите его.
+2. Скачайте [FunPay Cardinal](https://github.com/sidor0912/FunPayCardinal/archive/refs/heads/master.zip) и распакуйте
+   архив, либо склонируйте репозиторий.
+3. Перейдите в папку проекта и соберите образ:
+   ```
+   docker compose build
+   ```
+4. При первом запуске Кардинал запросит настройки (логин, токены и т.д.) через консольный ввод, поэтому для
+   первичной настройки запустите разовый интерактивный контейнер:
+   ```
+   docker compose run --rm funpaycardinal
+   ```
+   Отвечайте на вопросы мастера настройки прямо в этом окне.
+5. Теперь можно запускать бота в фоне:
+   ```
+   docker compose up -d
+   ```
+6. Полезные команды:
+    - Логи: `docker compose logs -f`
+    - Подключиться к консоли запущенного контейнера: `docker attach
+      funpaycardinal` (отключиться без остановки контейнера — `Ctrl+P`, затем `Ctrl+Q`).
+    - Остановить: `docker compose down`.
+
+   Папки `configs`, `logs`, `storage` и `plugins` монтируются с хоста внутрь контейнера, поэтому все данные
+   сохраняются между перезапусками и пересборками образа.
 
 ## :electric_plug: Установка плагинов
 

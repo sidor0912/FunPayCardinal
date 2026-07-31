@@ -855,7 +855,12 @@ class Cardinal(object):
         """
         for i in self.plugins:
             plugin = self.plugins[i].plugin
-            self.add_handlers_from_plugin(plugin, i)
+            try:
+                self.add_handlers_from_plugin(plugin, i)
+            except:
+                logger.error(_("crd_plugin_handlers_err", self.plugins[i].name))
+                logger.debug("TRACEBACK", exc_info=True)
+                self.plugins[i].enabled = False
 
     def run_handlers(self, handlers_list: list[Callable], args) -> None:
         """

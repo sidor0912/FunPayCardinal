@@ -639,6 +639,7 @@ crd_session_loop_started = "$CYANЦикл оновлення сесії запу
 crd_no_plugins_folder = "Папка з плагінами не виявлена."
 crd_no_plugins = "Плагіни не виявлені."
 crd_plugin_load_err = "Не вдалося завантажити плагін {}."
+crd_plugin_handlers_err = "Не вдалося зареєструвати обробники плагіна {}. Плагін вимкнено."
 crd_invalid_uuid = "Не вдалося завантажити плагін {}: невалідний UUID."
 crd_uuid_already_registered = "UUID {} ({}) вже зареєстрований."
 crd_handlers_registered = "Обробники з $YELLOW{}.py$RESET зареєстровані."

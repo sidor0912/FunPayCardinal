@@ -641,6 +641,7 @@ crd_session_loop_started = "$CYANЦикл обновления сессии за
 crd_no_plugins_folder = "Папка с плагинами не обнаружена."
 crd_no_plugins = "Плагины не обнаружены."
 crd_plugin_load_err = "Не удалось загрузить плагин {}."
+crd_plugin_handlers_err = "Не удалось зарегистрировать хэндлеры плагина {}. Плагин отключен."
 crd_invalid_uuid = "Не удалось загрузить плагин {}: невалидный UUID."
 crd_uuid_already_registered = "UUID {} ({}) уже зарегистрирован."
 crd_handlers_registered = "Хэндлеры из $YELLOW{}.py$RESET зарегистрированы."
