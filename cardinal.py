@@ -323,7 +323,6 @@ class Cardinal(object):
             error_text = ""
             time_delta = ""
             try:
-                time.sleep(1)
                 wait_time = self.account.raise_lots(subcat.category.id)
                 logger.info(_("crd_lots_raised", subcat.category.name))
                 raise_ok = True
@@ -353,6 +352,7 @@ class Cardinal(object):
                 time.sleep(t)
                 wait_time = 1
             next_time = time.time() + wait_time + 1
+            time.sleep(2)
             self.raise_time[subcat.category.id] = next_time
             next_call = next_time if next_time < next_call else next_call
             if raise_ok:
