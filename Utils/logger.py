@@ -77,6 +77,7 @@ class CLILoggerFormatter(logging.Formatter):
         msg = add_colors(msg)
         msg = msg.replace("$RESET", LOG_COLORS[record.levelno])
         record.msg = msg
+        record.args = None
         log_format = CLI_LOG_FORMAT.replace("$RESET", Style.RESET_ALL + LOG_COLORS[record.levelno])
         formatter = logging.Formatter(log_format, CLI_TIME_FORMAT)
         return formatter.format(record)
@@ -93,6 +94,7 @@ class FileLoggerFormatter(logging.Formatter):
         msg = record.getMessage()
         msg = CLEAR_RE.sub("", msg)
         record.msg = msg
+        record.args = None
         formatter = logging.Formatter(FILE_LOG_FORMAT, FILE_TIME_FORMAT)
         return formatter.format(record)
 

@@ -4,7 +4,7 @@ import html
 from typing import TYPE_CHECKING, Literal, Any, Optional, IO
 
 import FunPayAPI.common.enums
-from FunPayAPI.common.utils import parse_currency, RegularExpressions
+from FunPayAPI.common.utils import parse_currency, RegularExpressions, strip_invisible_suffix
 from .types import PaymentMethod, CalcResult
 
 if TYPE_CHECKING:
@@ -1640,8 +1640,7 @@ class Account:
                 last_msg_text = last_msg_text[1:]
                 by_vertex = True
 
-            if last_msg_text.endswith(self.zero_width_suffix):
-                last_msg_text = last_msg_text[:-len(self.zero_width_suffix)]
+            last_msg_text = strip_invisible_suffix(last_msg_text)
 
             chat_obj = types.ChatShortcut(chat_id, chat_with, last_msg_text, node_msg_id, user_msg_id, unread, str(msg))
             if not is_image:
@@ -2163,8 +2162,7 @@ class Account:
                 else:
                     message_text = parser.find("div", {"class": "chat-msg-text"}).text
 
-                if message_text.endswith(self.zero_width_suffix):
-                    message_text = message_text[:-len(self.zero_width_suffix)]
+                message_text = strip_invisible_suffix(message_text)
 
                 if message_text.startswith(self.__bot_character) or \
                         message_text.startswith(self.__old_bot_character) and author_id == self.id:

@@ -5,6 +5,7 @@
 import string
 import random
 import re
+import unicodedata
 from datetime import datetime, timedelta, timezone
 
 from .enums import Currency
@@ -89,6 +90,13 @@ def parse_wait_time(response: str) -> int:
 
 def parse_currency(s: str) -> Currency:
     return CURRENCY_MAP.get(s, Currency.UNKNOWN)
+
+
+def strip_invisible_suffix(text: str) -> str:
+    end = len(text)
+    while end > 0 and (text[end - 1].isspace() or unicodedata.category(text[end - 1]) == "Cf"):
+        end -= 1
+    return text[:end]
 
 def parse_funpay_datetime(date_text: str) -> datetime:
     """Парсит время"""
