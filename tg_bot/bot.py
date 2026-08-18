@@ -837,43 +837,7 @@ class TGBot:
         if chat.looking_link:
             text += f"<b><i>{_('viewing')}:</i></b>\n<a href=\"{chat.looking_link}\">{chat.looking_text}</a>\n\n"
 
-        messages = chat.messages[-10:]
-        last_message_author_id = -1
-        last_by_bot = False
-        last_badge = None
-        last_by_vertex = False
-        for i in messages:
-            if i.author_id == last_message_author_id and i.by_bot == last_by_bot and i.badge == last_badge and \
-                    last_by_vertex == i.by_vertex:
-                author = ""
-            elif i.author_id == self.cardinal.account.id:
-                author = f"<i><b>🤖 {_('you')} (<i>FPC</i>):</b></i> " if i.by_bot else f"<i><b>🫵 {_('you')}:</b></i> "
-                if i.is_autoreply:
-                    author = f"<i><b>📦 {_('you')} ({i.badge}):</b></i> "
-            elif i.author_id == 0:
-                author = f"<i><b>🔵 {i.author}: </b></i>"
-            elif i.is_employee:
-                author = f"<i><b>🆘 {i.author} ({i.badge}): </b></i>"
-            elif i.author == i.chat_name:
-                author = f"<i><b>👤 {i.author}: </b></i>"
-                if i.is_autoreply:
-                    author = f"<i><b>🛍️ {i.author} ({i.badge}):</b></i> "
-                elif i.author in self.cardinal.blacklist:
-                    author = f"<i><b>🚷 {i.author}: </b></i>"
-                elif i.by_bot:
-                    author = f"<i><b>🐦 {i.author}: </b></i>"
-                elif i.by_vertex:
-                    author = f"<i><b>🐺 {i.message.author}: </b></i>"
-            else:
-                author = f"<i><b>🆘 {i.author} ({_('support')}): </b></i>"
-            msg_text = f"<code>{utils.escape(i.text)}</code>" if i.text else \
-                f"<a href=\"{i.image_link}\">" \
-                f"{self.cardinal.show_image_name and not (i.author_id == self.cardinal.account.id and i.by_bot) and i.image_name or _('photo')}</a>"
-            text += f"{author}{msg_text}\n\n"
-            last_message_author_id = i.author_id
-            last_by_bot = i.by_bot
-            last_badge = i.badge
-            last_by_vertex = i.by_vertex
+        text += utils.format_messages(self.cardinal, chat.messages[-10:])
 
         self.bot.edit_message_text(text, c.message.chat.id, c.message.id,
                                    reply_markup=kb.reply(int(chat_id), username, False, False))

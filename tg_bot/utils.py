@@ -18,7 +18,11 @@ import json
 import time
 import unicodedata
 import Utils.cardinal_tools
+from locales.localizer import Localizer
 from tg_bot import CBT
+
+localizer = Localizer()
+_ = localizer.translate
 
 
 class NotificationTypes:
@@ -154,6 +158,133 @@ def escape(text: str) -> str:
     for char in escape_characters:
         text = text.replace(char, escape_characters[char])
     return text
+
+
+def format_message_line(cardinal: Cardinal, msg, last: dict | None = None, *, force_show_author: bool = False,
+                        chat_url: bool = False, mono: bool = True, hide_watermark: bool = False,
+                        show_ads: bool = True, show_image_name: bool | None = None,
+                        system_message_style: str = "code") -> str:
+    """
+    Форматирует ОДНО сообщение чата (значок по роли автора + тело) в HTML для Telegram.
+
+    Общая логика для всех мест, где нужно показать сообщение чата в тг (уведомления о новых
+    сообщениях, полная/недавняя история чата, синхронизация с форумом) - не дублируй её, зови
+    эту функцию (или format_messages() для готового списка сообщений).
+
+    :param cardinal: экземпляр Cardinal (нужен account.id, blacklist, show_image_name).
+    :param msg: сообщение чата (FunPayAPI.types.Message).
+    :param last: {"author_id", "by_bot", "badge", "by_vertex"} предыдущего ПОКАЗАННОГО сообщения -
+        нужен, чтобы схлопнуть подпись автора у подряд идущих сообщений одного и того же автора.
+        None/{} - подпись показать (нет предыдущего сообщения). Обнови этот словарь вызовом
+        {"author_id": msg.author_id, "by_bot": msg.by_bot, "badge": msg.badge,
+        "by_vertex": msg.by_vertex} после каждого НЕпустого результата, если форматируешь
+        сообщения по одному в своём цикле (format_messages() делает это сама).
+    :param force_show_author: не схлопывать подпись, даже если она совпадает с last - используй
+        для первого сообщения после того, как ты сама сбросила накопленный текст (например,
+        отправила его отдельным Telegram-сообщением), чтобы новое сообщение не начиналось без
+        подписи автора.
+    :param chat_url: оборачивать ник автора ссылкой на чат на FunPay.
+    :param mono: оборачивать текст обычных сообщений в <code> (моноширинный шрифт).
+    :param hide_watermark: прятать вотермарку бота (Other.watermark в _main.cfg) под спойлером в
+        собственных сообщениях, отправленных ботом.
+    :param show_ads: показывать рекламные сообщения (📣) или молча пропускать их
+        (возвращается пустая строка, last обновлять не нужно).
+    :param show_image_name: показывать ли имя файла у отправленных изображений вместо "photo".
+        None - взять из cardinal.show_image_name (глобальная настройка).
+    :param system_message_style: "code" - тело системных сообщений FunPay (author_id == 0) в
+        <code>, как у обычных сообщений; "bold_italic" - <b><i>...</i></b> без <code>.
+
+    :return: строка "{author}{body}" (без завершающих переносов), либо пустая строка, если
+        сообщение нужно молча пропустить (см. show_ads).
+    """
+    account = cardinal.account
+    last = last or {}
+
+    is_ad = msg.author_id == 500 and msg.interlocutor_id != 500
+    if is_ad and not show_ads:
+        return ""
+
+    author_text = msg.author
+    if chat_url:
+        author_text = f"<a href='https://funpay.com/chat/?node={msg.chat_id}'>{msg.author}</a>"
+
+    if not force_show_author and msg.author_id == last.get("author_id") and msg.by_bot == last.get("by_bot") \
+            and msg.badge == last.get("badge") and msg.by_vertex == last.get("by_vertex"):
+        author = ""
+    elif msg.author_id == account.id:
+        if msg.is_autoreply:
+            author = f"<i><b>📦 {_('you')} ({msg.badge}):</b></i> "
+        elif msg.by_bot:
+            author = f"<i><b>🤖 FPC:</b></i> "
+        else:
+            author = f"<i><b>🫵 {_('you')}:</b></i> "
+
+    elif msg.author_id == 0:
+        author = f"<i><b>🔵 {author_text}: </b></i>"
+    elif msg.is_employee:
+        author = f"<i><b>📣 {author_text} ({msg.badge}): </b></i>" if is_ad \
+            else f"<i><b>🆘 {author_text} ({msg.badge}): </b></i>"
+    elif msg.author == msg.chat_name:
+        author = f"<i><b>👤 {author_text}: </b></i>"
+        if msg.is_autoreply:
+            author = f"<i><b>🛍️ {author_text} ({msg.badge}):</b></i> "
+        elif msg.author in cardinal.blacklist:
+            author = f"<i><b>🚷 {author_text}: </b></i>"
+        elif msg.by_bot:
+            author = f"<i><b>🐦 {author_text}: </b></i>"
+        elif msg.by_vertex:
+            author = f"<i><b>🐺 {author_text}: </b></i>"
+    else:
+        author = f"<i><b>🆘 {author_text} ({_('support')}): </b></i>"
+
+    if msg.text:
+        if msg.author_id == 0 and system_message_style == "bold_italic":
+            body = f"<b><i>{escape(msg.text)}</i></b>"
+        else:
+            text = msg.text
+            hidden_wm = False
+            if hide_watermark and msg.author_id == account.id and msg.by_bot:
+                watermark = cardinal.MAIN_CFG["Other"].get("watermark", "")
+                if watermark and text.startswith(f"{watermark}\n"):
+                    text = text.replace(watermark, "", 1)
+                    hidden_wm = True
+            body = escape(text)
+            if mono:
+                body = f"<code>{body}</code>"
+            if hidden_wm:
+                body = f"<tg-spoiler>🐦</tg-spoiler>{body}"
+    elif msg.image_link:
+        is_own_bot_image = msg.author_id == account.id and msg.by_bot
+        show_name = cardinal.show_image_name if show_image_name is None else show_image_name
+        name = show_name and not is_own_bot_image and msg.image_name
+        body = f"<a href=\"{msg.image_link}\">{name or _('photo')}</a>"
+    else:
+        body = ""
+
+    return f"{author}{body}"
+
+
+def format_messages(cardinal: Cardinal, messages: list, **options) -> str:
+    """
+    Форматирует список сообщений чата в HTML для Telegram, вызывая format_message_line() для
+    каждого сообщения по очереди и склеивая результат (см. её докстринг за подробностями и
+    списком поддерживаемых опций - force_show_author/chat_url/mono/hide_watermark/show_ads/
+    show_image_name/system_message_style).
+
+    :param cardinal: экземпляр Cardinal (нужен account.id, blacklist, show_image_name).
+    :param messages: список сообщений чата (FunPayAPI.types.Message), от старых к новым.
+
+    :return: HTML-форматированный текст (используй с parse_mode="HTML").
+    """
+    lines = []
+    last: dict = {}
+    for msg in messages:
+        line = format_message_line(cardinal, msg, last, **options)
+        if not line:
+            continue
+        lines.append(line)
+        last = {"author_id": msg.author_id, "by_bot": msg.by_bot, "badge": msg.badge, "by_vertex": msg.by_vertex}
+    return "\n\n".join(lines)
 
 
 def has_brand_mark(watermark: str) -> bool:

@@ -556,6 +556,11 @@ class Runner:
             logger.error("Не удалось обновить список продаж: превышено кол-во попыток.")
             return events
 
+        if self.saved_orders is not None and len(self.saved_orders) > len(orders_list) or len(orders_list) > 100:
+            logger.error(f"Что-то пошло не так при получении списка заказов.")
+            logger.debug(f"SAVED: {list(self.saved_orders.keys()) if self.saved_orders else self.saved_orders}")
+            logger.debug(f"ORDERS_LIST ({len(orders_list)}): {[i.id for i in orders_list]}")
+            return events
         now_orders = {}
         for order in orders_list:
             now_orders[order.id] = order
