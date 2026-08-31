@@ -141,6 +141,9 @@ def validate_proxy(proxy: str):
 
     ip, port = ip_port.split(":")
 
+    if scheme == "socks5":
+        scheme = "socks5h"
+
     ip_parts = ip.split(".")
     if len(ip_parts) != 4 or not all(part.isdigit() and 0 <= int(part) < 256 for part in ip_parts):
         raise ValueError("Неправильный IP")
