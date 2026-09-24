@@ -1507,7 +1507,8 @@ class Account:
                 raise exceptions.UnauthorizedError(response)
 
             header = parser.select_one("h1.page-header.page-header-no-hr")
-            if not header or header.text.strip().lower() not in ("мої продажі", "мои продажи", "my sales"):
+            header_text = next(header.stripped_strings, "").lower() if header else ""
+            if header_text not in ("мої продажі", "мои продажи", "my sales"):
                 raise exceptions.UnauthorizedError(response)
 
         next_order_id = parser.find("input", {"type": "hidden", "name": "continue"})
