@@ -108,6 +108,9 @@ class Account:
         self.last_update: int | None = None
         """Последнее время обновления аккаунта."""
 
+        self.__admins: dict[int, tuple[str, str]] = {}
+        """Администраторы, сообщения которых видели - ID профиля: (ник, бейдж)"""
+
         self.__initiated: bool = False
 
         self.__saved_chats: dict[int, types.ChatShortcut] = {}
@@ -2173,9 +2176,9 @@ class Account:
                         message_text.startswith(self.__old_bot_character) and author_id == self.id:
                     message_text = message_text[1:]
                     by_bot = True
-                # todo придумать, как отсеять юзеров со старыми версиями кардинала (подождать обнову фп?)
-                # elif message_text.startswith(self.__old_bot_character):
-                #     by_vertex = True
+                elif message_text.startswith(self.__old_bot_character):
+                    message_text = message_text[1:]
+                    by_vertex = True
 
             message_obj = types.Message(i["id"], message_text, chat_id, interlocutor_username, interlocutor_id,
                                         None, author_id, i["html"], image_link, image_name,
@@ -2188,12 +2191,14 @@ class Account:
             messages.append(message_obj)
 
         for i in messages:
-            i.author = ids.get(i.author_id)
+            i.author = ids.get(i.author_id) or self.__admins.get(i.author_id, (None, None))[0]
             i.chat_name = interlocutor_username
             i.interlocutor_id = interlocutor_id
-            i.badge = badges.get(i.author_id) if badges.get(i.author_id) != 0 else None
+            i.badge = badges.get(i.author_id) or self.__admins.get(i.author_id, (None, None))[1]
             parser = BeautifulSoup(i.html, "lxml")
             if i.badge:
+                if i.author:
+                    self.__admins[i.author_id] = (i.author, i.badge)
                 i.is_employee = True
                 if i.badge in ("поддержка", "підтримка", "support"):
                     i.is_support = True
@@ -2348,10 +2353,6 @@ class Account:
     @property
     def old_bot_character(self) -> str:
         return self.__old_bot_character
-
-    @property
-    def zero_width_suffix(self) -> str:
-        return " ​‍‌"
 
     @property
     def locale(self) -> Literal["ru", "en", "uk"] | None:
