@@ -43,6 +43,21 @@ done
 
 distro_version=$(lsb_release -rs)
 
+case $distro_version in
+  "26.04" | "26.10") # Ubuntu 26.04 (Resolute Raccoon), 26.10 (Stonking Stingray)
+    python_version="3.14"
+    ;;
+  "13" | "25.04" | "25.10") # Debian 13 (Trixie), Ubuntu 25.04 (Plucky Puffin), 25.10 (Questing Quokka)
+    python_version="3.13"
+    ;;
+  "24.04" | "24.10") # Ubuntu 24.04 (Noble Numbat), 24.10 (Oracular Oriole)
+    python_version="3.12"
+    ;;
+  *)
+    python_version="3.11"
+    ;;
+esac
+
 clear
 echo -e "${start_process_line}\nДобавляю репозитории...\n${end_process_line}"
 
@@ -53,16 +68,22 @@ if ! sudo apt update; then
 fi
 
 #2
-if ! sudo apt install -y software-properties-common; then
-  echo -e "${start_process_line}\nПроизошла ошибка при установке software-properties-common. (2/${commands})\n${end_process_line}"
-  exit 2
-fi
+case $distro_version in
+  "13") # Debian 13 (Trixie): пакета software-properties-common нет в репозиториях, а add-apt-repository здесь не нужен
+    ;;
+  *)
+    if ! sudo apt install -y software-properties-common; then
+      echo -e "${start_process_line}\nПроизошла ошибка при установке software-properties-common. (2/${commands})\n${end_process_line}"
+      exit 2
+    fi
+    ;;
+esac
 
 #3
 case $distro_version in
-  "22.04" | "22.10" | "23.04" | "23.10" | "24.04" | "24.10") # Ubuntu 22.04 (Jammy Jellyfish), 22.10 (Kinetic Kudu), 23.04 (Lunar Lobster), 23.10 (Mantic Minotaur), 24.04 (Noble Numbat), 24.10 (Oracular Oriole)
+  "22.04" | "22.10" | "23.04" | "23.10" | "24.04" | "24.10" | "25.04" | "25.10" | "26.04" | "26.10") # Ubuntu 22.04 (Jammy Jellyfish), 22.10 (Kinetic Kudu), 23.04 (Lunar Lobster), 23.10 (Mantic Minotaur), 24.04 (Noble Numbat), 24.10 (Oracular Oriole), 25.04 (Plucky Puffin), 25.10 (Questing Quokka), 26.04 (Resolute Raccoon), 26.10 (Stonking Stingray)
     ;;
-  "12") # Debian 12 (Bookworm)
+  "12" | "13") # Debian 12 (Bookworm), 13 (Trixie)
     ;;
   "11") # Debian 11 (Bullseye)
     # TODO: Ошибка проверки ключа репозитория на некоторых машинах, хз почему, проще использовать костыль ввиде убунтовских deadsnakes
@@ -97,7 +118,7 @@ case $distro_version in
     fi
 
     #3.3
-    if ! sudo add-apt-repository -s "deb https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu focal main"; then
+    if ! sudo add-apt-repository -s "deb https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu jammy main"; then
       echo -e "${start_process_line}\nПроизошла ошибка при добавлении репозитория. (3.3/${commands})\n${end_process_line}"
       exit 2
     fi
@@ -160,20 +181,10 @@ clear
 echo -e "$start_process_line\nУстанавливаю Python...\n$end_process_line"
 
 #7
-case $distro_version in
-  "24.04" | "24.10")
-    if ! sudo apt install -y python3.12 python3.12-dev python3.12-gdbm python3.12-venv; then
-      echo -e "${start_process_line}\nПроизошла ошибка при установке Python. (7/${commands})\n${end_process_line}"
-      exit 2
-    fi
-    ;;
-  *)
-    if ! sudo apt install -y python3.11 python3.11-dev python3.11-gdbm python3.11-venv; then
-      echo -e "${start_process_line}\nПроизошла ошибка при установке Python. (7/${commands})\n${end_process_line}"
-      exit 2
-    fi
-    ;;
-esac
+if ! sudo apt install -y "python${python_version}" "python${python_version}-dev" "python${python_version}-gdbm" "python${python_version}-venv"; then
+  echo -e "${start_process_line}\nПроизошла ошибка при установке Python. (7/${commands})\n${end_process_line}"
+  exit 2
+fi
 
 clear
 echo -e "$start_process_line\nСоздаю пользователя и устанавливаю/обновляю Pip...\n$end_process_line"
@@ -189,20 +200,10 @@ else
 fi
 
 #9
-case $distro_version in
-  "24.04" | "24.10")
-    if ! sudo -u $username python3.12 -m venv /home/$username/pyvenv; then
-      echo -e "${start_process_line}\nПроизошла ошибка при создании виртуального окружения. (9/${commands})\n${end_process_line}"
-      exit 2
-    fi
-    ;;
-  *)
-    if ! sudo -u $username python3.11 -m venv /home/$username/pyvenv; then
-      echo -e "${start_process_line}\nПроизошла ошибка при создании виртуального окружения. (9/${commands})\n${end_process_line}"
-      exit 2
-    fi
-    ;;
-esac
+if ! sudo -u $username "python${python_version}" -m venv /home/$username/pyvenv; then
+  echo -e "${start_process_line}\nПроизошла ошибка при создании виртуального окружения. (9/${commands})\n${end_process_line}"
+  exit 2
+fi
 
 #10
 # Важно: eunsurepip стоить запускать от root, иначе будет ошибка на некоторых версиях ОС (например, Debian 11, Debian 12, Ubuntu 20.04, Ubuntu 24.04)
@@ -291,7 +292,7 @@ echo -e "$start_process_line\nНастраиваю кодировку серве
 
 #22
 case $distro_version in
-  "11" | "12")
+  "11" | "12" | "13")
     if ! sudo apt install -y locales locales-all; then
       echo -e "${start_process_line}\nПроизошла ошибка при установке локализаций. (22/${commands})\n${end_process_line}"
       exit 2
