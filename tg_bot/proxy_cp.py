@@ -9,7 +9,7 @@ import time
 from typing import TYPE_CHECKING
 from tg_bot import utils, static_keyboards as skb, keyboards as kb, CBT
 import telebot.apihelper
-from Utils.cardinal_tools import validate_proxy, cache_proxy_dict, check_proxy
+from Utils.cardinal_tools import validate_proxy, cache_proxy_dict, check_proxy, build_proxy
 from telebot.types import InlineKeyboardMarkup as K, InlineKeyboardButton as B
 
 if TYPE_CHECKING:
@@ -33,8 +33,8 @@ def init_proxy_cp(crd: Cardinal, *args):
     def check_one_proxy(proxy: str):
         try:
             d = {
-                "http": f"http://{proxy}",
-                "https": f"http://{proxy}"
+                "http": proxy,
+                "https": proxy
             }
             pr_dict[proxy] = check_proxy(d)
         except:
@@ -77,8 +77,8 @@ def init_proxy_cp(crd: Cardinal, *args):
         tg.clear_state(m.chat.id, m.from_user.id, True)
         proxy = m.text
         try:
-            login, password, ip, port = validate_proxy(proxy)
-            proxy_str = f"{f'{login}:{password}@' if login and password else ''}{ip}:{port}"
+            scheme, login, password, ip, port = validate_proxy(proxy)
+            proxy_str = build_proxy(scheme, login, password, ip, port)
             if proxy_str in crd.proxy_dict.values():
                 bot.send_message(m.chat.id, _("proxy_already_exists").format(utils.escape(proxy_str)), reply_markup=kb)
                 return
@@ -106,21 +106,16 @@ def init_proxy_cp(crd: Cardinal, *args):
             open_proxy_list(c)
             return
 
-        login, password, ip, port = validate_proxy(proxy)
-        proxy = f"{f'{login}:{password}@' if login and password else ''}{ip}:{port}"
-        proxy = {
-            "http": f"http://{proxy}",
-            "https": f"http://{proxy}"
+        scheme, login, password, ip, port = validate_proxy(proxy)
+        proxy = build_proxy(scheme, login, password, ip, port)
+        proxy_dict = {
+            "http": proxy,
+            "https": proxy
         }
-        crd.MAIN_CFG["Proxy"].update({
-            "ip": ip,
-            "port": port,
-            "login": login,
-            "password": password
-        })
+        crd.MAIN_CFG["Proxy"]["proxy"] = proxy
         crd.save_config(crd.MAIN_CFG, "configs/_main.cfg")
         if crd.MAIN_CFG["Proxy"].getboolean("enable"):
-            crd.account.proxy = proxy
+            crd.account.proxy = proxy_dict
         open_proxy_list(c)
 
     def delete_proxy(c: CallbackQuery):
@@ -133,20 +128,13 @@ def init_proxy_cp(crd: Cardinal, *args):
         c.data = f"{CBT.PROXY}:{offset}"
         if proxy_id in crd.proxy_dict.keys():
             proxy = crd.proxy_dict[proxy_id]
-            login, password, ip, port = validate_proxy(proxy)
             now_proxy = crd.account.proxy
-            if not now_proxy or now_proxy.get("http").replace("http://", "", 1) != proxy:
+            if not now_proxy or now_proxy.get("http") != proxy:
                 del crd.proxy_dict[proxy_id]
                 cache_proxy_dict(crd.proxy_dict)
                 if proxy in pr_dict:
                     del pr_dict[proxy]
                 logger.info(f"Прокси {proxy} удалены.")
-                if str(crd.MAIN_CFG["Proxy"]["ip"]) == str(ip) and str(crd.MAIN_CFG["Proxy"]["login"]) == str(login) \
-                        and str(crd.MAIN_CFG["Proxy"]["port"]) == str(port) \
-                        and str(crd.MAIN_CFG["Proxy"]["password"]) == str(password):
-                    for i in ("password", "port", "login", "ip"):
-                        crd.MAIN_CFG["Proxy"][i] = ""
-                    crd.save_config(crd.MAIN_CFG, "configs/_main.cfg")
             else:
                 bot.answer_callback_query(c.id, _("proxy_undeletable"), show_alert=True)
                 return

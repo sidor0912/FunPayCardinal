@@ -38,6 +38,9 @@ telebot.apihelper.ENABLE_MIDDLEWARE = True
 class TGBot:
     def __init__(self, cardinal: Cardinal):
         self.cardinal = cardinal
+        if cardinal.MAIN_CFG["Telegram"]["proxy"]:
+            telebot.apihelper.proxy = {"https": cardinal.MAIN_CFG["Telegram"]["proxy"],
+                                       "http": cardinal.MAIN_CFG["Telegram"]["proxy"]}
         self.bot = telebot.TeleBot(self.cardinal.MAIN_CFG["Telegram"]["token"], parse_mode="HTML",
                                    allow_sending_without_reply=True, num_threads=5)
 
@@ -87,6 +90,7 @@ class TGBot:
             "sys": "cmd_sys",
             "get_backup": "cmd_get_backup",
             "create_backup": "cmd_create_backup",
+            "upload_backup": "cmd_upload_backup",
             "del_logs": "cmd_del_logs",
             "power_off": "cmd_power_off",
             "watermark": "cmd_watermark",
@@ -305,7 +309,7 @@ class TGBot:
         else:
             self.attempts[m.from_user.id] = self.attempts.get(m.from_user.id, 0) + 1
             text = _("access_denied", m.from_user.username, language=lang)
-            kb_links = kb.LINKS_KB(language=lang)
+            kb_links = kb.links(language=lang)
             logger.warning(_("log_access_attempt", m.from_user.username, m.from_user.id))
         self.bot.send_message(m.chat.id, text, reply_markup=kb_links)
 
@@ -476,7 +480,7 @@ class TGBot:
         Активирует режим ввода вотемарки сообщений.
         """
         watermark = self.cardinal.MAIN_CFG["Other"]["watermark"]
-        watermark = f"\n<code>{watermark}</code>" if watermark else ""
+        watermark = f"\n<code>{utils.escape(watermark)}</code>" if watermark else ""
         result = self.bot.send_message(m.chat.id, _("act_edit_watermark").format(watermark),
                                        reply_markup=skb.CLEAR_STATE_BTN())
         self.set_state(m.chat.id, result.id, m.from_user.id, CBT.EDIT_WATERMARK)
@@ -487,8 +491,9 @@ class TGBot:
         if re.fullmatch(r"\[[a-zA-Z]+]", watermark):
             self.bot.reply_to(m, _("watermark_error"))
             return
+
         preview = f"<a href=\"https://sfunpay.com/s/chat/zb/wl/zbwl4vwc8cc1wsftqnx5.jpg\">⁢</a>" if not \
-            any([i.lower() in watermark.lower() for i in ("🐦", "FPC", "𝑭𝑷𝑪", "𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍", "Cardinal", "Кардинал")]) else \
+            utils.has_brand_mark(watermark) else \
             f"<a href=\"https://sfunpay.com/s/chat/kd/8i/kd8isyquw660kcueck3g.jpg\">⁢</a>"
         self.cardinal.MAIN_CFG["Other"]["watermark"] = watermark
         self.cardinal.save_config(self.cardinal.MAIN_CFG, "configs/_main.cfg")
@@ -525,6 +530,7 @@ class TGBot:
                     else:
                         self.bot.send_message(m.chat.id, "<b>Ошибок в последнем лог-файле не обнаружено.</b>")  # locale
             except:
+                logger.warning("Не удалось отправить лог-файл")
                 logger.debug("TRACEBACK", exc_info=True)
                 self.bot.send_message(m.chat.id, _("logfile_error"))
 
@@ -573,8 +579,14 @@ class TGBot:
             with open(file_path := "backup.zip", 'rb') as file:
                 modification_time = os.path.getmtime(file_path)
                 formatted_time = time.strftime('%d.%m.%Y %H:%M:%S', time.localtime(modification_time))
-                self.bot.send_document(chat_id=m.chat.id, document=InputFile(file),
-                                       caption=f'{_("update_backup")}\n\n{formatted_time}')
+                try:
+                    self.bot.send_document(chat_id=m.chat.id, document=InputFile(file),
+                                           caption=f'{_("update_backup")}\n\n{formatted_time}')
+                except:
+                    logger.warning("Не удалось отправить бэкап")
+                    logger.debug("TRACEBACK", exc_info=True)
+                    self.bot.send_message(m.chat.id, _("update_backup_send_error"))
+
         else:
             self.bot.send_message(m.chat.id, _("update_backup_not_found"))
 
@@ -713,6 +725,13 @@ class TGBot:
         result = self.bot.send_message(m.chat.id, _("send_img"), reply_markup=skb.CLEAR_STATE_BTN())
         self.set_state(m.chat.id, result.id, m.from_user.id, cbt)
 
+    def act_upload_backup(self, m: Message):
+        """
+        Активирует режим ожидания бэкапа.
+        """
+        result = self.bot.send_message(m.chat.id, _("send_backup"), reply_markup=skb.CLEAR_STATE_BTN())
+        self.set_state(m.chat.id, result.id, m.from_user.id, CBT.UPLOAD_BACKUP)
+
     def act_edit_greetings_text(self, c: CallbackQuery):
         variables = ["v_date", "v_date_text", "v_full_date_text", "v_time", "v_full_time", "v_username",
                      "v_message_text", "v_chat_id", "v_chat_name", "v_photo", "v_sleep"]
@@ -818,43 +837,7 @@ class TGBot:
         if chat.looking_link:
             text += f"<b><i>{_('viewing')}:</i></b>\n<a href=\"{chat.looking_link}\">{chat.looking_text}</a>\n\n"
 
-        messages = chat.messages[-10:]
-        last_message_author_id = -1
-        last_by_bot = False
-        last_badge = None
-        last_by_vertex = False
-        for i in messages:
-            if i.author_id == last_message_author_id and i.by_bot == last_by_bot and i.badge == last_badge and \
-                    last_by_vertex == i.by_vertex:
-                author = ""
-            elif i.author_id == self.cardinal.account.id:
-                author = f"<i><b>🤖 {_('you')} (<i>FPC</i>):</b></i> " if i.by_bot else f"<i><b>🫵 {_('you')}:</b></i> "
-                if i.is_autoreply:
-                    author = f"<i><b>📦 {_('you')} ({i.badge}):</b></i> "
-            elif i.author_id == 0:
-                author = f"<i><b>🔵 {i.author}: </b></i>"
-            elif i.is_employee:
-                author = f"<i><b>🆘 {i.author} ({i.badge}): </b></i>"
-            elif i.author == i.chat_name:
-                author = f"<i><b>👤 {i.author}: </b></i>"
-                if i.is_autoreply:
-                    author = f"<i><b>🛍️ {i.author} ({i.badge}):</b></i> "
-                elif i.author in self.cardinal.blacklist:
-                    author = f"<i><b>🚷 {i.author}: </b></i>"
-                elif i.by_bot:
-                    author = f"<i><b>🐦 {i.author}: </b></i>"
-                elif i.by_vertex:
-                    author = f"<i><b>🐺 {i.message.author}: </b></i>"
-            else:
-                author = f"<i><b>🆘 {i.author} ({_('support')}): </b></i>"
-            msg_text = f"<code>{utils.escape(i.text)}</code>" if i.text else \
-                f"<a href=\"{i.image_link}\">" \
-                f"{self.cardinal.show_image_name and not (i.author_id == self.cardinal.account.id and i.by_bot) and i.image_name or _('photo')}</a>"
-            text += f"{author}{msg_text}\n\n"
-            last_message_author_id = i.author_id
-            last_by_bot = i.by_bot
-            last_badge = i.badge
-            last_by_vertex = i.by_vertex
+        text += utils.format_messages(self.cardinal, chat.messages[-10:])
 
         self.bot.edit_message_text(text, c.message.chat.id, c.message.id,
                                    reply_markup=kb.reply(int(chat_id), username, False, False))
@@ -1089,6 +1072,7 @@ class TGBot:
         self.cbq_handler(self.update_profile, lambda c: c.data == CBT.UPDATE_PROFILE)
         self.msg_handler(self.act_manual_delivery_test, commands=["test_lot"])
         self.msg_handler(self.act_upload_image, commands=["upload_chat_img", "upload_offer_img"])
+        self.msg_handler(self.act_upload_backup, commands=["upload_backup"])
         self.cbq_handler(self.act_edit_greetings_text, lambda c: c.data == CBT.EDIT_GREETINGS_TEXT)
         self.msg_handler(self.edit_greetings_text,
                          func=lambda m: self.check_state(m.chat.id, m.from_user.id, CBT.EDIT_GREETINGS_TEXT))
@@ -1145,7 +1129,7 @@ class TGBot:
         self.cbq_handler(self.empty_callback, lambda c: c.data == CBT.EMPTY)
         self.cbq_handler(self.switch_lang, lambda c: c.data.startswith(f"{CBT.LANG}:"))
 
-    def send_notification(self, text: str | None, keyboard=None,
+    def send_notification(self, text: str | None, keyboard: K | None = None,
                           notification_type: str = utils.NotificationTypes.other, photo: bytes | None = None,
                           pin: bool = False):
         """

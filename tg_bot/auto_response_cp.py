@@ -89,11 +89,13 @@ def init_auto_response_cp(cardinal: Cardinal, *args):
         cardinal.RAW_AR_CFG.add_section(raw_command)
         cardinal.RAW_AR_CFG.set(raw_command, "response", "Данной команде необходимо настроить текст ответа :(")
         cardinal.RAW_AR_CFG.set(raw_command, "telegramNotification", "0")
+        cardinal.RAW_AR_CFG.set(raw_command, "enabled", "1")
 
         for cmd in commands:
             cardinal.AR_CFG.add_section(cmd)
             cardinal.AR_CFG.set(cmd, "response", "Данной команде необходимо настроить текст ответа :(")
             cardinal.AR_CFG.set(cmd, "telegramNotification", "0")
+            cardinal.AR_CFG.set(cmd, "enabled", "1")
 
         cardinal.save_config(cardinal.RAW_AR_CFG, "configs/auto_response.cfg")
 
@@ -213,12 +215,12 @@ def init_auto_response_cp(cardinal: Cardinal, *args):
         bot.reply_to(m, _("ar_notification_text_changed", utils.escape(command), utils.escape(notification_text)),
                      reply_markup=keyboard)
 
-    def switch_notification(c: CallbackQuery):
+    def switch_command_settings(c: CallbackQuery):
         """
         Вкл / Выкл уведомление об использовании команды.
         """
         split = c.data.split(":")
-        command_index, offset = int(split[1]), int(split[2])
+        command_index, offset, setting = int(split[1]), int(split[2]), split[3]
         bot.answer_callback_query(c.id)
         if not check_command_exists(command_index, c.message, reply_mode=False):
             bot.answer_callback_query(c.id)
@@ -227,13 +229,13 @@ def init_auto_response_cp(cardinal: Cardinal, *args):
         command = cardinal.RAW_AR_CFG.sections()[command_index]
         commands = [i.strip() for i in command.split("|") if i.strip()]
         command_obj = cardinal.RAW_AR_CFG[command]
-        if command_obj.get("telegramNotification") in [None, "0"]:
+        if command_obj.get(setting) in [None, "0"]:
             value = "1"
         else:
             value = "0"
-        cardinal.RAW_AR_CFG.set(command, "telegramNotification", value)
+        cardinal.RAW_AR_CFG.set(command, setting, value)
         for cmd in commands:
-            cardinal.AR_CFG.set(cmd, "telegramNotification", value)
+            cardinal.AR_CFG.set(cmd, setting, value)
         cardinal.save_config(cardinal.RAW_AR_CFG, "configs/auto_response.cfg")
         logger.info(_("log_param_changed", c.from_user.username, c.from_user.id, command, value))
         open_edit_command_cp(c)
@@ -275,7 +277,7 @@ def init_auto_response_cp(cardinal: Cardinal, *args):
     tg.msg_handler(edit_command_notification,
                    func=lambda m: tg.check_state(m.chat.id, m.from_user.id, CBT.EDIT_CMD_NOTIFICATION_TEXT))
 
-    tg.cbq_handler(switch_notification, lambda c: c.data.startswith(f"{CBT.SWITCH_CMD_NOTIFICATION}:"))
+    tg.cbq_handler(switch_command_settings, lambda c: c.data.startswith(f"{CBT.SWITCH_CMD_SETTING}:"))
     tg.cbq_handler(del_command, lambda c: c.data.startswith(f"{CBT.DEL_CMD}:"))
 
 

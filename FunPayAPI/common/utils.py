@@ -5,6 +5,9 @@
 import string
 import random
 import re
+import unicodedata
+from datetime import datetime, timedelta, timezone
+
 from .enums import Currency
 
 MONTHS = {
@@ -46,6 +49,16 @@ MONTHS = {
     "December": 12
 }
 
+CURRENCY_MAP = {
+    "RUB": Currency.RUB,
+    "EUR": Currency.EUR,
+    "USD": Currency.USD,
+    "₽": Currency.RUB,
+    "€": Currency.EUR,
+    "$": Currency.USD,
+    "¤": Currency.RUB,
+}
+
 
 def random_tag() -> str:
     """
@@ -76,10 +89,37 @@ def parse_wait_time(response: str) -> int:
 
 
 def parse_currency(s: str) -> Currency:
-    return {"₽": Currency.RUB,
-            "€": Currency.EUR,
-            "$": Currency.USD,
-            "¤": Currency.RUB}.get(s, Currency.UNKNOWN)
+    return CURRENCY_MAP.get(s, Currency.UNKNOWN)
+
+
+def strip_invisible_suffix(text: str) -> str:
+    end = len(text)
+    while end > 0 and (text[end - 1].isspace() or unicodedata.category(text[end - 1]) == "Cf"):
+        end -= 1
+    return text[:end]
+
+def parse_funpay_datetime(date_text: str) -> datetime:
+    """Парсит время"""
+    now = datetime.now(tz=timezone(timedelta(hours=3)))
+    if any(today in date_text for today in ("сегодня", "сьогодні", "today")):  # сегодня, ЧЧ:ММ
+        h, m = date_text.split(", ")[1].split(":")
+        return datetime(now.year, now.month, now.day, int(h), int(m))
+    elif any(yesterday in date_text for yesterday in ("вчера", "вчора", "yesterday")):  # вчера, ЧЧ:ММ
+        h, m = date_text.split(", ")[1].split(":")
+        temp = now - timedelta(days=1)
+        return datetime(temp.year, temp.month, temp.day, int(h), int(m))
+    elif date_text.count(" ") == 2:  # ДД месяца, ЧЧ:ММ
+        split = date_text.split(", ")
+        day, month = split[0].split()
+        day, month = int(day), MONTHS[month]
+        h, m = split[1].split(":")
+        return datetime(now.year, month, day, int(h), int(m))
+    else:  # ДД месяца ГГГГ, ЧЧ:ММ
+        split = date_text.split(", ")
+        day, month, year = split[0].split()
+        day, month, year = int(day), MONTHS[month], int(year)
+        h, m = split[1].split(":")
+        return datetime(year, month, day, int(h), int(m))
 
 
 class RegularExpressions(object):
@@ -103,7 +143,7 @@ class RegularExpressions(object):
         """
 
         self.ORDER_PURCHASED2 = re.compile(
-            r"[a-zA-Z0-9]+, не забудьте потом нажать кнопку («Подтвердить выполнение заказа»|«Подтвердить получение валюты»)\.")
+            r"[a-zA-Z0-9]+, (не забудьте потом нажать кнопку («Подтвердить выполнение заказа»|«Подтвердить получение валюты»)\.|do not forget to press the («Confirm order fulfilment»|«Confirm currency receipt») button once you finish\.)")
         """
         Скомпилированное регулярное выражение, описывающее сообщение об оплате заказа (2).
         Лучше всего использовать вместе с MessageTypesRes.ORDER_PURCHASED
@@ -213,7 +253,12 @@ class RegularExpressions(object):
 
         self.PRODUCTS_AMOUNT = re.compile(r",\s(\d{1,3}(?:\s?\d{3})*)\s(шт|pcs)\.")
         """
-        Скомпилированное регулярное выражение, описывающее запись кол-ва товаров в заказе.
+        Скомпилированное регулярное выражение, описывающее запись кол-ва товаров в заказе со страницы заказОВ.
+        """
+
+        self.PRODUCTS_AMOUNT_ORDER = re.compile(r"(\d{1,3}(?:\s?\d{3})*)\s(шт|pcs)\.")
+        """
+        Скомпилированное регулярное выражение, описывающее запись кол-ва товаров со страницы заказА.
         """
 
         self.EXCHANGE_RATE = re.compile(

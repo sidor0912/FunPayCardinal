@@ -5,6 +5,8 @@ gl_yes = "✅ Так"
 gl_yep = "✅ угу"
 gl_no = "❌ Ні"
 gl_cancel = "❌ Скасувати"
+gl_on = "🟢 Увімкнено"
+gl_off = "🔴 Вимкнено"
 gl_error = "⚠️ Помилка"
 gl_try_again = "Спробуй знову"
 gl_error_try_again = f"{gl_error}. {gl_try_again}."
@@ -114,6 +116,7 @@ tmplt_add_another = "➕ Додати іншу"
 # Налаштування привітання
 gr_greetings = "{} Вітати користувачів"
 gr_ignore_sys_msgs = "{} Ігнорувати системні повідомлення"
+gr_only_new_chats = "{} Тільки в нових діалогах"
 gr_edit_message = "✏️ Змінити текст привітального повідомлення"
 gr_edit_cooldown = "⏱️ Кулдаун: {} дн."
 
@@ -135,8 +138,11 @@ mv_show_image_name = "{} Відображати назви зображень"
 pl_add = "➕ Додати плагін"
 pl_activate = "Активувати"
 pl_deactivate = "Деактивувати"
+pl_pin = "Закріпити"
+pl_unpin = "Відкріпити"
 pl_commands = "⌨️ Команди"
 pl_settings = "⚙️ Налаштування"
+pl_buy = "💸 Купити плагін"
 
 # Конфіги
 cfg_download_main = "⤵️ Завантажити основний конфіг"
@@ -267,12 +273,19 @@ proxy_format = "❌ Проксі повинні мати формат <u>login:p
 proxy_adding_error = "❌ Під час додавання проксі сталася якась помилка."
 proxy_undeletable = "❌ Ці проксі неможливо видалити, оскільки вони зараз використовуються."
 
-act_edit_watermark = "Введи новий текст водяного знака. Наприклад:\n{}\n<code>𝑭𝒖𝒏𝑷𝒂𝒚 𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍</code>\n" \
-                     "<code>FunPay Cardinal</code>\n<code>[FunPay / Cardinal]</code>\n<code>𝑭𝑷𝑪</code>\n" \
-                     "<code>FPC</code>\n<code>🤖</code>\n<code>🐦</code>\n\n" \
-                     "Приклади можна скопіювати натисканням і відредагувати на свій розсуд.\nВрахуй, що на FunPay емодзі " \
-                     "🐦 виглядає не так, як в Telegram." \
-                     "\n\nЯкщо потрібно видалити водяний знак, відправ <code>-</code>."
+act_edit_watermark = "Введи новий текст водяного знака. Наприклад:\n{}\n" \
+                     "<code>𝓕𝓾𝓷𝓟𝓪𝔂 𝓒𝓪𝓻𝓭𝓲𝓷𝓪𝓵</code>\n" \
+                     "<code>𝔽𝕦𝕟ℙ𝕒𝕪 ℂ𝕒𝕣𝕕𝕚𝕟𝕒𝕝</code>\n<code>ＦｕｎＰａｙ Ｃａｒｄｉｎａｌ</code>\n" \
+                     "<code>ꜰᴜɴᴘᴀʏ ᴄᴀʀᴅɪɴᴀʟ</code>\n<code>🄵🅄🄽🄿🄰🅈 🄲🄰🅁🄳🄸🄽🄰🄻</code>\n" \
+                     "<code>ⒻⓤⓝⓅⓐⓨ Ⓒⓐⓡⓓⓘⓝⓐⓛ</code>\n<code>𝐅𝐮𝐧𝐏𝐚𝐲 𝐂𝐚𝐫𝐝𝐢𝐧𝐚𝐥</code>\n" \
+                     "<code>𝗙𝘂𝗻𝗣𝗮𝘆 𝗖𝗮𝗿𝗱𝗶𝗻𝗮𝗹</code>\n<code>𝘍𝘶𝘯𝘗𝘢𝘺 𝘊𝘢𝘳𝘥𝘪𝘯𝘢𝘭</code>\n" \
+                     "<code>𝙁𝙪𝙣𝙋𝙖𝙮 𝘾𝙖𝙧𝙙𝙞𝙣𝙖𝙡</code>\n<code>𝙵𝚞𝚗𝙿𝚊𝚢 𝙲𝚊𝚛𝚍𝚒𝚗𝚊𝚕</code>\n" \
+                     "<code>ᖴᑌᑎᑭᗩY ᑕᗩᖇᗪIᑎᗩᒪ</code>\n" \
+                     "<code>FunPay Cardinal</code>\n<code>[FunPay / Cardinal]</code>\n" \
+                     "<code>🤖</code>\n<code>🐦</code>\n\n" \
+                     "Приклади можна скопіювати натисканням і відредагувати на свій смак.\nМай на увазі, що на FunPay емодзі " \
+                     "🐦 виглядає не так, як у Telegram." \
+                     "\n\nЩоб видалити водяний знак, надішли <code>-</code>."
 watermark_changed = "✅ Водяний знак повідомлень змінено."
 watermark_deleted = "✅ Водяний знак повідомлень видалено."
 watermark_error = "❌ Невалідний водяний знак."
@@ -290,6 +303,7 @@ update_update = "Щоб оновитися, введи команду /update"
 update_backup = "✅ Резервна копія конфігів, сховища і плагінів <code>backup.zip</code>.\n\n" \
                 "⚠️ НЕ ВІДПРАВЛЯЙ цей архів НІКОМУ. Він містить абсолютно ВЕСЬ вміст і налаштування бота (в тому числі golden_key і товарні файли)."
 update_backup_error = "❌ Не вдалося створити бекап конфігів, сховища і плагінів."
+update_backup_send_error = "❌ Не вдалося надіслати резервну копію."
 update_backup_not_found = "❌ Резервна копія не знайдена."
 update_downloaded = "✅ Завантажив оновлення {} (пропущено {} шт.). Встановлюю..."
 update_download_error = "❌ Сталася помилка при завантаженні оновлення."
@@ -298,6 +312,8 @@ update_done_exe = "✅ Встановив оновлення! Новий <code>F
                   "Вимкни <i>FPC</i>, перенеси новий <code>FPC.exe</code> на місце старого " \
                   "і запусти <code>Start.bat</code>."
 update_install_error = "❌ Сталася помилка при встановленні оновлення."
+
+send_backup = "Надішли мені бекап.\n\n<b>⚠️ УВАГА! Завантаження бекапів із сумнівних джерел може призвести до сумних наслідків.</b>"
 
 restarting = "Перезавантажуюсь..."
 power_off_0 = """<b><u>Ти впевнений, що хочеш вимкнути мене?</u></b>\n
@@ -316,7 +332,9 @@ power_off_error = "❌ Дана кнопка не належить цьому з
 
 enter_msg_text = "Введи текст повідомлення."
 msg_sent = "✅ Повідомлення відправлено у чат <a href=\"https://funpay.com/chat/?node={}\">{}</a>."
+msg_sent_short = "✅ Повідомлення відправлено."
 msg_sending_error = "❌ Не вдалося відправити повідомлення у чат <a href=\"https://funpay.com/chat/?node={}\">{}</a>."
+msg_sending_error_short = "❌ Не вдалося відправити повідомлення у чат."
 send_img = "Відправ мені зображення."
 
 greeting_changed = "✅ Текст привітання змінено."
@@ -423,9 +441,7 @@ adv_description = """🐦 𝑭𝒖𝒏𝑷𝒂𝒚 𝑪𝒂𝒓𝒅𝒊𝒏𝒂�
 🧩 Плагіни
 🌟 І багато іншого...
 
-🛠️ Створено за допомогою: github.com/sidor0912/FunPayCardinal
-👨‍💻 Автор: @woopertail, @sidor0912
-💰 Донат: @sidor_donate
+🛠️ Створити свого бота: github.com/sidor0912/FunPayCardinal
 🔄 Оновлення: @fpc_updates
 🧩 Плагіни: @fpc_plugins
 💬 Чат: @funpay_cardinal"""
@@ -482,6 +498,7 @@ cmd_update = "оновитися до наст. версії"
 cmd_sys = "інформація про навантаження на систему"
 cmd_create_backup = "створити бекап"
 cmd_get_backup = "отримати бекап"
+cmd_upload_backup = "вивантажити бекап"
 cmd_restart = "перезапустити FPC"
 cmd_power_off = "вимкнути FPC"
 
@@ -622,6 +639,7 @@ crd_session_loop_started = "$CYANЦикл оновлення сесії запу
 crd_no_plugins_folder = "Папка з плагінами не виявлена."
 crd_no_plugins = "Плагіни не виявлені."
 crd_plugin_load_err = "Не вдалося завантажити плагін {}."
+crd_plugin_handlers_err = "Не вдалося зареєструвати обробники плагіна {}. Плагін вимкнено."
 crd_invalid_uuid = "Не вдалося завантажити плагін {}: невалідний UUID."
 crd_uuid_already_registered = "UUID {} ({}) вже зареєстрований."
 crd_handlers_registered = "Обробники з $YELLOW{}.py$RESET зареєстровані."

@@ -95,6 +95,10 @@ class OrderStatuses(Enum):
     """Заказ закрыт."""
     REFUNDED = 2
     """Средства по заказу возвращены."""
+    PARTIALLY_REFUNDED = 3
+    """Средства по заказу частично возвращены."""
+    UNPAID = 5
+    """Заказ не оплачен."""
 
 
 class SubCategoryTypes(Enum):
@@ -123,9 +127,9 @@ class Currency(Enum):
     def __str__(self):
         if self == Currency.USD:
             return "$"
-        elif self == Currency.RUB:
+        if self == Currency.RUB:
             return "₽"
-        elif self == Currency.EUR:
+        if self == Currency.EUR:
             return "€"
         return "¤"
 
@@ -133,9 +137,9 @@ class Currency(Enum):
     def code(self) -> str:
         if self == Currency.USD:
             return "usd"
-        elif self == Currency.RUB:
+        if self == Currency.RUB:
             return "rub"
-        elif self == Currency.EUR:
+        if self == Currency.EUR:
             return "eur"
         raise Exception("Неизвестная валюта.")
 

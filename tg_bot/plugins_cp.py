@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from cardinal import Cardinal
 
 from tg_bot import utils, keyboards, CBT
-from tg_bot.static_keyboards import CLEAR_STATE_BTN
+from tg_bot.static_keyboards import UPLOAD_PLUGIN
 from locales.localizer import Localizer
 
 from telebot.types import InlineKeyboardMarkup as K, InlineKeyboardButton as B, Message, CallbackQuery
@@ -168,14 +168,26 @@ def init_plugins_cp(cardinal: Cardinal, *args):
         c.data = f"{CBT.PLUGINS_LIST}:{offset}"
         open_plugins_list(c)
 
+    def pin_plugin(c: CallbackQuery):
+        split = c.data.split(":")
+        uuid, offset = split[1], int(split[2])
+
+        if not check_plugin_exists(uuid, c.message):
+            bot.answer_callback_query(c.id)
+            return
+
+        cardinal.pin_plugin(uuid)
+        c.data = f"{CBT.EDIT_PLUGIN}:{uuid}:{offset}"
+        open_edit_plugin_cp(c)
+
     def act_upload_plugin(obj: CallbackQuery | Message):
         if isinstance(obj, CallbackQuery):
             offset = int(obj.data.split(":")[1])
-            result = bot.send_message(obj.message.chat.id, _("pl_new"), reply_markup=CLEAR_STATE_BTN())
+            result = bot.send_message(obj.message.chat.id, _("pl_new"), reply_markup=UPLOAD_PLUGIN())
             tg.set_state(obj.message.chat.id, result.id, obj.from_user.id, CBT.UPLOAD_PLUGIN, {"offset": offset})
             bot.answer_callback_query(obj.id)
         else:
-            result = bot.send_message(obj.chat.id, _("pl_new"), reply_markup=CLEAR_STATE_BTN())
+            result = bot.send_message(obj.chat.id, _("pl_new"), reply_markup=UPLOAD_PLUGIN())
             tg.set_state(obj.chat.id, result.id, obj.from_user.id, CBT.UPLOAD_PLUGIN, {"offset": 0})
 
     tg.cbq_handler(open_plugins_list, lambda c: c.data.startswith(f"{CBT.PLUGINS_LIST}:"))
@@ -186,6 +198,7 @@ def init_plugins_cp(cardinal: Cardinal, *args):
     tg.cbq_handler(ask_delete_plugin, lambda c: c.data.startswith(f"{CBT.DELETE_PLUGIN}:"))
     tg.cbq_handler(cancel_delete_plugin, lambda c: c.data.startswith(f"{CBT.CANCEL_DELETE_PLUGIN}:"))
     tg.cbq_handler(delete_plugin, lambda c: c.data.startswith(f"{CBT.CONFIRM_DELETE_PLUGIN}:"))
+    tg.cbq_handler(pin_plugin, lambda c: c.data.startswith(f"{CBT.PIN_PLUGIN}:"))
 
     tg.cbq_handler(act_upload_plugin, lambda c: c.data.startswith(f"{CBT.UPLOAD_PLUGIN}:"))
     tg.msg_handler(act_upload_plugin, commands=["upload_plugin"])

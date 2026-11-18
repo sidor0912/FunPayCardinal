@@ -9,4 +9,4 @@
 /dist
 __pycache__
 test.py
-backup.zip
+*.zip

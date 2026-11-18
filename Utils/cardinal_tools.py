@@ -14,6 +14,7 @@ import FunPayAPI.types
 from datetime import datetime
 import Utils.exceptions
 import itertools
+import threading
 import psutil
 import json
 import sys
@@ -28,6 +29,26 @@ logger = logging.getLogger("FPC.cardinal_tools")
 localizer = Localizer()
 _ = localizer.translate
 
+_products_file_locks: dict[str, threading.Lock] = {}
+_products_file_locks_guard = threading.Lock()
+
+
+def get_products_file_lock(path: str) -> threading.Lock:
+    """
+    Возвращает Lock, общий для всех обращений к указанному товарному файлу (создаёт при первом
+    обращении). Используется всеми функциями, читающими/пишущими storage/products/*, чтобы
+    синхронизировать доступ из разных потоков.
+
+    :param path: путь до товарного файла.
+
+    :return: Lock, специфичный для данного файла.
+    """
+    normalized = os.path.normcase(os.path.abspath(path))
+    with _products_file_locks_guard:
+        if normalized not in _products_file_locks:
+            _products_file_locks[normalized] = threading.Lock()
+        return _products_file_locks[normalized]
+
 
 def count_products(path: str) -> int:
     """
@@ -37,10 +58,11 @@ def count_products(path: str) -> int:
 
     :return: кол-во товара в указанном файле.
     """
-    if not os.path.exists(path):
-        return 0
-    with open(path, "r", encoding="utf-8") as f:
-        products = f.read()
+    with get_products_file_lock(path):
+        if not os.path.exists(path):
+            return 0
+        with open(path, "r", encoding="utf-8") as f:
+            products = f.read()
     products = products.split("\n")
     products = list(itertools.filterfalse(lambda el: not el, products))
     return len(products)
@@ -104,20 +126,43 @@ def validate_proxy(proxy: str):
     :param proxy: прокси
     :return: логин, пароль, IP и порт
     """
-    try:
-        if "@" in proxy:
-            login_password, ip_port = proxy.split("@")
-            login, password = login_password.split(":")
-            ip, port = ip_port.split(":")
-        else:
-            login, password = "", ""
-            ip, port = proxy.split(":")
-        if not all([0 <= int(i) < 256 for i in ip.split(".")]) or ip.count(".") != 3 \
-                or not ip.replace(".", "").isdigit() or not 0 <= int(port) <= 65535:
-            raise Exception()
-    except:
-        raise ValueError("Прокси должны иметь формат login:password@ip:port или ip:port")  # locale
-    return login, password, ip, port
+    if "://" in proxy:
+        scheme, rest = proxy.split("://", 1)
+    else:
+        scheme = "http"
+        rest = proxy
+
+    if "@" in rest:
+        login_password, ip_port = rest.split("@")
+        login, password = login_password.split(":")
+    else:
+        login, password = "", ""
+        ip_port = rest
+
+    ip, port = ip_port.split(":")
+
+    if scheme == "socks5":
+        scheme = "socks5h"
+
+    ip_parts = ip.split(".")
+    if len(ip_parts) != 4 or not all(part.isdigit() and 0 <= int(part) < 256 for part in ip_parts):
+        raise ValueError("Неправильный IP")
+
+    if not port.isdigit() or not 0 < int(port) <= 65535:
+        raise ValueError("Неправильный порт")
+
+    if scheme not in ("http", "https", "socks5", "socks5h"):
+        raise ValueError("Схема прокси должна быть http, https, socks5 или socks5h")
+
+    return scheme, login, password, ip, port
+
+def build_proxy(scheme: str | None, login: str, password: str, ip: str, port: str) -> str:
+    if not scheme:
+        scheme = "http"
+    if login and password:
+        return f"{scheme}://{login}:{password}@{ip}:{port}"
+    else:
+        return f"{scheme}://{ip}:{port}"
 
 
 def cache_proxy_dict(proxy_dict: dict[int, str]) -> None:
@@ -147,10 +192,16 @@ def load_proxy_dict() -> dict[int, str]:
 
         try:
             proxy = json.loads(proxy)
-            proxy = {int(k): v for k, v in proxy.items()}
+            proxy_dict = {}
+            for id_, proxy_str in proxy.items():
+                try:
+                    proxy_dict[int(id_)] = build_proxy(*validate_proxy(proxy_str))
+                except:
+                    logger.debug(f"Не удалось добавить {proxy_str}")
+                    logger.debug("TRACEBACK", exc_info=True)
         except json.decoder.JSONDecodeError:
             return {}
-        return proxy
+        return proxy_dict
 
 
 def cache_disabled_plugins(disabled_plugins: list[str]) -> None:
@@ -176,6 +227,33 @@ def load_disabled_plugins() -> list[str]:
         return []
 
     with open("storage/cache/disabled_plugins.json", "r", encoding="utf-8") as f:
+        try:
+            return json.loads(f.read())
+        except json.decoder.JSONDecodeError:
+            return []
+
+def cache_pinned_plugins(pinned_plugins: list[str]) -> None:
+    """
+    Кэширует UUID закрепленных плагинов.
+
+    :param pinned_plugins: список UUID закрепленных плагинов.
+    """
+    if not os.path.exists("storage/cache"):
+        os.makedirs("storage/cache")
+
+    with open("storage/cache/pinned_plugins.json", "w", encoding="utf-8") as f:
+        f.write(json.dumps(pinned_plugins))
+
+def load_pinned_plugins() -> list[str]:
+    """
+    Загружает список UUID закрепленных плагинов из кэша.
+
+    :return: список UUID закрепленных плагинов.
+    """
+    if not os.path.exists("storage/cache/pinned_plugins.json"):
+        return []
+
+    with open("storage/cache/pinned_plugins.json", "r", encoding="utf-8") as f:
         try:
             return json.loads(f.read())
         except json.decoder.JSONDecodeError:
@@ -305,28 +383,29 @@ def get_products(path: str, amount: int = 1) -> list[list[str] | int] | None:
 
     :return: [[Товар/-ы], оставшееся кол-во товара]
     """
-    with open(path, "r", encoding="utf-8") as f:
-        products = f.read()
+    with get_products_file_lock(path):
+        with open(path, "r", encoding="utf-8") as f:
+            products = f.read()
 
-    products = products.split("\n")
+        products = products.split("\n")
 
-    # Убираем пустые элементы
-    products = list(itertools.filterfalse(lambda el: not el, products))
+        # Убираем пустые элементы
+        products = list(itertools.filterfalse(lambda el: not el, products))
 
-    if not products:
-        raise Utils.exceptions.NoProductsError(path)
+        if not products:
+            raise Utils.exceptions.NoProductsError(path)
 
-    elif len(products) < amount:
-        raise Utils.exceptions.NotEnoughProductsError(path, len(products), amount)
+        elif len(products) < amount:
+            raise Utils.exceptions.NotEnoughProductsError(path, len(products), amount)
 
-    got_products = products[:amount]
-    save_products = products[amount:]
-    amount = len(save_products)
+        got_products = products[:amount]
+        save_products = products[amount:]
+        amount = len(save_products)
 
-    with open(path, "w", encoding="utf-8") as f:
-        f.write("\n".join(save_products))
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("\n".join(save_products))
 
-    return [got_products, amount]
+        return [got_products, amount]
 
 
 def add_products(path: str, products: list[str], at_zero_position=False):
@@ -337,14 +416,15 @@ def add_products(path: str, products: list[str], at_zero_position=False):
     :param products: товары.
     :param at_zero_position: добавить товары в начало товарного файла.
     """
-    if not at_zero_position:
-        with open(path, "a", encoding="utf-8") as f:
-            f.write("\n" + "\n".join(products))
-    else:
-        with open(path, "r", encoding="utf-8") as f:
-            text = f.read()
-        with open(path, "w", encoding="utf-8") as f:
-            f.write("\n".join(products) + "\n" + text)
+    with get_products_file_lock(path):
+        if not at_zero_position:
+            with open(path, "a", encoding="utf-8") as f:
+                f.write("\n" + "\n".join(products))
+        else:
+            with open(path, "r", encoding="utf-8") as f:
+                text = f.read()
+            with open(path, "w", encoding="utf-8") as f:
+                f.write("\n".join(products) + "\n" + text)
 
 
 def safe_text(text: str):
@@ -420,7 +500,7 @@ def format_order_text(text: str, order: FunPayAPI.types.OrderShortcut | FunPayAP
         logger.debug("TRACEBACK", exc_info=True)
     description = order.description if isinstance(order,
                                                   FunPayAPI.types.OrderShortcut) else order.short_description if order.short_description else ""
-    params = order.params if isinstance(order, FunPayAPI.types.Order) and order.params else ""
+    params = order.lot_params_text if isinstance(order, FunPayAPI.types.Order) and order.lot_params else ""
     variables = {
         "$full_date_text": str_full_date,
         "$date_text": str_date,

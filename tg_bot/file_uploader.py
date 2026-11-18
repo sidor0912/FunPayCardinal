@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from cardinal import Cardinal
     from tg_bot.bot import TGBot
 
-from Utils import config_loader as cfg_loader, exceptions as excs, cardinal_tools
+from Utils import config_loader as cfg_loader, exceptions as excs, cardinal_tools, updater
 from telebot.types import InlineKeyboardButton as Button
 from tg_bot import utils, keyboards, CBT
 from tg_bot.static_keyboards import CLEAR_STATE_BTN
@@ -97,9 +97,10 @@ def init_uploader(cardinal: Cardinal):
         tg.clear_state(m.chat.id, m.from_user.id, True)
         if not check_file(tg, m, type_="txt"):
             return
-        if not download_file(tg, m, m.document.file_name,
-                             custom_path=f"storage/products"):
-            return
+        with cardinal_tools.get_products_file_lock(f"storage/products/{m.document.file_name}"):
+            if not download_file(tg, m, m.document.file_name,
+                                 custom_path=f"storage/products"):
+                return
 
         try:
             products_count = cardinal_tools.count_products(f"storage/products/{utils.escape(m.document.file_name)}")
@@ -278,17 +279,15 @@ def init_uploader(cardinal: Cardinal):
             file_info = tg.bot.get_file(photo.file_id)
             file = tg.bot.download_file(file_info.file_path)
             image_id = cardinal.account.upload_image(file, type_="chat")
-            result = cardinal.account.send_message(chat_id, None, username, image_id)
+            result = cardinal.send_message(chat_id, f"$photo={image_id}", username, watermark=False)
             if not result:
-                tg.bot.reply_to(m, f'❌ Не удалось отправить сообщение в переписку '
-                                   f'<a href="https://funpay.com/chat/?node={chat_id}">{username}</a>. '
-                                   f'Подробнее в файле <code>logs/log.log</code>',
-                                reply_markup=keyboards.reply(chat_id, username, again=True))
-                return
+                raise Exception("Нету сообщений")
             tg.bot.reply_to(m, f'✅ Сообщение отправлено в переписку '
                                f'<a href="https://funpay.com/chat/?node={chat_id}">{username}</a>.',
                             reply_markup=keyboards.reply(chat_id, username, again=True))
         except:
+            logger.warning("Произошла ошибка при отправке изображения.")
+            logger.debug("TRACEBACK", exc_info=True)
             tg.bot.reply_to(m, f'❌ Не удалось отправить сообщение в переписку '
                                f'<a href="https://funpay.com/chat/?node={chat_id}">{username}</a>. '
                                f'Подробнее в файле <code>logs/log.log</code>',
@@ -329,6 +328,28 @@ def init_uploader(cardinal: Cardinal):
     def upload_offer_image(m: types.Message):
         upload_image(m, type_="offer")
 
+    def upload_backup(m: types.Message):
+        tg.clear_state(m.chat.id, m.from_user.id, True)
+        if not m.document:
+            tg.bot.send_message(m.chat.id, "❌ Файл не обнаружен.")
+            return
+        if not m.document.file_name.endswith(".zip"):
+            tg.bot.send_message(m.chat.id, f"❌ Неправильный формат файла: "
+                                           f"<b><u>.{m.document.file_name.split('.')[-1]}</u></b> "
+                                           f"(вместо <b><u>.zip</u></b>)")
+            return
+        if not download_file(tg, m, "backup.zip"):
+            return
+        if not updater.extract_backup_archive():
+            tg.bot.send_message(m.chat.id, "❌ Возникла ошибка при распаковке архива.")
+            return
+        tg.bot.send_message(m.chat.id, "✅ Бекап загружен.")
+
+        if not updater.install_backup():
+            tg.bot.send_message(m.chat.id, "❌ Возникла ошибка при переносе файлов.")
+            return
+        tg.bot.send_message(m.chat.id, "✅ Бекап использован. Используй команду /restart.")
+
     tg.cbq_handler(act_upload_products_file, lambda c: c.data == CBT.UPLOAD_PRODUCTS_FILE)
     tg.cbq_handler(act_upload_auto_response_config, lambda c: c.data == "upload_auto_response_config")
     tg.cbq_handler(act_upload_auto_delivery_config, lambda c: c.data == "upload_auto_delivery_config")
@@ -342,6 +363,7 @@ def init_uploader(cardinal: Cardinal):
     tg.file_handler(CBT.SEND_FP_MESSAGE, send_funpay_image)
     tg.file_handler(CBT.UPLOAD_CHAT_IMAGE, upload_chat_image)
     tg.file_handler(CBT.UPLOAD_OFFER_IMAGE, upload_offer_image)
+    tg.file_handler(CBT.UPLOAD_BACKUP, upload_backup)
 
 
 BIND_TO_PRE_INIT = [init_uploader]

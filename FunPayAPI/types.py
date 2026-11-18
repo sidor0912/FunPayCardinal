@@ -2,6 +2,8 @@
 В данном модуле описаны все типы пакета FunPayAPI
 """
 from __future__ import annotations
+
+import re
 from typing import Literal, overload, Optional
 
 import FunPayAPI.common.enums
@@ -47,7 +49,7 @@ class ChatShortcut(BaseOrderInfo):
     :type determine_msg_type: :obj:`bool`, опционально
     """
 
-    def __init__(self, id_: int, name: str, last_message_text: str,
+    def __init__(self, id_: int, name: str, last_message_text: str, node_msg_id: int, user_msg_id: int,
                  unread: bool, html: str, determine_msg_type: bool = True):
         self.id: int = id_
         """ID чата."""
@@ -61,6 +63,10 @@ class ChatShortcut(BaseOrderInfo):
         """Отпралено ли последнее сообщение через Vertex?"""
         self.unread: bool = unread
         """Флаг \"непрочитанности\" (если True - в чате есть непрочитанные сообщения)."""
+        self.node_msg_id: int = node_msg_id
+        """ID последнего сообщения в чате."""
+        self.user_msg_id: int = user_msg_id
+        """ID последнего прочитанного сообщения."""
         self.last_message_type: MessageTypes | None = None if not determine_msg_type else self.get_last_message_type()
         """Тип последнего сообщения."""
         self.html: str = html
@@ -116,6 +122,44 @@ class ChatShortcut(BaseOrderInfo):
 
     def __str__(self):
         return self.last_message_text
+
+
+class BuyerViewing:
+    """
+    Данный класс представляет поле "Покупатель смотрит"
+    """
+
+    def __init__(self, buyer_id: int, link: str | None, text: str | None, tag: str | None, html: str | None = None):
+        """
+        :param buyer_id: ID покупателя.
+        :param link: Ссылка на лот, который он просматривает.
+        :param text: Текстовое описание лота.
+        :param tag: Тег события.
+        :param html: Исходный HTML-код блока просмотра (если необходимо).
+        """
+        self.buyer_id: int = buyer_id
+        self.link: str | None = link
+        self.text: str | None = text
+        self.tag: str | None = tag
+        self.html: str | None = html
+        self.is_viewing_lot: bool = bool(self.link)
+
+    @property
+    def lot_id(self) -> str | int | None:
+        if self.is_viewing_lot:
+            id_ = self.link.split("=")[-1]
+            return int(id_) if id_.isdigit() else id_
+        else:
+            return None
+
+    @property
+    def subcategory_type(self) -> SubCategoryTypes | None:
+        if self.is_viewing_lot:
+            return SubCategoryTypes.COMMON if "/lots/" in self.link else SubCategoryTypes.CURRENCY
+        else:
+            return None
+
+
 
 
 class Chat:
@@ -190,9 +234,10 @@ class Message(BaseOrderInfo):
     """
 
     def __init__(self, id_: int, text: str | None, chat_id: int | str, chat_name: str | None,
+                 interlocutor_id: int | None,
                  author: str | None, author_id: int, html: str,
                  image_link: str | None = None, image_name: str | None = None,
-                 determine_msg_type: bool = True, badge_text: Optional[str] = None):
+                 determine_msg_type: bool = True, badge_text: Optional[str] = None, tag: Optional[str] = None):
         self.id: int = id_
         """ID сообщения."""
         self.text: str | None = text
@@ -201,6 +246,10 @@ class Message(BaseOrderInfo):
         """ID чата."""
         self.chat_name: str | None = chat_name
         """Название чата."""
+        self.interlocutor_id: int | None = interlocutor_id
+        """ID собеседника"""
+        self.buyer_viewing: BuyerViewing | None = None
+        """Лот, который смотрит собеседник (если включена настройка)"""
         self.type: MessageTypes | None = None if not determine_msg_type else self.get_message_type()
         """Тип сообщения."""
         self.author: str | None = author
@@ -237,6 +286,7 @@ class Message(BaseOrderInfo):
         """Являемся ли мы продавцом по заказу (для системных сообщений)."""
         self.i_am_buyer: bool | None = None
         """Являемся ли мы покупателем по заказу (для системных сообщений)."""
+        self.tag: str | None = tag
 
         BaseOrderInfo.__init__(self)
 
@@ -385,6 +435,15 @@ class OrderShortcut(BaseOrderInfo):
     def __str__(self):
         return self.description
 
+class Server:
+    def __init__(self, id_: int, name: str | None = None):
+        self.id: int = id_
+        self.name = name
+
+class Side:
+    def __init__(self, id_: int, name: str | None = None):
+        self.id: int = id_
+        self.name = name
 
 class Order:
     """
@@ -399,14 +458,17 @@ class Order:
     :param subcategory: подкатегория, к которой относится заказ.
     :type subcategory: :class:`FunPayAPI.types.SubCategory` or :obj:`None`
 
-    :param params: параметры лота (значения некоторых полей заказа).
-    :type params: :obj:`str` or :obj:`None`
+    :param server: сервер.
+    :type server: :obj:`FunPayAPI.types.Server` or :obj:`None`
 
-    :param short_description: краткое описание (название) заказа.
-    :type short_description: :obj:`str` or :obj:`None`
+    :param side: сторона.
+    :type side: :obj:`FunPayAPI.types.Side` or :obj:`None`
 
-    :param full_description: полное описание заказа.
-    :type full_description: :obj:`str` or :obj:`None`
+    :param fields: поля оплаченного лота.
+    :type fields: :obj:`dict` of :class:`FunPayAPI.types.LotField`
+
+    :param amount: количество товара.
+    :type amount: :obj:`int`
 
     :param sum_: сумма заказа.
     :type sum_: :obj:`float`
@@ -414,71 +476,187 @@ class Order:
     :param currency: валюта заказа.
     :type currency: :class:`FunPayAPI.common.enums.Currency`
 
+    :param player: имя персонажа.
+    :type player: :obj:`str` or :obj:`None`
+
     :param buyer_id: ID покупателя.
     :type buyer_id: :obj:`int`
 
     :param buyer_username: никнейм покупателя.
-    :type buyer_username: :obj:`str`
+    :type buyer_username: :obj:`str` or :obj:`None`
 
     :param seller_id: ID продавца.
     :type seller_id: :obj:`int`
 
     :param seller_username: никнейм продавца.
-    :type seller_username: :obj:`str`
+    :type seller_username: :obj:`str` or :obj:`None`
 
     :param chat_id: ID чата (или его текстовое обозначение).
     :type chat_id: :obj:`int` or :obj:`str`
 
-    :param html: HTML код заказа.
-    :type html: :obj:`str`
-
     :param review: объект отзыва на заказ.
     :type review: :class:`FunPayAPI.types.Review` or :obj:`None`
 
-    :param order_secrets: cписок товаров автовыдачи FunPay.
+    :param order_secrets: список товаров автовыдачи FunPay.
     :type order_secrets: :obj:`list` of :obj:`str`
-    """
 
-    def __init__(self, id_: str, status: OrderStatuses, subcategory: SubCategory | None, params: str | None,
-                 short_description: str | None,
-                 full_description: str | None, sum_: float, currency: Currency,
-                 buyer_id: int, buyer_username: str,
-                 seller_id: int, seller_username: str, chat_id: str | int,
-                 html: str, review: Review | None, order_secrets: list[str]):
+    :param locale: локаль заказа.
+    :type locale: :obj:`Literal["ru", "en", "uk"]`
+    """
+    def __init__(self, id_: str, status: OrderStatuses, subcategory: SubCategory | None,
+                 server: Server | None, side: Side | None,
+                 fields: dict[str, LotField], amount: int, sum_: float, currency: Currency, player: str | None,
+                 buyer_id: int, buyer_username: str | None,
+                 seller_id: int, seller_username: str | None,
+                 chat_id: str | int,
+                 review: Review | None, order_secrets: list[str], locale: Literal["ru", "en", "uk"]):
         self.id: str = id_ if not id_.startswith("#") else id_[1:]
         """ID заказа."""
         self.status: OrderStatuses = status
         """Статус заказа."""
         self.subcategory: SubCategory | None = subcategory
         """Подкатегория, к которой относится заказ."""
-        self.params: str | None = params
-        """Параметры лота (значения некоторых полей заказа)"""
-        self.short_description: str | None = short_description
-        """Краткое описание (название) заказа. То же самое, что и Order.title."""
-        self.title: str | None = short_description
-        """Краткое описание (название) заказа. То же самое, что и Order.short_description."""
-        self.full_description: str | None = full_description
-        """Полное описание заказа."""
+        self.fields: dict[str, LotField] = fields
+        """Поля оплаченного лота."""
         self.sum: float = sum_
         """Сумма заказа."""
         self.currency: Currency = currency
         """Валюта заказа."""
         self.buyer_id: int = buyer_id
         """ID покупателя."""
-        self.buyer_username: str = buyer_username
+        self.buyer_username: str | None = buyer_username
         """Никнейм покупателя."""
         self.seller_id: int = seller_id
         """ID продавца."""
-        self.seller_username: str = seller_username
+        self.seller_username: str | None = seller_username
         """Никнейм продавца."""
         self.chat_id: str | int = chat_id
         """ID чата."""
-        self.html: str = html
-        """HTML код заказа."""
         self.review: Review | None = review
         """Объект отзыва заказа."""
+        self.amount: int = amount
+        """Количество."""
+        self.locale: Literal["ru", "en"] = "en" if locale == "en" else "ru"
+        """Язык заказа (для выбора значений по умолчанию для краткого/подробного описания)."""
+        self.player: str | None = player
+        """Имя персонажа."""
+        self.server: Server | None = server
+        """Выбранный сервер."""
+        self.side: Side | None = side
+        """Выбранная сторона."""
         self.order_secrets: list[str] = order_secrets
         """Список товаров автовыдачи FunPay заказа."""
+
+    def get_field(self, key: str) -> LotField | None:
+        """
+        Возвращает объект поля лота по его ключу.
+
+        :param key: ключ поля.
+        :type key: :obj:`str`
+
+        :return: объект поля лота.
+        :rtype: :class:`FunPayAPI.types.LotField` or :obj:`None`
+        """
+        return self.fields.get(key)
+
+    def get_field_value(self, key: str, locale: Literal["ru", "en"] = "ru") -> str | None:
+        """
+        Возвращает значение поля лота по его ключу и локали.
+
+        :param key: ключ поля.
+        :type key: :obj:`str`
+
+        :param locale: локаль значения.
+        :type locale: :obj:`Literal["ru", "en"]`
+
+        :return: значение поля.
+        :rtype: :obj:`str` or :obj:`None`
+        """
+        field = self.get_field(key)
+        if not field:
+            return None
+        if isinstance(field.value, dict):
+            return field.value.get(locale)
+        return field.value
+
+    def get_field_value_any(self, key: str) -> str | None:
+        """
+        Возвращает значение поля лота по его ключу,
+        используя приоритет локали заказа.
+
+        :param key: ключ поля.
+        :type key: :obj:`str`
+
+        :return: значение поля.
+        :rtype: :obj:`str` or :obj:`None`
+        """
+        locales = [self.locale] + [l for l in ("ru", "en") if l != self.locale]
+        for locale in locales:
+            value = self.get_field_value(key, locale)
+            if value:
+                return value
+        return None
+
+    @property
+    def short_description(self) -> str | None:
+        return self.get_field_value_any("summary")
+
+    @property
+    def title(self) -> str:
+        return self.short_description
+
+    @property
+    def full_description(self) -> str:
+        return self.get_field_value_any("desc")
+
+    @property
+    def payment_msg(self) -> str:
+        return self.get_field_value_any("payment_msg")
+
+    @property
+    def lot_params(self) -> list[tuple[str, str]]:
+        result = []
+        for key, field in self.fields.items():
+            if key in ("payment_msg", "desc", "summary"):
+                continue
+            v = self.get_field_value_any(key)
+            result.append((field.name, v))
+        return result
+
+    @property
+    def lot_params_text(self) -> str | None:
+        """
+        Возвращает параметры лота из заказа в виде строки.
+        """
+        result = None
+        for key, field in self.fields.items():
+            if key in ("payment_msg", "desc", "summary"):
+                continue
+            v = self.get_field_value_any(key)
+            if not v:
+                continue
+            s = f"{v} {field.name}" if (isinstance(v, int) or str(v).isdigit()) else v
+            result = f'{result}, {s}' if result else s
+        return result
+
+    @property
+    def lot_params_dict(self) -> dict[str, str]:
+        """
+        Возвращает параметры лота из заказа в виде словаря.
+
+        !!! Если названия дублируются - часть данных будет утеряна. !!!
+        """
+        d = {}
+        for key, field in self.fields.items():
+            if key in ("payment_msg", "desc", "summary"):
+                continue
+            d[field.name] = self.get_field_value_any(key)
+        return d
+
+    @property
+    def character_name(self) -> str | None:
+        """Имя персонажа"""
+        return self.player
 
     def __str__(self):
         return f"#{self.id}"
@@ -595,6 +773,39 @@ class SubCategory:
         self.private_link: str = f"{self.public_link}trade"
         """Приватная ссылка на список лотов подкатегории (для редактирования лотов)."""
 
+    @property
+    def is_common(self):
+        return self.type == SubCategoryTypes.COMMON
+
+    @property
+    def is_lots(self):
+        return self.is_common
+
+    @property
+    def is_currency(self):
+        return self.type == SubCategoryTypes.CURRENCY
+
+    @property
+    def is_chips(self):
+        return self.is_currency
+
+    @property
+    def ui_name(self):
+        return f"{self.category.name} / {self.name}"
+
+    def telegram_text(self, link: Literal["private", "public", None] = None) -> str:
+        if link == "private":
+            return f"<a href='{self.private_link}'>{self.ui_name}</a>"
+        if link == "public":
+            return f"<a href='{self.public_link}'>{self.ui_name}</a>"
+        return self.ui_name
+
+class LotField:
+    def __init__(self, id: str, value: str | dict, name: str = None, field_type_id: str | None = None):
+        self.id: str = id
+        self.value: str | dict = value
+        self.name: str = name
+        self.field_type_id: str = field_type_id
 
 class LotFields:
     """
@@ -611,10 +822,17 @@ class LotFields:
 
     :param currency: валюта лота.
     :type currency: :class:`FunPayAPI.common.enums.Currency`
+
+    :param calc_result: объект рассчитанной комиссии лота.
+    :type calc_result: :class:`FunPayAPI.types.CalcResult` or :obj:`None`
+
+    :param db_amount: количество в БД FunPay, нужно для определения фактической активности лота.
+    :type db_amount: :class:`int` or :obj:`None`
     """
 
     def __init__(self, lot_id: int, fields: dict, subcategory: SubCategory | None = None,
-                 currency: Currency = Currency.UNKNOWN):
+                 currency: Currency = Currency.UNKNOWN, calc_result: CalcResult | None = None,
+                 db_amount: int | None = None):
         self.lot_id: int = lot_id
         """ID лота."""
         self.__fields: dict = fields
@@ -634,26 +852,53 @@ class LotFields:
         """Английское сообщение покупателю после оплаты"""
         self.images: list[int] = [int(i) for i in self.__fields.get("fields[images]", "").split(",") if i]
         """ID изображений лота"""
-        self.auto_delivery: bool = self.__fields.get("auto_delivery") == "on"
+        self.auto_delivery: bool | None = bool(self.__fields["auto_delivery"]) if "auto_delivery" in self.__fields else None
         """Включена ли автовыдача FunPay"""
         self.secrets: list[str] = [i for i in self.__fields.get("secrets", "").strip().split("\n") if i]
-        """Товары встроенной автовыдачи"""
-        self.amount: int | None = int(i) if (i := self.__fields.get("amount")) else None
-        """Кол-во товара."""
+        """Товары встроенной автовыдачи FunPay"""
+        self._amount: int | None = self.__fields.get("amount")
+        if self._amount is not None:
+            self._amount = int(self._amount) if bool(self._amount) else 0
+        """Кол-во товара (значение поля "Наличие")."""
         self.price: float = float(i) if (i := self.__fields.get("price")) else None
         """Цена за 1шт."""
-        self.active: bool = self.__fields.get("active") == "on"
+        self.active: bool = False if db_amount == 0 else self.__fields.get("active") == "on"
         """Активен ли лот."""
-        self.deactivate_after_sale: bool = self.__fields.get("deactivate_after_sale") == "on"
+        self.deactivate_after_sale: bool | None = bool(self.__fields["deactivate_after_sale"]) if "deactivate_after_sale" in self.__fields else None
         """Деактивировать ли лот после продажи."""
         self.subcategory: SubCategory | None = subcategory
         """Подкатегория лота"""
-        self.public_link: str = f"https://funpay.com/lots/offer?id={lot_id}"
-        """Публичная ссылка на лот."""
-        self.private_link: str = f"https://funpay.com/lots/offerEdit?offer={lot_id}"
-        """Приватная ссылка на лот (на изменение лота)."""
         self.currency: Currency = currency
         """Валюта лота."""
+        self.csrf_token: str | None = self.__fields.get("csrf_token")
+        """CSRF-токен"""
+        self.calc_result: CalcResult | None = calc_result
+
+    @property
+    def amount(self) -> int | None:
+        """Кол-во товара:
+
+        Кол-во товаров в автовыдаче FunPay, если она включена в лоте.
+        None, если у товара нет поля "Наличие"
+        Наличие
+        """
+        if self.auto_delivery:
+            return len(self.secrets)
+        return self._amount
+
+    @amount.setter
+    def amount(self, value: int | None):
+        self._amount = value
+
+    @property
+    def public_link(self) -> str:
+        """Публичная ссылка на лот."""
+        return f"https://funpay.com/lots/offer?id={self.lot_id}"
+
+    @property
+    def private_link(self) -> str:
+        """Приватная ссылка на лот (на изменение лота)."""
+        return f"https://funpay.com/lots/offerEdit?offer={self.lot_id}"
 
     @property
     def fields(self) -> dict[str, str]:
@@ -701,13 +946,111 @@ class LotFields:
         self.__fields["fields[payment_msg][ru]"] = self.payment_msg_ru
         self.__fields["fields[payment_msg][en]"] = self.payment_msg_en
         self.__fields["price"] = str(self.price) if self.price is not None else ""
-        self.__fields["deactivate_after_sale"] = "on" if self.deactivate_after_sale else ""
         self.__fields["active"] = "on" if self.active else ""
-        self.__fields["amount"] = self.amount if self.amount is not None else ""
         self.__fields["fields[images]"] = ",".join(map(str, self.images))
         self.__fields["secrets"] = "\n".join(self.secrets)
-        self.__fields["auto_delivery"] = "on" if self.auto_delivery else ""
+        self.__fields["csrf_token"] = self.csrf_token
+
+        if self._amount is not None:
+            self.__fields["amount"] = self._amount or ""
+        else:
+            self.__fields.pop("amount", None)
+
+        if self.deactivate_after_sale is not None:
+            self.__fields["deactivate_after_sale"] = "on" if self.deactivate_after_sale else ""
+        else:
+            self.__fields.pop("deactivate_after_sale", None)
+
+        if self.auto_delivery is not None:
+            self.__fields["auto_delivery"] = "on" if self.auto_delivery else ""
+        else:
+            self.__fields.pop("auto_delivery", None)
+
         return self
+
+
+class ChipOffer:
+    def __init__(self, lot_id: str, active: bool = False, server: str | None = None,
+                 side: str | None = None, price: float | None = None, amount: int | None = None):
+        self.lot_id = lot_id
+        self.active = active
+        self.server = server
+        self.side = side
+        self.price = price
+        self.amount = amount
+
+    @property
+    def key(self):
+        s = "".join([f"[{i}]" for i in self.lot_id.split("-")[3:]])
+        return f"offers{s}"
+
+
+class ChipFields:
+    def __init__(self, account_id: int, subcategory_id: int, fields: dict[str, str]):
+        self.subcategory_id = subcategory_id
+        self.__fields = fields
+
+        self.min_sum = float(i) if (i := self.__fields.get("options[chip_min_sum]")) else None
+        self.account_id: int = account_id
+        """ID аккаунта FunPay"""
+        self.game_id = int(self.__fields.get("game"))
+        """ID игры"""
+        self.csrf_token: str | None = self.__fields.get("csrf_token")
+        """CSRF-токен"""
+
+        self.chip_offers: dict[str, ChipOffer] = {}
+        self.__parse_offers()
+
+    @property
+    def fields(self) -> dict[str, str]:
+        """
+        Возвращает все поля лота в виде словаря.
+
+        :return: все поля лота в виде словаря.
+        :rtype: :obj:`dict` {:obj:`str`: :obj:`str`}
+        """
+        return self.__fields
+
+    def renew_fields(self) -> ChipFields:
+        """
+        Обновляет :py:obj:`~__fields` (возвращается в методе :meth:`FunPayAPI.types.ChipFields.get_fields`),
+        основываясь на свойствах экземпляра.
+        Необходимо вызвать перед сохранением лота на FunPay после изменения любого свойства экземпляра.
+
+        :return: экземпляр класса :class:`FunPayAPI.types.ChipFields` с новыми полями лота.
+        :rtype: :class:`FunPayAPI.types.ChipFields`
+        """
+        self.__fields["game"] = str(self.game_id)
+        self.__fields["chip"] = str(self.subcategory_id)
+        self.__fields["options[chip_min_sum]"] = str(self.min_sum) if self.min_sum is not None else ""
+        self.__fields["csrf_token"] = self.csrf_token
+        for chip_offer in self.chip_offers.values():
+            key = chip_offer.key
+            self.__fields[f"{key}[amount]"] = str(chip_offer.amount) if chip_offer.amount is not None else ""
+            self.__fields[f"{key}[price]"] = str(chip_offer.price) if chip_offer.price is not None else ""
+            if chip_offer.active:
+                self.__fields[f"{key}[active]"] = "on"
+            else:
+                self.__fields.pop(f"{key}[active]", None)
+        return self
+
+    def __parse_offers(self):
+        for k, v in self.__fields.items():
+            if not k.startswith("offers"):
+                continue
+            nums = re.findall(r'\d+', k)
+            key = "-".join(list(map(str, nums)))
+            offer_id = f"{self.account_id}-{self.game_id}-{self.subcategory_id}-{key}"
+            if offer_id not in self.chip_offers:
+                self.chip_offers[offer_id] = ChipOffer(offer_id)
+            chip_offer = self.chip_offers[offer_id]
+            field = k.split("[")[-1].rstrip("]")
+            if field == "active":
+                chip_offer.active = v == "on"
+            elif field == "price":
+                chip_offer.price = float(v) if v else None
+            elif field == "amount":
+                chip_offer.amount = int(v) if v else None
 
 
 class LotPage:
@@ -794,6 +1137,9 @@ class LotShortcut:
     :param server: название сервера (если указан в лоте).
     :type server: :obj:`str` or :obj:`None`
 
+    :param side: название стороны (если указана в лоте).
+    :type side: :obj:`str` or :obj:`None`
+
     :param description: краткое описание (название) лота.
     :type description: :obj:`str` or :obj:`None`
 
@@ -810,7 +1156,7 @@ class LotShortcut:
     :type html: :obj:`str`
     """
 
-    def __init__(self, id_: int | str, server: str | None,
+    def __init__(self, id_: int | str, server: str | None, side: str | None,
                  description: str | None, amount: int | None, price: float, currency: Currency,
                  subcategory: SubCategory | None,
                  seller: SellerShortcut | None, auto: bool, promo: bool | None, attributes: dict[str, int | str] | None,
@@ -821,6 +1167,8 @@ class LotShortcut:
         """ID лота."""
         self.server: str | None = server
         """Название сервера (если указан)."""
+        self.side: str | None = side
+        """Сторона (если указана)."""
         self.description: str | None = description
         """Краткое описание (название) лота."""
         self.title: str | None = description
@@ -858,6 +1206,9 @@ class MyLotShortcut:
     :param server: название сервера (если указан в лоте).
     :type server: :obj:`str` or :obj:`None`
 
+    :param side: название стороны (если указана в лоте).
+    :type side: :obj:`str` or :obj:`None`
+
     :param description: краткое описание (название) лота.
     :type description: :obj:`str` or :obj:`None`
 
@@ -874,7 +1225,7 @@ class MyLotShortcut:
     :type html: :obj:`str`
     """
 
-    def __init__(self, id_: int | str, server: str | None,
+    def __init__(self, id_: int | str, server: str | None, side: str | None,
                  description: str | None, amount: int | None, price: float, currency: Currency,
                  subcategory: SubCategory | None, auto: bool, active: bool,
                  html: str):
@@ -884,6 +1235,8 @@ class MyLotShortcut:
         """ID лота."""
         self.server: str | None = server
         """Название сервера (если указан)."""
+        self.side: str | None = side
+        """Сторона (если указана)."""
         self.description: str | None = description
         """Краткое описание (название) лота."""
         self.title: str | None = description
@@ -943,8 +1296,6 @@ class UserProfile:
         """Заблокирован ли пользователь."""
         self.html: str = html
         """HTML код страницы пользователя."""
-        self.__lots: list[LotShortcut] = []
-        """Все лоты пользователя."""
         self.__lots_ids: dict[int | str, LotShortcut] = {}
         """Все лоты пользователя в виде словаря {ID: лот}}"""
         self.__sorted_by_subcategory_lots: dict[SubCategory, dict[int | str, LotShortcut]] = {}
@@ -975,7 +1326,7 @@ class UserProfile:
         :return: список всех лотов пользователя.
         :rtype: :obj:`list` of :class:`FunPayAPI.types.LotShortcut`
         """
-        return self.__lots
+        return list(self.__lots_ids.values())
 
     @overload
     def get_sorted_lots(self, mode: Literal[1]) -> dict[int | str, LotShortcut]:
@@ -1012,21 +1363,27 @@ class UserProfile:
         else:
             return self.__sorted_by_subcategory_type_lots
 
+    def update_lot(self, lot: LotShortcut):
+        """
+        Обновляет лот в списке лотов.
+
+        :param lot: объект лота.
+        """
+        self.__lots_ids[lot.id] = lot
+        if lot.subcategory not in self.__sorted_by_subcategory_lots:
+            self.__sorted_by_subcategory_lots[lot.subcategory] = {}
+        self.__sorted_by_subcategory_lots[lot.subcategory][lot.id] = lot
+        self.__sorted_by_subcategory_type_lots[lot.subcategory.type][lot.id] = lot
+
     def add_lot(self, lot: LotShortcut):
         """
         Добавляет лот в список лотов.
 
         :param lot: объект лота.
         """
-        if lot in self.__lots:
+        if lot.id in self.__lots_ids:
             return
-
-        self.__lots.append(lot)
-        self.__lots_ids[lot.id] = lot
-        if lot.subcategory not in self.__sorted_by_subcategory_lots:
-            self.__sorted_by_subcategory_lots[lot.subcategory] = {}
-        self.__sorted_by_subcategory_lots[lot.subcategory][lot.id] = lot
-        self.__sorted_by_subcategory_type_lots[lot.subcategory.type][lot.id] = lot
+        self.update_lot(lot)
 
     def get_common_lots(self) -> list[LotShortcut]:
         """
@@ -1186,19 +1543,36 @@ class CalcResult:
         self.account_currency = account_currency
         """Валюта аккаунта"""
 
-    @property
-    def commission_coefficient(self) -> float:
-        """Отношение цены с комиссией к цене без комиссии."""
-        if self.min_price_with_commission:
+    def get_coefficient(self, currency: Currency):
+        """Отношение цены с комиссией в переданной валюте к цене без комиссии в валюте аккаунта."""
+        if self.min_price_with_commission and currency == self.min_price_currency == self.account_currency:
             return self.min_price_with_commission / self.price
         else:
-            res = min(filter(lambda x: x.currency == self.account_currency,
-                             self.methods), key=lambda x: x.price, default=None)
+            res = min(filter(lambda x: x.currency == currency, self.methods), key=lambda x: x.price, default=None)
             if not res:
                 raise Exception("Невозможно определить коэффициент комиссии.")
             return res.price / self.price
 
     @property
+    def commission_coefficient(self) -> float:
+        """Отношение цены с комиссией к цене без комиссии в валюте аккаунта."""
+        return self.get_coefficient(self.account_currency)
+
+    @property
     def commission_percent(self) -> float:
         """Процент комиссии."""
         return (self.commission_coefficient - 1) * 100
+
+class Wallet:
+    """Класс, описывающий кошелёк со страницы https://funpay.com/account/wallets"""
+
+    def __init__(self, type_id: str, data: str, data_n: int | None = None,
+                 detail_id: int | None = None, is_masked: bool = False, type_text: str | None = None):
+        self.detail_id: int | None = detail_id
+        self.type_id: str = type_id
+        self.data: str = data
+        self.is_masked: bool = is_masked
+        self.type_text: str = type_text
+        self.data_n: int | None = data_n
+
+

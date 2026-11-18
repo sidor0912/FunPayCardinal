@@ -23,9 +23,18 @@ echo -e "\n\n\n"
 echo -ne "${CYAN}Введите имя пользователя, от имени которого будет запускаться бот (например, 'fpc' или 'cardinal'): ${RESET}"
 while true; do
   read username
+
   if [[ "$username" =~ ^[a-zA-Z][a-zA-Z0-9_-]+$ ]]; then
     if id "$username" &>/dev/null; then
-      echo -ne "\n${RED}Такой пользователь уже существует. ${CYAN}Пожалуйста, введите другое имя пользователя: ${RESET}"
+      echo -ne "\n${RED}Пользователь уже существует.${RESET} Использовать его? (y/n): "
+      read use_existing
+
+      if [[ "$use_existing" =~ ^[Yy]$ ]]; then
+        echo -e "${CYAN}Будет использован существующий пользователь: $username${RESET}"
+        break
+      else
+        echo -ne "${CYAN}Введите другое имя пользователя: ${RESET}"
+      fi
     else
       break
     fi
@@ -141,6 +150,18 @@ if ! sudo apt install -y unzip ; then
   exit 2
 fi
 
+#6.1
+if grep -q '^[#[:space:]]*precedence[[:space:]]*::ffff:0:0/96' /etc/gai.conf; then
+    if ! sudo sed -i 's|^[#[:space:]]*precedence[[:space:]]*::ffff:0:0/96.*|precedence ::ffff:0:0/96 100|' /etc/gai.conf; then
+        echo -e "${start_process_line}\nПроизошла ошибка при настройке gai.conf. (6.1/${commands})\n${end_process_line}"
+        exit 2
+    fi
+elif ! grep -qxF 'precedence ::ffff:0:0/96 100' /etc/gai.conf; then
+    if ! echo 'precedence ::ffff:0:0/96 100' | sudo tee -a /etc/gai.conf >/dev/null; then
+        echo -e "${start_process_line}\nПроизошла ошибка при настройке gai.conf. (6.1/${commands})\n${end_process_line}"
+        exit 2
+    fi
+fi
 
 clear
 echo -e "$start_process_line\nУстанавливаю Python...\n$end_process_line"
@@ -166,9 +187,13 @@ clear
 echo -e "$start_process_line\nСоздаю пользователя и устанавливаю/обновляю Pip...\n$end_process_line"
 
 #8
-if ! sudo useradd -m $username ; then
-  echo -e "${start_process_line}\nПроизошла ошибка при создании пользователя. (8/${commands})\n${end_process_line}"
-  exit 2
+if id "$username" &>/dev/null; then
+    echo -e "${CYAN}Пользователь $username уже существует, пропускаем создание.${RESET}"
+else
+    if ! sudo useradd -m "$username"; then
+        echo -e "${start_process_line}\nПроизошла ошибка при создании пользователя. (8/${commands})\n${end_process_line}"
+        exit 2
+    fi
 fi
 
 #9
@@ -212,7 +237,7 @@ echo -e "$start_process_line\nУстанавливаю FunPayCardinal...\n$end_p
 
 
 #13
-if ! sudo mkdir /home/$username/fpc-install ; then
+if ! sudo mkdir -p "/home/$username/fpc-install"; then
   echo -e "${start_process_line}\nПроизошла ошибка при создании директории для установки. (13/${commands})\n${end_process_line}"
   exit 2
 fi
@@ -227,21 +252,21 @@ if ! sudo curl -L $LOCATION -o /home/$username/fpc-install/fpc.zip ; then
 fi
 
 #15
-if ! sudo unzip /home/$username/fpc-install/fpc.zip -d /home/$username/fpc-install ; then
+if ! sudo unzip -o -q "/home/$username/fpc-install/fpc.zip" -d "/home/$username/fpc-install"; then
   echo -e "${start_process_line}\nПроизошла ошибка при распаковке архива. (15/${commands})\n${end_process_line}"
   exit 2
 fi
 
 #16
-if ! sudo mkdir /home/$username/FunPayCardinal ; then
+if ! sudo mkdir -p "/home/$username/FunPayCardinal"; then
   echo -e "${start_process_line}\nПроизошла ошибка при создании директории для бота. (16/${commands})\n${end_process_line}"
   exit 2
 fi
 
 #17
-if ! sudo mv /home/$username/fpc-install/*/* /home/$username/FunPayCardinal/ ; then
-  echo -e "${start_process_line}\nПроизошла ошибка при перемещении файлов. (17/${commands})\n${end_process_line}"
-  exit 2
+if ! sudo cp -r /home/$username/fpc-install/*/* /home/$username/FunPayCardinal/; then
+    echo -e "${start_process_line}\nПроизошла ошибка при копировании файлов. (17/${commands})\n${end_process_line}"
+    exit 2
 fi
 
 #18
@@ -307,10 +332,27 @@ echo -e "#######################################################################
 sleep 3
 clear
 
+CONFIG_FILE="/home/$username/FunPayCardinal/configs/_main.cfg"
 
-sudo -u $username LANG=en_US.utf8 /home/$username/pyvenv/bin/python /home/$username/FunPayCardinal/main.py <&1
-sudo systemctl start FunPayCardinal@$username.service
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "Файл конфигурации не найден. Запускаем первичную настройку..."
+    sudo -u $username LANG=en_US.utf8 /home/$username/pyvenv/bin/python /home/$username/FunPayCardinal/main.py <&1
+else
+    echo -ne "\n${RED}Файл конфигурации найден.${RESET} Хотите добавить Telegram прокси? [y/n]:  "
+    read edit_config
+    case "$edit_config" in
+        [yY]|[yY][eE][sS])
+            echo -ne "${CYAN}Запускаем редактирование Telegram прокси...${RESET}\n\n"
+            sudo -u $username LANG=en_US.utf8 /home/$username/pyvenv/bin/python -W ignore::SyntaxWarning /home/$username/FunPayCardinal/setup_telegram_proxy.py <&1
+            ;;
+        *)
+            echo -ne "${CYAN}Редактирование пропущено.${RESET}"
+            ;;
+    esac
 
+fi
+
+sudo systemctl restart "FunPayCardinal@$username.service"
 
 clear
 echo -e $logo

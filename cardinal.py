@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Callable
 
 from FunPayAPI import types
 from FunPayAPI.common.enums import SubCategoryTypes
+from Utils.cardinal_tools import validate_proxy, build_proxy
 
 if TYPE_CHECKING:
     from configparser import ConfigParser
@@ -52,7 +53,8 @@ class PluginData:
     """
 
     def __init__(self, name: str, version: str, desc: str, credentials: str, uuid: str,
-                 path: str, plugin: ModuleType, settings_page: bool, delete_handler: Callable | None, enabled: bool):
+                 path: str, plugin: ModuleType, settings_page: bool, delete_handler: Callable | None, enabled: bool,
+                 pinned: bool):
         """
         :param name: название плагина.
         :param version: версия плагина.
@@ -64,6 +66,7 @@ class PluginData:
         :param settings_page: есть ли страница настроек у плагина.
         :param delete_handler: хэндлер, привязанный к удалению плагина.
         :param enabled: включен ли плагин.
+        :param pinned: закреплен ли плагин в списке плагинов?
         """
         self.name = name
         self.version = version
@@ -77,6 +80,7 @@ class PluginData:
         self.commands = {}
         self.delete_handler = delete_handler
         self.enabled = enabled
+        self.pinned = pinned
 
 
 class Cardinal(object):
@@ -103,15 +107,14 @@ class Cardinal(object):
         self.proxy = {}
         self.proxy_dict = cardinal_tools.load_proxy_dict()  # прокси {0: "login:password@ip:port", 1: "ip:port"...}
         if self.MAIN_CFG["Proxy"].getboolean("enable"):
-            if self.MAIN_CFG["Proxy"]["ip"] and self.MAIN_CFG["Proxy"]["port"].isnumeric():
+            if self.MAIN_CFG["Proxy"]["proxy"]:
                 logger.info(_("crd_proxy_detected"))
 
-                ip, port = self.MAIN_CFG["Proxy"]["ip"], self.MAIN_CFG["Proxy"]["port"]
-                login, password = self.MAIN_CFG["Proxy"]["login"], self.MAIN_CFG["Proxy"]["password"]
-                proxy_str = f"{f'{login}:{password}@' if login and password else ''}{ip}:{port}"
+                scheme, login, password, ip, port = validate_proxy(self.MAIN_CFG["Proxy"]["proxy"])
+                proxy_str = build_proxy(scheme, login, password, ip, port)
                 self.proxy = {
-                    "http": f"http://{proxy_str}",
-                    "https": f"http://{proxy_str}"
+                    "http": proxy_str,
+                    "https": proxy_str
                 }
 
                 if proxy_str not in self.proxy_dict.values():
@@ -146,9 +149,16 @@ class Cardinal(object):
         self.profile_last_tag: str | None = None
         # Тег последнего event'а, после которого обновлялось состояние лотов.
         self.last_state_change_tag: str | None = None
+        # Тег последнего event'а, перед которым пороговое значение для определения новых чатов.
+        self.last_profile_refresh_event_tag: str | None = None
+        # Тег последнего event'а, после которого был запущен отдельный поток обновления профилей и состояний лотов.
+        self.last_greeting_chat_id_threshold_change_tag: str | None = None
+        self.greeting_threshold_chat_ids = set()  # ID чатов для последующего обновления  self.greeting_chat_id_threshold
         self.blacklist = cardinal_tools.load_blacklist()  # ЧС.
         self.old_users = cardinal_tools.load_old_users(
             float(self.MAIN_CFG["Greetings"]["greetingsCooldown"]))  # Уже написавшие пользователи.
+        self.greeting_chat_id_threshold = max(self.old_users.keys(), default=0)
+        # пороговое значение для определения новых чатов (для приветствия)
 
         # Хэндлеры
         self.pre_init_handlers = []
@@ -196,6 +206,7 @@ class Cardinal(object):
 
         self.plugins: dict[str, PluginData] = {}
         self.disabled_plugins = cardinal_tools.load_disabled_plugins()
+        self.pinned_plugins = cardinal_tools.load_pinned_plugins()
 
     def __init_account(self) -> None:
         """
@@ -296,7 +307,7 @@ class Cardinal(object):
         # Время следующего вызова функции (по умолчанию - бесконечность).
         next_call = float("inf")
 
-        for subcat in sorted(list(self.profile.get_sorted_lots(2).keys()), key=lambda x: x.category.position):
+        for subcat in sorted(list(self.curr_profile.get_sorted_lots(2).keys()), key=lambda x: x.category.position):
             if subcat.type is SubCategoryTypes.CURRENCY:
                 continue
             # Если id категории текущей подкатегории уже находится в self.game_ids, но время поднятия подкатегорий
@@ -312,30 +323,24 @@ class Cardinal(object):
             error_text = ""
             time_delta = ""
             try:
-                time.sleep(1)
-                self.account.raise_lots(subcat.category.id)
+                wait_time = self.account.raise_lots(subcat.category.id)
                 logger.info(_("crd_lots_raised", subcat.category.name))
                 raise_ok = True
                 last_time = self.raised_time.get(subcat.category.id)
                 self.raised_time[subcat.category.id] = new_time = int(time.time())  # locale
                 time_delta = "" if not last_time else f" Последнее поднятие: {cardinal_tools.time_to_str(new_time - last_time)} назад."
-                time.sleep(1)
-                self.account.raise_lots(subcat.category.id)
+                error_text = f"Подождите {cardinal_tools.time_to_str(wait_time)}."
             except FunPayAPI.exceptions.RaiseError as e:
                 if e.error_message is not None:
                     error_text = e.error_message
                 if e.wait_time is not None:
                     logger.warning(_("crd_raise_time_err", subcat.category.name, error_text,
                                      cardinal_tools.time_to_str(e.wait_time)))
-                    next_time = int(time.time()) + e.wait_time
+                    wait_time = e.wait_time
                 else:
                     logger.error(_("crd_raise_unexpected_err", subcat.category.name))
                     time.sleep(10)
-                    next_time = int(time.time()) + 1
-                self.raise_time[subcat.category.id] = next_time
-                next_call = next_time if next_time < next_call else next_call
-                if not raise_ok:
-                    continue
+                    wait_time = 1
             except Exception as e:
                 t = 10
                 if isinstance(e, FunPayAPI.exceptions.RequestFailedError) and e.status_code in (503, 403, 429):
@@ -345,11 +350,13 @@ class Cardinal(object):
                     logger.error(_("crd_raise_unexpected_err", subcat.category.name))
                 logger.debug("TRACEBACK", exc_info=True)
                 time.sleep(t)
-                next_time = int(time.time()) + 1
-                next_call = next_time if next_time < next_call else next_call
-                if not raise_ok:
-                    continue
-            self.run_handlers(self.post_lots_raise_handlers, (self, subcat.category, error_text + time_delta))
+                wait_time = 1
+            next_time = time.time() + wait_time + 1
+            time.sleep(2)
+            self.raise_time[subcat.category.id] = next_time
+            next_call = next_time if next_time < next_call else next_call
+            if raise_ok:
+                self.run_handlers(self.post_lots_raise_handlers, (self, subcat.category, error_text + time_delta))
         return next_call if next_call < float("inf") else 10
 
     def get_order_from_object(self, obj: types.OrderShortcut | types.Message | types.ChatShortcut,
@@ -435,7 +442,8 @@ class Cardinal(object):
                 entities.extend(self.split_text(text))
         return entities
 
-    def send_message(self, chat_id: int | str, message_text: str, chat_name: str | None = None, attempts: int = 3,
+    def send_message(self, chat_id: int | str, message_text: str, chat_name: str | None = None,
+                     interlocutor_id: int | None = None, attempts: int = 3,
                      watermark: bool = True) -> list[FunPayAPI.types.Message] | None:
         """
         Отправляет сообщение в чат FunPay.
@@ -443,6 +451,7 @@ class Cardinal(object):
         :param chat_id: ID чата.
         :param message_text: текст сообщения.
         :param chat_name: название чата (необязательно).
+        :param interlocutor_id: ID собеседника (необязательно).
         :param attempts: кол-во попыток на отправку сообщения.
         :param watermark: добавлять ли водяной знак в начало сообщения?
 
@@ -461,15 +470,19 @@ class Cardinal(object):
             while current_attempts:
                 try:
                     if isinstance(entity, str):
-                        msg = self.account.send_message(chat_id, entity, chat_name, None, not self.old_mode_enabled,
+                        msg = self.account.send_message(chat_id, entity, chat_name,
+                                                        interlocutor_id,
+                                                        None, not self.old_mode_enabled,
                                                         self.old_mode_enabled,
-                                                        self.keep_sent_messages_unread)
+                                                        self.keep_sent_messages_unread and self.old_mode_enabled)
                         result.append(msg)
                         logger.info(_("crd_msg_sent", chat_id))
                     elif isinstance(entity, int):
-                        msg = self.account.send_image(chat_id, entity, chat_name, not self.old_mode_enabled,
+                        msg = self.account.send_image(chat_id, entity, chat_name,
+                                                      interlocutor_id,
+                                                      not self.old_mode_enabled,
                                                       self.old_mode_enabled,
-                                                      self.keep_sent_messages_unread)
+                                                      self.keep_sent_messages_unread and self.old_mode_enabled)
                         result.append(msg)
                         logger.info(_("crd_msg_sent", chat_id))
                     elif isinstance(entity, float):
@@ -529,7 +542,7 @@ class Cardinal(object):
 
                 return result
             except:
-                logger.warning("Не удалось получить курс обмена. Осталось попыток: {i}")
+                logger.warning(f"Не удалось получить курс обмена. Осталось попыток: {i}")
                 logger.debug("TRACEBACK", exc_info=True)
                 time.sleep(1)
 
@@ -639,7 +652,11 @@ class Cardinal(object):
         self.run_handlers(self.pre_init_handlers, (self,))
 
         if self.MAIN_CFG["Telegram"].getboolean("enabled"):
-            self.telegram.setup_commands()
+            try:
+                self.telegram.setup_commands()
+            except:
+                logger.warning("Произошла ошибка при установке команд.")
+                logger.debug("TRACEBACK", exc_info=True)
             try:
                 self.telegram.edit_bot()
             except AttributeError:  # todo убрать когда-то
@@ -669,6 +686,7 @@ class Cardinal(object):
         """
         self.run_id += 1
         self.start_time = int(time.time())
+        Thread(target=self.runner.loop, daemon=True).start()
         self.run_handlers(self.pre_start_handlers, (self,))
         self.run_handlers(self.post_start_handlers, (self,))
 
@@ -809,7 +827,8 @@ class Cardinal(object):
 
             plugin_data = PluginData(data["NAME"], data["VERSION"], data["DESCRIPTION"], data["CREDITS"], data["UUID"],
                                      f"plugins/{file}", plugin, data["SETTINGS_PAGE"], data["BIND_TO_DELETE"],
-                                     False if data["UUID"] in self.disabled_plugins else True)
+                                     False if data["UUID"] in self.disabled_plugins else True,
+                                     True if data["UUID"] in self.pinned_plugins else False)
 
             self.plugins[data["UUID"]] = plugin_data
 
@@ -836,7 +855,12 @@ class Cardinal(object):
         """
         for i in self.plugins:
             plugin = self.plugins[i].plugin
-            self.add_handlers_from_plugin(plugin, i)
+            try:
+                self.add_handlers_from_plugin(plugin, i)
+            except:
+                logger.error(_("crd_plugin_handlers_err", self.plugins[i].name))
+                logger.debug("TRACEBACK", exc_info=True)
+                self.plugins[i].enabled = False
 
     def run_handlers(self, handlers_list: list[Callable], args) -> None:
         """
@@ -847,7 +871,8 @@ class Cardinal(object):
         """
         for func in handlers_list:
             try:
-                if getattr(func, "plugin_uuid") is None or self.plugins[getattr(func, "plugin_uuid")].enabled:
+                plugin_uuid = getattr(func, "plugin_uuid")
+                if plugin_uuid is None or (plugin_uuid in self.plugins and self.plugins[plugin_uuid].enabled):
                     func(*args)
             except Exception as ex:
                 text = _("crd_handler_err")
@@ -857,7 +882,6 @@ class Cardinal(object):
                     pass
                 logger.error(text)
                 logger.debug("TRACEBACK", exc_info=True)
-                continue
 
     def add_telegram_commands(self, uuid: str, commands: list[tuple[str, str, bool]]):
         """
@@ -889,6 +913,18 @@ class Cardinal(object):
         elif not self.plugins[uuid].enabled and uuid not in self.disabled_plugins:
             self.disabled_plugins.append(uuid)
         cardinal_tools.cache_disabled_plugins(self.disabled_plugins)
+
+    def pin_plugin(self, uuid):
+        """
+        Закрепляет / открепляет плагин в списке плагинов.
+        :param uuid: UUID плагина.
+        """
+        self.plugins[uuid].pinned = not self.plugins[uuid].pinned
+        if not self.plugins[uuid].pinned and uuid in self.pinned_plugins:
+            self.pinned_plugins.remove(uuid)
+        elif self.plugins[uuid].pinned and uuid not in self.pinned_plugins:
+            self.pinned_plugins.append(uuid)
+        cardinal_tools.cache_pinned_plugins(self.pinned_plugins)
 
     # Настройки
     @property
