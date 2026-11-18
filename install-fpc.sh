@@ -14,22 +14,20 @@ logo="\e[38;5;0m.\e[0m\e[38;5;0m.\e[0m\e[38;5;0m.\e[0m\e[38;5;0m.\e[0m\e[38;5;0m
 clear
 echo -e $logo
 
-
 echo -e "\n\n${RED} * GitHub ${CYAN}github.com/sidor0912/FunPayCardinal${RESET}"
 echo -e "${RED} * Telegram ${CYAN}t.me/funpay_cardinal${RESET}"
 echo -e "\n\n\n"
-
 
 echo -ne "${CYAN}Введите имя пользователя, от имени которого будет запускаться бот (например, 'fpc' или 'cardinal'): ${RESET}"
 while true; do
   read username
 
-  if [[ "$username" =~ ^[a-zA-Z][a-zA-Z0-9_-]+$ ]]; then
-    if id "$username" &>/dev/null; then
+  if [[ $username =~ ^[a-zA-Z][a-zA-Z0-9_-]+$ ]]; then
+    if id "$username" &> /dev/null; then
       echo -ne "\n${RED}Пользователь уже существует.${RESET} Использовать его? (y/n): "
       read use_existing
 
-      if [[ "$use_existing" =~ ^[Yy]$ ]]; then
+      if [[ $use_existing =~ ^[Yy]$ ]]; then
         echo -e "${CYAN}Будет использован существующий пользователь: $username${RESET}"
         break
       else
@@ -43,22 +41,19 @@ while true; do
   fi
 done
 
-
 distro_version=$(lsb_release -rs)
-
 
 clear
 echo -e "${start_process_line}\nДобавляю репозитории...\n${end_process_line}"
 
-
 # 1
-if ! sudo apt update ; then
+if ! sudo apt update; then
   echo -e "${start_process_line}\nПроизошла ошибка при обновлении списка пакетов. (1/${commands})\n${end_process_line}"
   exit 2
 fi
 
 #2
-if ! sudo apt install -y software-properties-common ; then
+if ! sudo apt install -y software-properties-common; then
   echo -e "${start_process_line}\nПроизошла ошибка при установке software-properties-common. (2/${commands})\n${end_process_line}"
   exit 2
 fi
@@ -90,37 +85,37 @@ case $distro_version in
     # fi
 
     #3.1
-    if ! sudo apt install -y gnupg ; then
+    if ! sudo apt install -y gnupg; then
       echo -e "${start_process_line}\nПроизошла ошибка при установке gnupg. (3.1/${commands})\n${end_process_line}"
       exit 2
     fi
 
     #3.2
-    if ! sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys BA6932366A755776 ; then
+    if ! sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys BA6932366A755776; then
       echo -e "${start_process_line}\nПроизошла ошибка при добавлении ключа репозитория. (3.2/${commands})\n${end_process_line}"
       exit 2
     fi
 
     #3.3
-    if ! sudo add-apt-repository -s "deb https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu focal main" ; then
+    if ! sudo add-apt-repository -s "deb https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu focal main"; then
       echo -e "${start_process_line}\nПроизошла ошибка при добавлении репозитория. (3.3/${commands})\n${end_process_line}"
       exit 2
     fi
 
     #3.4
-    sudo tee /etc/apt/preferences.d/10deadsnakes-ppa >/dev/null <<EOF
+    sudo tee /etc/apt/preferences.d/10deadsnakes-ppa > /dev/null << EOF
 Package: *
 Pin: release o=LP-PPA-deadsnakes
 Pin-Priority: 100
 EOF
-    if $? -ne 0 ; then
+    if $? -ne 0; then
       echo -e "${start_process_line}\nПроизошла ошибка при добавлении приоритета репозитория. (3.4/${commands})\n${end_process_line}"
       exit 2
     fi
     ;;
   *)
     #3
-    if ! sudo add-apt-repository -y ppa:deadsnakes/ppa ; then
+    if ! sudo add-apt-repository -y ppa:deadsnakes/ppa; then
       echo -e "${start_process_line}\nПроизошла ошибка при добавлении репозитория. (3/${commands})\n${end_process_line}"
       exit 2
     fi
@@ -128,55 +123,52 @@ EOF
 esac
 
 #4
-if ! sudo apt update ; then
+if ! sudo apt update; then
   echo -e "${start_process_line}\nПроизошла ошибка при обновлении списка пакетов. (4/${commands})\n${end_process_line}"
   exit 2
 fi
 
-
 clear
 echo -e "$start_process_line\nУстанавливаю необходимые пакеты...\n$end_process_line"
 
-
 #5
-if ! sudo apt install -y curl ; then
+if ! sudo apt install -y curl; then
   echo -e "${start_process_line}\nПроизошла ошибка при установке Curl. (5/${commands})\n${end_process_line}"
   exit 2
 fi
 
 #6
-if ! sudo apt install -y unzip ; then
+if ! sudo apt install -y unzip; then
   echo -e "${start_process_line}\nПроизошла ошибка при установке Unzip. (6/${commands})\n${end_process_line}"
   exit 2
 fi
 
 #6.1
 if grep -q '^[#[:space:]]*precedence[[:space:]]*::ffff:0:0/96' /etc/gai.conf; then
-    if ! sudo sed -i 's|^[#[:space:]]*precedence[[:space:]]*::ffff:0:0/96.*|precedence ::ffff:0:0/96 100|' /etc/gai.conf; then
-        echo -e "${start_process_line}\nПроизошла ошибка при настройке gai.conf. (6.1/${commands})\n${end_process_line}"
-        exit 2
-    fi
+  if ! sudo sed -i 's|^[#[:space:]]*precedence[[:space:]]*::ffff:0:0/96.*|precedence ::ffff:0:0/96 100|' /etc/gai.conf; then
+    echo -e "${start_process_line}\nПроизошла ошибка при настройке gai.conf. (6.1/${commands})\n${end_process_line}"
+    exit 2
+  fi
 elif ! grep -qxF 'precedence ::ffff:0:0/96 100' /etc/gai.conf; then
-    if ! echo 'precedence ::ffff:0:0/96 100' | sudo tee -a /etc/gai.conf >/dev/null; then
-        echo -e "${start_process_line}\nПроизошла ошибка при настройке gai.conf. (6.1/${commands})\n${end_process_line}"
-        exit 2
-    fi
+  if ! echo 'precedence ::ffff:0:0/96 100' | sudo tee -a /etc/gai.conf > /dev/null; then
+    echo -e "${start_process_line}\nПроизошла ошибка при настройке gai.conf. (6.1/${commands})\n${end_process_line}"
+    exit 2
+  fi
 fi
 
 clear
 echo -e "$start_process_line\nУстанавливаю Python...\n$end_process_line"
 
-
 #7
 case $distro_version in
   "24.04" | "24.10")
-    if ! sudo apt install -y python3.12 python3.12-dev python3.12-gdbm python3.12-venv ; then
+    if ! sudo apt install -y python3.12 python3.12-dev python3.12-gdbm python3.12-venv; then
       echo -e "${start_process_line}\nПроизошла ошибка при установке Python. (7/${commands})\n${end_process_line}"
       exit 2
     fi
     ;;
   *)
-    if ! sudo apt install -y python3.11 python3.11-dev python3.11-gdbm python3.11-venv ; then
+    if ! sudo apt install -y python3.11 python3.11-dev python3.11-gdbm python3.11-venv; then
       echo -e "${start_process_line}\nПроизошла ошибка при установке Python. (7/${commands})\n${end_process_line}"
       exit 2
     fi
@@ -187,25 +179,25 @@ clear
 echo -e "$start_process_line\nСоздаю пользователя и устанавливаю/обновляю Pip...\n$end_process_line"
 
 #8
-if id "$username" &>/dev/null; then
-    echo -e "${CYAN}Пользователь $username уже существует, пропускаем создание.${RESET}"
+if id "$username" &> /dev/null; then
+  echo -e "${CYAN}Пользователь $username уже существует, пропускаем создание.${RESET}"
 else
-    if ! sudo useradd -m "$username"; then
-        echo -e "${start_process_line}\nПроизошла ошибка при создании пользователя. (8/${commands})\n${end_process_line}"
-        exit 2
-    fi
+  if ! sudo useradd -m "$username"; then
+    echo -e "${start_process_line}\nПроизошла ошибка при создании пользователя. (8/${commands})\n${end_process_line}"
+    exit 2
+  fi
 fi
 
 #9
 case $distro_version in
   "24.04" | "24.10")
-    if ! sudo -u $username python3.12 -m venv /home/$username/pyvenv ; then
+    if ! sudo -u $username python3.12 -m venv /home/$username/pyvenv; then
       echo -e "${start_process_line}\nПроизошла ошибка при создании виртуального окружения. (9/${commands})\n${end_process_line}"
       exit 2
     fi
     ;;
   *)
-    if ! sudo -u $username python3.11 -m venv /home/$username/pyvenv ; then
+    if ! sudo -u $username python3.11 -m venv /home/$username/pyvenv; then
       echo -e "${start_process_line}\nПроизошла ошибка при создании виртуального окружения. (9/${commands})\n${end_process_line}"
       exit 2
     fi
@@ -214,27 +206,25 @@ esac
 
 #10
 # Важно: eunsurepip стоить запускать от root, иначе будет ошибка на некоторых версиях ОС (например, Debian 11, Debian 12, Ubuntu 20.04, Ubuntu 24.04)
-if ! sudo /home/$username/pyvenv/bin/python -m ensurepip --upgrade ; then
+if ! sudo /home/$username/pyvenv/bin/python -m ensurepip --upgrade; then
   echo -e "${start_process_line}\nПроизошла ошибка при установке Pip. (10/${commands})\n${end_process_line}"
   exit 2
 fi
 
 #11
-if ! sudo -u $username /home/$username/pyvenv/bin/python -m pip install --upgrade pip ; then
+if ! sudo -u $username /home/$username/pyvenv/bin/python -m pip install --upgrade pip; then
   echo -e "${start_process_line}\nПроизошла ошибка при обновлении Pip. (11/${commands})\n${end_process_line}"
   exit 2
 fi
 
 #12
-if ! sudo chown -hR $username:$username /home/$username/pyvenv ; then
+if ! sudo chown -hR $username:$username /home/$username/pyvenv; then
   echo -e "${start_process_line}\nПроизошла ошибка при изменении владельца виртуального окружения. (12/${commands})\n${end_process_line}"
   exit 2
 fi
 
-
 clear
 echo -e "$start_process_line\nУстанавливаю FunPayCardinal...\n$end_process_line"
-
 
 #13
 if ! sudo mkdir -p "/home/$username/fpc-install"; then
@@ -243,10 +233,10 @@ if ! sudo mkdir -p "/home/$username/fpc-install"; then
 fi
 
 gh_repo="sidor0912/FunPayCardinal"
-LOCATION=$(curl -sS https://api.github.com/repos/$gh_repo/releases/latest | grep "zipball_url" | awk '{ print $2 }' | sed 's/,$//' | sed 's/"//g' )
+LOCATION=$(curl -sS https://api.github.com/repos/$gh_repo/releases/latest | grep "zipball_url" | awk '{ print $2 }' | sed 's/,$//' | sed 's/"//g')
 
 #14
-if ! sudo curl -L $LOCATION -o /home/$username/fpc-install/fpc.zip ; then
+if ! sudo curl -L $LOCATION -o /home/$username/fpc-install/fpc.zip; then
   echo -e "${start_process_line}\nПроизошла ошибка при загрузке архива. (14/${commands})\n${end_process_line}"
   exit 2
 fi
@@ -265,60 +255,55 @@ fi
 
 #17
 if ! sudo cp -r /home/$username/fpc-install/*/* /home/$username/FunPayCardinal/; then
-    echo -e "${start_process_line}\nПроизошла ошибка при копировании файлов. (17/${commands})\n${end_process_line}"
-    exit 2
+  echo -e "${start_process_line}\nПроизошла ошибка при копировании файлов. (17/${commands})\n${end_process_line}"
+  exit 2
 fi
 
 #18
-if ! sudo rm -rf /home/$username/fpc-install ; then
+if ! sudo rm -rf /home/$username/fpc-install; then
   echo -e "${start_process_line}\nПроизошла ошибка при удалении директории для установки. (18/${commands})\n${end_process_line}"
   exit 2
 fi
 
 #19
-if ! sudo chown -hR $username:$username /home/$username/FunPayCardinal ; then
+if ! sudo chown -hR $username:$username /home/$username/FunPayCardinal; then
   echo -e "${start_process_line}\nПроизошла ошибка при изменении владельца файлов. (19/${commands})\n${end_process_line}"
   exit 2
 fi
 
 #20
-if ! sudo -u $username /home/$username/pyvenv/bin/pip install -U -r /home/$username/FunPayCardinal/requirements.txt ; then
+if ! sudo -u $username /home/$username/pyvenv/bin/pip install -U -r /home/$username/FunPayCardinal/requirements.txt; then
   echo -e "${start_process_line}\nПроизошла ошибка при установке необходимых Py-пакетов. (20/${commands})\n${end_process_line}"
   exit 2
 fi
 
-
 clear
 echo -e "$start_process_line\nСоздаю ссылку на файл фонового процесса...\n$end_process_line"
 
-
 #21
-if ! sudo ln -sf /home/$username/FunPayCardinal/FunPayCardinal@.service /etc/systemd/system/FunPayCardinal@.service ; then
+if ! sudo ln -sf /home/$username/FunPayCardinal/FunPayCardinal@.service /etc/systemd/system/FunPayCardinal@.service; then
   echo -e "${start_process_line}\nПроизошла ошибка при создании ссылки на файл фонового процесса. (21/${commands})\n${end_process_line}"
   exit 2
 fi
 
-
 clear
 echo -e "$start_process_line\nНастраиваю кодировку сервера...\n$end_process_line"
-
 
 #22
 case $distro_version in
   "11" | "12")
-    if ! sudo apt install -y locales locales-all ; then
+    if ! sudo apt install -y locales locales-all; then
       echo -e "${start_process_line}\nПроизошла ошибка при установке локализаций. (22/${commands})\n${end_process_line}"
       exit 2
     fi
     ;;
   *)
-    if ! sudo apt install -y language-pack-en ; then
+    if ! sudo apt install -y language-pack-en; then
       echo -e "${start_process_line}\nПроизошла ошибка при установке языковых пакетов. (22/${commands})\n${end_process_line}"
       exit 2
     fi
     ;;
 esac
-
 
 clear
 echo -e $logo
@@ -335,20 +320,20 @@ clear
 CONFIG_FILE="/home/$username/FunPayCardinal/configs/_main.cfg"
 
 if [ ! -f "$CONFIG_FILE" ]; then
-    echo "Файл конфигурации не найден. Запускаем первичную настройку..."
-    sudo -u $username LANG=en_US.utf8 /home/$username/pyvenv/bin/python /home/$username/FunPayCardinal/main.py <&1
+  echo "Файл конфигурации не найден. Запускаем первичную настройку..."
+  sudo -u $username LANG=en_US.utf8 /home/$username/pyvenv/bin/python /home/$username/FunPayCardinal/main.py <&1
 else
-    echo -ne "\n${RED}Файл конфигурации найден.${RESET} Хотите добавить Telegram прокси? [y/n]:  "
-    read edit_config
-    case "$edit_config" in
-        [yY]|[yY][eE][sS])
-            echo -ne "${CYAN}Запускаем редактирование Telegram прокси...${RESET}\n\n"
-            sudo -u $username LANG=en_US.utf8 /home/$username/pyvenv/bin/python -W ignore::SyntaxWarning /home/$username/FunPayCardinal/setup_telegram_proxy.py <&1
-            ;;
-        *)
-            echo -ne "${CYAN}Редактирование пропущено.${RESET}"
-            ;;
-    esac
+  echo -ne "\n${RED}Файл конфигурации найден.${RESET} Хотите добавить Telegram прокси? [y/n]:  "
+  read edit_config
+  case "$edit_config" in
+    [yY] | [yY][eE][sS])
+      echo -ne "${CYAN}Запускаем редактирование Telegram прокси...${RESET}\n\n"
+      sudo -u $username LANG=en_US.utf8 /home/$username/pyvenv/bin/python -W ignore::SyntaxWarning /home/$username/FunPayCardinal/setup_telegram_proxy.py <&1
+      ;;
+    *)
+      echo -ne "${CYAN}Редактирование пропущено.${RESET}"
+      ;;
+  esac
 
 fi
 
