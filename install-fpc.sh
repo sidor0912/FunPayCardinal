@@ -85,55 +85,6 @@ case $distro_version in
     ;;
   "12" | "13") # Debian 12 (Bookworm), 13 (Trixie)
     ;;
-  "11") # Debian 11 (Bullseye)
-    # TODO: Ошибка проверки ключа репозитория на некоторых машинах, хз почему, проще использовать костыль ввиде убунтовских deadsnakes
-    # #3.1
-    # if ! sudo curl -O https://people.debian.org/~paravoid/python-all/unofficial-python-all.asc ; then
-    #   echo -e "${start_process_line}\nПроизошла ошибка при загрузке ключа репозитория. (3.1/${commands})\n${end_process_line}"
-    #   exit 2
-    # fi
-
-    # #3.2
-    # if ! sudo mv unofficial-python-all.asc /etc/apt/trusted.gpg.d/ ; then
-    #   echo -e "${start_process_line}\nПроизошла ошибка при перемещении ключа репозитория. (3.2/${commands})\n${end_process_line}"
-    #   exit 2
-    # fi
-
-    # #3.3
-    # if ! echo "deb http://people.debian.org/~paravoid/python-all $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/python-all.list ; then
-    #   echo -e "${start_process_line}\nПроизошла ошибка при добавлении репозитория. (3.3/${commands})\n${end_process_line}"
-    #   exit 2
-    # fi
-
-    #3.1
-    if ! sudo apt install -y gnupg; then
-      echo -e "${start_process_line}\nПроизошла ошибка при установке gnupg. (3.1/${commands})\n${end_process_line}"
-      exit 2
-    fi
-
-    #3.2
-    if ! sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys BA6932366A755776; then
-      echo -e "${start_process_line}\nПроизошла ошибка при добавлении ключа репозитория. (3.2/${commands})\n${end_process_line}"
-      exit 2
-    fi
-
-    #3.3
-    if ! sudo add-apt-repository -s "deb https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu jammy main"; then
-      echo -e "${start_process_line}\nПроизошла ошибка при добавлении репозитория. (3.3/${commands})\n${end_process_line}"
-      exit 2
-    fi
-
-    #3.4
-    sudo tee /etc/apt/preferences.d/10deadsnakes-ppa > /dev/null << EOF
-Package: *
-Pin: release o=LP-PPA-deadsnakes
-Pin-Priority: 100
-EOF
-    if $? -ne 0; then
-      echo -e "${start_process_line}\nПроизошла ошибка при добавлении приоритета репозитория. (3.4/${commands})\n${end_process_line}"
-      exit 2
-    fi
-    ;;
   *)
     #3
     if ! sudo add-apt-repository -y ppa:deadsnakes/ppa; then
@@ -206,7 +157,7 @@ if ! sudo -u $username "python${python_version}" -m venv /home/$username/pyvenv;
 fi
 
 #10
-# Важно: eunsurepip стоить запускать от root, иначе будет ошибка на некоторых версиях ОС (например, Debian 11, Debian 12, Ubuntu 20.04, Ubuntu 24.04)
+# Важно: eunsurepip стоить запускать от root, иначе будет ошибка на некоторых версиях ОС (например, Debian 12, Ubuntu 20.04, Ubuntu 24.04)
 if ! sudo /home/$username/pyvenv/bin/python -m ensurepip --upgrade; then
   echo -e "${start_process_line}\nПроизошла ошибка при установке Pip. (10/${commands})\n${end_process_line}"
   exit 2
@@ -292,7 +243,7 @@ echo -e "$start_process_line\nНастраиваю кодировку серве
 
 #22
 case $distro_version in
-  "11" | "12" | "13")
+  "12" | "13")
     if ! sudo apt install -y locales locales-all; then
       echo -e "${start_process_line}\nПроизошла ошибка при установке локализаций. (22/${commands})\n${end_process_line}"
       exit 2
