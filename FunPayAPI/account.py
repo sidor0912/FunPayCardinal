@@ -1528,12 +1528,24 @@ class Account:
                 games_options = games_options.find_all(lambda x: x.name == "option" and x.get("value"))
                 for game_option in games_options:
                     game_name = game_option.text
-                    sections_list = json.loads(game_option.get("data-data"))
-                    for key, section_name in sections_list:
-                        section_type, section_id = key.split("-")
-                        section_type = types.SubCategoryTypes.COMMON if section_type == "lot" else types.SubCategoryTypes.CURRENCY
-                        section_id = int(section_id)
-                        subcategories[f"{game_name}, {section_name}"] = self.get_subcategory(section_type, section_id)
+                    raw_sections = game_option.get("data-options") or game_option.get("data-data")
+                    if not raw_sections:
+                        continue
+                    try:
+                        sections_list = json.loads(raw_sections)
+                    except (ValueError, TypeError):
+                        continue
+                    if isinstance(sections_list, dict):
+                        sections_list = list(sections_list.items())
+                    for item in sections_list:
+                        try:
+                            key, section_name = item[0], item[1]
+                            section_type, section_id = key.split("-")
+                            section_type = types.SubCategoryTypes.COMMON if section_type == "lot" else types.SubCategoryTypes.CURRENCY
+                            section_id = int(section_id)
+                            subcategories[f"{game_name}, {section_name}"] = self.get_subcategory(section_type, section_id)
+                        except (ValueError, TypeError, IndexError):
+                            continue
             else:
                 subcategories = None
         if not order_divs:
