@@ -18,6 +18,7 @@ import logging
 import random
 import string
 import json
+import math
 import time
 import re
 
@@ -50,11 +51,14 @@ class Account:
     :type locale: :obj:`Literal["ru", "en", "uk"]` or :obj:`None`
     """
 
-    def __init__(self, golden_key: str, user_agent: str | None = None,
+    def __init__(self, golden_key: str | None, user_agent: str | None = None,
                  requests_timeout: int | float = 10, proxy: Optional[dict] = None,
-                 locale: Literal["ru", "en", "uk"] | None = None):
-        self.golden_key: str = golden_key
-        """Токен (golden_key) аккаунта."""
+                 locale: Literal["ru", "en", "uk"] | None = None,
+                 max_retries: int = 6, wait_on_429: bool = True):
+        self.golden_key: str = golden_key or ""
+        """Токен (golden_key) аккаунта. Пустой - неавторизованный (анонимный) аккаунт, см. :attr:`is_anonymous`."""
+        self.wait_on_429: bool = wait_on_429
+        """Ждать ли и повторять запрос при получении 429? Если False - 429 возвращается вызывающему сразу."""
         self.user_agent: str | None = user_agent
         """User-agent браузера, с которого был произведен вход в аккаунт."""
         self.requests_timeout: int | float = requests_timeout
@@ -133,11 +137,11 @@ class Account:
         """Старое значение self.__bot_character, для корректной маркировки отправки ботом старых сообщений"""
         self.session = requests.Session()
         retry_strategy = Retry(
-            total=6,
-            connect=6,
-            read=6,
-            redirect=6,
-            status=6,
+            total=max_retries,
+            connect=max_retries,
+            read=max_retries,
+            redirect=max_retries,
+            status=max_retries,
             backoff_factor=1,
             status_forcelist=[500, 502, 503, 504],
             allowed_methods={"GET", "POST"}
@@ -190,14 +194,15 @@ class Account:
                 self.__locale = "ru"
 
         if self.is_funpay_api_method(api_method):
-            cookies = {"golden_key": self.golden_key}
+            cookies = {"golden_key": self.golden_key} if self.golden_key else {}
             cookies.update(self.cookies)
             if self.phpsessid:
                 cookies["PHPSESSID"] = self.phpsessid
             link = self.normalize_url(api_method, locale)
         else:
-            cookies = {"golden_key": self.golden_key,
-                       "cookie_prefs": "1"}
+            cookies = {"cookie_prefs": "1"}
+            if self.golden_key:
+                cookies["golden_key"] = self.golden_key
             cookies.update(self.cookies)
             if self.phpsessid and not exclude_phpsessid:
                 cookies["PHPSESSID"] = self.phpsessid
@@ -226,6 +231,8 @@ class Account:
             self.__update_cookies(response)
             if response.status_code == 429:
                 self.last_429_err_time = time.time()
+                if not self.wait_on_429:
+                    break
                 wait = min(2 ** i, 30)
                 logger.warning(f"Получен код $YELLOW429 (Too Many Requests)$RESET от FunPay "
                                f"($YELLOW{link}$RESET). Попытка $YELLOW{i}$RESET, жду $YELLOW{wait}$RESET сек.")
@@ -556,33 +563,40 @@ class Account:
         """
         Возвращает страницу лота.
 
+        Для анонимного аккаунта (без golden_key, см. :attr:`is_anonymous`) инициализация через
+        :meth:`get` не требуется: страница лота публична.
+
         :param lot_id: ID лота.
         :type lot_id: :obj:`int` or :obj:`str`
 
-        :return: объект страницы лота или :obj:`None`, если лот не найден.
-        :rtype: :class:`FunPayAPI.types.lotPage` or :obj:`None`
+        :return: объект страницы лота.
+        :rtype: :class:`FunPayAPI.types.lotPage`
+
+        :raises RequestFailedError: если запрос завершился не кодом 200 (у несуществующего лота - 404).
         """
-        if not self.is_initiated:
+        anonymous = self.is_anonymous
+        if not anonymous and not self.is_initiated:
             raise exceptions.AccountNotInitiatedError()
         headers = {
             "accept": "*/*"
         }
-        response = self.method("get", f"lots/offer?id={lot_id}", headers, {}, raise_not_200=True, locale=locale)
+        response = self.method("get", f"lots/offer?id={lot_id}", headers, {}, raise_not_200=True,
+                               locale=locale)
         if locale:
             self.locale = self.__default_locale
         html_response = response.content.decode()
         parser = BeautifulSoup(html_response, "lxml")
-        username = parser.find("div", {"class": "user-link-name"})
-        if not username:
-            raise exceptions.UnauthorizedError(response)
+        if not anonymous:
+            username = parser.find("div", {"class": "user-link-name"})
+            if not username:
+                raise exceptions.UnauthorizedError(response)
 
-        self.__update_csrf_token(parser)
+            self.__update_csrf_token(parser)
 
-        if (page_header := parser.find("h1", class_="page-header")) \
-                and page_header.text in ("Предложение не найдено", "Пропозицію не знайдено", "Offer not found"):
-            return None
-
-        subcategory_id = int(parser.find("a", class_="js-back-link")['href'].split("/")[-2])
+        back_link = parser.find("a", class_="js-back-link")
+        if back_link is None:
+            raise exceptions.RequestFailedError(response)
+        subcategory_id = int(back_link['href'].split("/")[-2])
         chat_header = parser.find("div", class_="chat-header")
         if chat_header:
             seller = chat_header.find("div", class_="media-user-name").find("a")
@@ -606,8 +620,30 @@ class Account:
                     if photos:
                         image_urls = [photo.get("href") for photo in photos]
 
+        price, price_currency = self.__parse_lot_page_price(parser)
+
         return types.LotPage(lot_id, self.get_subcategory(enums.SubCategoryTypes.COMMON, subcategory_id),
-                             short_description, detailed_description, image_urls, seller_id, seller_username)
+                             short_description, detailed_description, image_urls, seller_id, seller_username,
+                             subcategory_id, price, price_currency)
+
+    @staticmethod
+    def __parse_lot_page_price(parser: BeautifulSoup) -> tuple[float | None, types.Currency]:
+        """
+        Цена «от» и её валюта из формы покупки (то же значение, что в таблице раздела).
+        Цена способа оплаты - произведение чисел из его data-factors, цена «от» - минимум по способам оплаты
+        в валюте страницы. Валюта страницы - из «Не выбран - от 974.64 ₽» (в списке есть способы и в других валютах).
+        """
+        option = parser.find("option", {"value": "0"})
+        if option is None or not option.get("data-content"):
+            return None, types.Currency.UNKNOWN
+        currency = parse_currency(BeautifulSoup(option["data-content"], "lxml").get_text(" ", strip=True).split()[-1])
+        if currency == types.Currency.UNKNOWN:
+            return None, currency
+        prices = []
+        for option in parser.find_all("option", {"data-cy": currency.code}):
+            if factors := option.get("data-factors"):
+                prices.append(math.prod(float(i) for i in factors.split(",")))
+        return (min(prices) if prices else None), currency
 
     def get_balance(self, lot_id: int) -> types.Balance:
         """
@@ -2068,6 +2104,14 @@ class Account:
         if not self.is_initiated:
             raise exceptions.AccountNotInitiatedError()
         self.method("get", self._logout_link, {"accept": "*/*"}, {}, raise_not_200=True)
+
+    @property
+    def is_anonymous(self) -> bool:
+        """
+        Неавторизованный ли аккаунт (создан без golden_key)?
+        Такой аккаунт может выполнять только запросы к публичным страницам.
+        """
+        return not self.golden_key
 
     @property
     def is_initiated(self) -> bool:

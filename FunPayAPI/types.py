@@ -1077,10 +1077,20 @@ class LotPage:
 
     :param seller_username: Юзернейм продавца.
     :type seller_username: :obj:`str`
+
+    :param subcategory_id: ID подкатегории.
+    :type subcategory_id: :obj:`int` or :obj:`None`
+
+    :param price: Цена лота «от» (минимальная среди способов оплаты формы покупки, как в таблице раздела).
+    :type price: :obj:`float` or :obj:`None`
+
+    :param currency: Валюта цены.
+    :type currency: :obj:`Currency`
     """
 
     def __init__(self, lot_id: int, subcategory: SubCategory | None, short_description: str | None,
-                 full_description: str | None, image_urls: list[str], seller_id: int, seller_username: str, ) -> None:
+                 full_description: str | None, image_urls: list[str], seller_id: int, seller_username: str,
+                 subcategory_id: int | None = None, price: float | None = None, currency: Currency = Currency.UNKNOWN) -> None:
         self.lot_id: int = lot_id
         """ID лота"""
         self.subcategory: SubCategory | None = subcategory
@@ -1095,6 +1105,14 @@ class LotPage:
         """"ID продавца"""
         self.seller_username: str = seller_username
         """Юзернейм продавца"""
+        self.subcategory_id: int | None = (subcategory_id if subcategory_id is not None
+                                           else (subcategory.id if subcategory else None))
+        """ID подкатегории (доступен и тогда, когда сам объект подкатегории неизвестен - например, у анонимного аккаунта)"""
+        self.price: float | None = price
+        """Цена лота для покупателя (как в таблице раздела, «от X»): минимальная цена среди способов оплаты формы покупки.
+        None, если форму покупки на странице распарсить не удалось."""
+        self.currency: Currency = currency
+        """Валюта, в которой указана :attr:`price` (зависит от куки cy / валюты аккаунта)."""
 
     @property
     def seller_url(self) -> str:
